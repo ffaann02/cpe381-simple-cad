@@ -20,7 +20,6 @@ const TopMenuTabs = ({
       <TabsList className="flex gap-x-2 bg-neutral-100">
         <TabsTrigger value="home" className="rounded-sm">Home</TabsTrigger>
         <TabsTrigger value="shape" className="rounded-sm">Shape</TabsTrigger>
-        <TabsTrigger value="tools" className="rounded-sm">Tools</TabsTrigger>
       </TabsList>
     </Tabs>
   );

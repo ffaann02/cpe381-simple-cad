@@ -1,4 +1,4 @@
-import { useTab } from "@/context/TabsContext";
+import { useTab } from "@/context/AppContext";
 import { Layer } from "@/interface/tab";
 import { v4 as uuidv4 } from "uuid";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,7 +14,7 @@ const LineCanvas: React.FC = () => {
   const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
-  const { layers, setLayers } = useTab();
+  const { layers, setLayers, canvasSize } = useTab();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -145,6 +145,8 @@ const LineCanvas: React.FC = () => {
   return (
     <div className="flex flex-col items-center cursor-pointer h-full">
       <canvas
+      width={canvasSize.width}
+      height={canvasSize.height}
         ref={canvasRef}
         onClick={handleCanvasClick}
         onMouseMove={handleMouseMove}

@@ -1,12 +1,20 @@
+import { useTab } from "@/context/TabsContext";
+import { Layer } from "@/interface/tab";
+import { v4 as uuidv4 } from "uuid";
 import React, { useEffect, useRef, useState } from "react";
+
+type Line = {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  layerId: string;
+};
 
 const LineCanvas: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [points, setPoints] = useState<{ x: number; y: number }[]>([]);
-  const [lines, setLines] = useState<
-    { start: { x: number; y: number }; end: { x: number; y: number } }[]
-  >([]);
+  const [lines, setLines] = useState<Line[]>([]);
   const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const { layers, setLayers } = useTab();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,9 +73,12 @@ const LineCanvas: React.FC = () => {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw all confirmed lines
-    lines.forEach(({ start, end }) => {
-      drawBresenhamLine(start.x, start.y, end.x, end.y, ctx);
+    // Draw all visible lines
+    lines.forEach(({ start, end, layerId }) => {
+      const layer = layers.find((l) => l.id === layerId);
+      if (layer?.is_visible) {
+        drawBresenhamLine(start.x, start.y, end.x, end.y, ctx);
+      }
     });
 
     // Draw marker if one point is selected
@@ -94,10 +105,24 @@ const LineCanvas: React.FC = () => {
     if (newPoints.length === 1) {
       setPoints(newPoints);
     } else if (newPoints.length === 2) {
-      const newLine = { start: newPoints[0], end: newPoints[1] };
+      const newLayerId = uuidv4();
+      const newLine: Line = {
+        start: newPoints[0],
+        end: newPoints[1],
+        layerId: newLayerId,
+      };
       setLines((prev) => [...prev, newLine]);
       setPoints([]);
       setMousePos(null);
+
+      const newLayer: Layer = {
+        id: newLayerId,
+        icon: "🖊️",
+        name: `Line ${lines.length + 1}`,
+        is_selected: false,
+        is_visible: true,
+      };
+      setLayers([...layers, newLayer]);
     }
   };
 
@@ -106,7 +131,6 @@ const LineCanvas: React.FC = () => {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor(e.clientX - rect.left);
     const y = Math.floor(e.clientY - rect.top);
@@ -116,7 +140,7 @@ const LineCanvas: React.FC = () => {
 
   useEffect(() => {
     redraw();
-  }, [points, lines, mousePos]);
+  }, [points, lines, mousePos, layers]);
 
   return (
     <div className="flex flex-col items-center cursor-pointer h-full">

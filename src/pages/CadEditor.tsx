@@ -5,12 +5,7 @@ import HomeTab from "@/components/pages/editor/tabs/HomeTab";
 import ShapeTab from "@/components/pages/editor/tabs/ShapeTab";
 import ToolsTab from "@/components/pages/editor/tabs/ToolsTab";
 import { useTab } from "@/context/TabsContext";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
+import RightTab from "@/components/layout/RightTab";
 
 const CadEditor = () => {
   const { tab, setTab } = useTab();
@@ -48,23 +43,7 @@ const CadEditor = () => {
           <LineCanvas />
         </div>
         <div className="col-span-2 h-full rounded-sm border border-neutral-200">
-          <Accordion defaultValue={["properties", "layers"]} type="multiple" className="w-full">
-            <AccordionItem value="properties">
-              <AccordionTrigger className="px-2 py-2 hover:no-underline cursor-pointer">Properties</AccordionTrigger>
-              <AccordionContent className="px-2">
-                <div>
-                  
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="layers">
-            <AccordionTrigger className="px-2 py-2 hover:no-underline cursor-pointer">Layers</AccordionTrigger>
-            <AccordionContent className="px-2">
-            Yes. It comes with default styles that matches the other
-                components&apos; aesthetic.
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <RightTab/>
         </div>
       </div>
     </div>

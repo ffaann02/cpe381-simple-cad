@@ -1,17 +1,28 @@
+import { Layer, Tabs } from "@/interface/tab";
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface TabContextType {
   tab: string;
   setTab: (value: string) => void;
+  layers: Layer[];
+  setLayers: (layers: Layer[]) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
 
 export const TabProvider = ({ children }: { children: ReactNode }) => {
-  const [tab, setTab] = useState<string>("home");
+  const [tab, setTab] = useState<string>(Tabs.Home);
+  const [layers, setLayers] = useState<Layer[]>([]);
+
+  const value = {
+    tab,
+    setTab,
+    layers,
+    setLayers,
+  }
 
   return (
-    <TabContext.Provider value={{ tab, setTab }}>
+    <TabContext.Provider value={value}>
       {children}
     </TabContext.Provider>
   );

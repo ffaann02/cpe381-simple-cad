@@ -1,5 +1,6 @@
 import FileTab from "@/components/pages/editor/FileTab";
 import LineCanvas from "@/components/pages/editor/shape-canvas/LineCanvas";
+import CurveCanvas from "@/components/pages/editor/shape-canvas/CurveCanvas";
 import TopMenuTabs from "@/components/pages/editor/Tabs";
 import HomeTab from "@/components/pages/editor/tabs/HomeTab";
 import ShapeTab from "@/components/pages/editor/tabs/ShapeTab";
@@ -11,6 +12,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+
 
 const CadEditor = () => {
   const { tab, setTab } = useTab();
@@ -45,7 +47,8 @@ const CadEditor = () => {
       </div>
       <div className="grid grid-cols-12 gap-x-2 px-2 pb-2 h-[calc(100vh-12rem)]">
         <div className="bg-white w-full h-full col-span-10" id="canvas">
-          <LineCanvas />
+           <CurveCanvas/>
+          {/* <LineCanvas /> */}
         </div>
         <div className="col-span-2 h-full rounded-sm border border-neutral-200">
           <Accordion defaultValue={["properties", "layers"]} type="multiple" className="w-full">

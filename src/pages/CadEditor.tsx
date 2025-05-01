@@ -26,6 +26,11 @@ const CadEditor = () => {
     curves,
     ellipses,
     circles,
+    setPoints,
+    setLines,
+    setCurves,
+    setEllipses,
+    setCircles,
   } = useTab();
 
   const handleTabChange = (value: string) => {
@@ -52,6 +57,10 @@ const CadEditor = () => {
         curves={curves}
         ellipses={ellipses}
         circles={circles}
+        setLines={setLines}
+        setCurves={setCurves}
+        setEllipses={setEllipses}
+        setCircles={setCircles}
       />
       <div className="w-full bg-neutral-100 px-2 py-1 border-b">
         <TopMenuTabs value={tab} handleTabChange={handleTabChange} />

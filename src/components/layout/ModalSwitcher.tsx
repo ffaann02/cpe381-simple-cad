@@ -1,24 +1,15 @@
 import React, { useState, useRef } from "react";
 import { File, FilePlus, Image, FileText, Settings } from "lucide-react";
+import { RxCross2 } from "react-icons/rx";
 import { useTab } from "@/context/AppContext";
+import { Circle, Curve, Ellipse, Line, Point } from "@/interface/shape";
 
 // CAD Export Format Definition
 // Example:
-// # Lines
 // LINE startX, startY, endX, endY, color
-// LINE 10,20,30,40,red
-// # Circles
 // CIRCLE centerX, centerY, radius, borderColor, fillColor
-// CIRCLE 50,60,25,blue,yellow
-// # Rectangles
-// RECT x, y, width, height, borderColor, fillColor
-// RECT 100,120,40,50,green,orange
-// # Ellipses
 // ELLIPSE centerX, centerY, radiusX, radiusY, borderColor, fillColor
-// ELLIPSE 150,170,30,20,purple,pink
-// # Curves
 // CURVE p0x,p0y,p1x,p1y,p2x,p2y,p3x,p3y,color
-// CURVE 200,220,230,240,250,260,270,280,black
 
 export enum ShapeMode {
   Line = "line",
@@ -27,102 +18,45 @@ export enum ShapeMode {
   Ellipse = "ellipse",
 }
 
-export type Point = {
-  x: number;
-  y: number;
-  color?: string;
-};
-
-export type Line = {
-  start: Point;
-  end: Point;
-  borderRadius?: string;
-  color?: string;
-};
-
-export type Circle = {
-  center: Point;
-  radius: number;
-  backgroundColor?: string;
-  borderRadius?: string;
-  borderColor?: string;
-};
-
-export type Curve = {
-  p0: Point;
-  p1: Point;
-  p2: Point;
-  p3: Point;
-  borderRadius?: string;
-  color?: string;
-};
-
-export type Ellipse = {
-  center: Point;
-  rx: number;
-  ry: number;
-  borderRadius?: string;
-  backgroundColor?: string;
-  borderColor?: string;
-};
-
 const generateCadText = (
   lines: Line[],
   circles: Circle[],
   ellipses: Ellipse[],
-  curves: Curve[]
+  curves: Curve[],
+  canvasWidth: number = 800,
+  canvasHeight: number = 600
 ): string => {
-  let cadText = "";
+  let cadText = `CANVAS,${canvasWidth},${canvasHeight}\n`; // First line with canvas width and height
 
-  if (lines.length > 0) {
-    cadText += "# Lines\n";
-    lines.forEach((line) => {
-      cadText += `LINE ${line.start.x},${line.start.y},${line.end.x},${
-        line.end.y
-      },${line.color || "black"}\n`;
-    });
-  }
+  lines.forEach((line) => {
+    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${line.end.y},${line.color || "black"}\n`;
+  });
 
-  if (circles.length > 0) {
-    cadText += "# Circles\n";
-    circles.forEach((circle) => {
-      cadText += `CIRCLE ${circle.center.x},${circle.center.y},${
-        circle.radius
-      },${circle.borderColor || "black"},${circle.backgroundColor || ""}\n`;
-    });
-  }
+  circles.forEach((circle) => {
+    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${circle.borderColor || "black"},${circle.backgroundColor || ""}\n`;
+  });
 
-  if (ellipses.length > 0) {
-    cadText += "# Ellipses\n";
-    ellipses.forEach((ellipse) => {
-      cadText += `ELLIPSE ${ellipse.center.x},${ellipse.center.y},${
-        ellipse.rx
-      },${ellipse.ry},${ellipse.borderColor || "black"},${
-        ellipse.backgroundColor || ""
-      }\n`;
-    });
-  }
+  ellipses.forEach((ellipse) => {
+    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${ellipse.ry},${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
+  });
 
-  if (curves.length > 0) {
-    cadText += "# Curves\n";
-    curves.forEach((curve) => {
-      cadText += `CURVE ${curve.p0.x},${curve.p0.y},${curve.p1.x},${
-        curve.p1.y
-      },${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${
-        curve.color || "black"
-      }\n`;
-    });
-  }
+  curves.forEach((curve) => {
+    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
+  });
 
   return cadText;
 };
 
+
 interface ExportModalProps {
   lines: Line[];
   circles: Circle[];
-
   ellipses: Ellipse[];
   curves: Curve[];
+  setLines: React.Dispatch<React.SetStateAction<Line[]>>;
+  setCircles: React.Dispatch<React.SetStateAction<Circle[]>>;
+  setEllipses: React.Dispatch<React.SetStateAction<Ellipse[]>>;
+  setCurves: React.Dispatch<React.SetStateAction<Curve[]>>;
 }
 
 const ModalSwitcher: React.FC<ExportModalProps> = ({
@@ -130,15 +64,18 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   circles,
   ellipses,
   curves,
+  setLines,
+  setCircles,
+  setEllipses,
+  setCurves,
 }) => {
-  const { modalType, setModalType, openHomeModal, setOpenHomeModal } = useTab();
+  const { modalType, setModalType, openHomeModal, setOpenHomeModal, canvasRef, canvasSize } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
     width: 800,
     height: 600,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [importedFileContent, setImportedFileContent] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onNewProjectSubmit = () => {
@@ -166,6 +103,10 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
       setOpenHomeModal(false); // Close the modal
       setFormData({ projectName: "", width: 800, height: 600 }); // Reset form
       setErrors({});
+      setLines([]);
+      setCircles([]);
+      setEllipses([]);
+      setCurves([]);
     }
   };
 
@@ -177,19 +118,103 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     if (fileInputRef.current?.files?.[0]) {
       const file = fileInputRef.current.files[0];
       const reader = new FileReader();
+  
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        setImportedFileContent(text);
-        console.log("Imported file content:", text);
+        const linesFromFile: Line[] = [];
+        const circlesFromFile: Circle[] = [];
+        const ellipsesFromFile: Ellipse[] = [];
+        const curvesFromFile: Curve[] = [];
+  
+        text?.split("\n").forEach((line) => {
+          const parts = line.trim().split(",").map(p => p.trim());
+          console.log(parts)
+          const command = parts[0]?.toUpperCase();
+  
+          switch (command) {
+            case "LINE":
+              if (parts.length === 6) {
+                console.log("importing line")
+                linesFromFile.push({
+                  start: { x: parseFloat(parts[1]), y: parseFloat(parts[2])},
+                  end: { x: parseFloat(parts[3]), y: parseFloat(parts[4])},
+                  color: parts[5],
+                  layerId: "1", // Default layer ID, adjust as needed
+                });
+              }
+              break;
+  
+            case "CIRCLE":
+              if (parts.length >= 5) {
+                const circle: Circle = {
+                  center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                  radius: parseFloat(parts[3]),
+                  borderColor: parts[4],
+                  layerId: "1", // Default layer ID, adjust as needed
+      
+                };
+                if (parts.length >= 6) {
+                  circle.backgroundColor = parts[5];
+                }
+                circlesFromFile.push(circle);
+              }
+              break;
+  
+            case "ELLIPSE":
+              if (parts.length >= 6) {
+                const ellipse: Ellipse = {
+                  center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                  rx: parseFloat(parts[3]),
+                  ry: parseFloat(parts[4]),
+                  borderColor: parts[5],
+                  layerId: "1", // Default layer ID, adjust as needed
+                };
+                if (parts.length >= 7) {
+                  ellipse.backgroundColor = parts[6];
+                }
+                ellipsesFromFile.push(ellipse);
+              }
+              break;
+  
+            case "CURVE":
+              if (parts.length === 9) {
+                const color = parts[8];
+                curvesFromFile.push({
+                  p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]), color },
+                  p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]), color },
+                  p2: { x: parseFloat(parts[5]), y: parseFloat(parts[6]), color },
+                  p3: { x: parseFloat(parts[7]), y: parseFloat(parts[8]), color },
+                  color: parts[9],
+                  layerId: "1", // Default layer ID, adjust as needed
+                });
+              }
+              break;
+  
+            default:
+              console.log(command)
+              console.warn(`Unknown CAD command: ${command}`);
+          }
+        });
+  
+        setLines(linesFromFile);
+        setCircles(circlesFromFile);
+        setEllipses(ellipsesFromFile);
+        setCurves(curvesFromFile);
         setOpenHomeModal(false);
+        console.log(lines);
+        console.log(circles);
+        console.log(ellipses);
+        console.log(curves);
       };
+  
       reader.readAsText(file);
     }
   };
+  
 
   const handleExport = (format: "jpg" | "png" | "cad") => {
     if (format === "cad") {
-      const cadText = generateCadText(lines, circles, ellipses, curves);
+      const cadText = generateCadText(lines, circles, ellipses, curves, canvasSize.width, canvasSize.height );
       const blob = new Blob([cadText], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -202,8 +227,9 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     } else {
       console.log(`Exporting as ${format.toUpperCase()}...`);
       alert(
-        `Exporting as ${format.toUpperCase()} is not fully implemented here.  See console for CAD output.`
+        `Exporting as ${format.toUpperCase()} is not fully implemented here. See console for CAD output.`
       );
+      console.log(generateCadText(lines, circles, ellipses, curves));
     }
     setOpenHomeModal(false);
   };
@@ -212,7 +238,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     <>
       <div className="relative">
         {openHomeModal && (
-          <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="fixed z-100 inset-0 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
               {/* Modal backdrop */}
               <div
@@ -232,7 +258,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
 
               {/* Modal panel */}
               <div className="fixed left-1/2 top-1/2 z-[9999] transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg text-left overflow-hidden shadow-xl transition-all sm:max-w-lg sm:w-full">
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="bg-white px-4 py-5">
                   <div className="sm:flex sm:items-start">
                     <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                       <h3
@@ -241,7 +267,10 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                       >
                         Settings
                       </h3>
-                      <div className="mt-2">
+                      <button className="absolute cursor-pointer top-3 right-3" onClick={() => setOpenHomeModal(false)}>
+                        <RxCross2 className="text-xl" />
+                      </button>
+                      <div className="mt-2 mb-4">
                         <p className="text-sm text-gray-500">
                           Manage project settings, import, and export.
                         </p>
@@ -382,27 +411,15 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                               <input
                                 id="importFile"
                                 type="file"
-                                accept=".txt"
+                                accept=".cad, .txt"
                                 ref={fileInputRef}
                                 onChange={handleImport}
                                 className="w-full"
                               />
                               <p className="text-sm text-gray-500">
-                                Import a text file containing drawing data.
+                                Import a .cad or .txt file containing drawing data.
                               </p>
                             </div>
-                            {importedFileContent && (
-                              <div className="space-y-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Imported Content
-                                </label>
-                                <div className="border rounded-md p-4 bg-gray-100 overflow-auto max-h-48">
-                                  <pre className="text-sm">
-                                    {importedFileContent}
-                                  </pre>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         )}
                         {modalType === "export" && (

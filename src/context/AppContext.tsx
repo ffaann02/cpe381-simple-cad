@@ -9,7 +9,7 @@ import {
 } from "@/interface/shape";
 import { Layer, Tabs } from "@/interface/tab";
 import { Tools } from "@/interface/tool";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useRef } from "react";
 
 interface TabContextType {
   modalType: "new" | "import" | "export";
@@ -31,16 +31,17 @@ interface TabContextType {
   shape: ShapeMode;
   setShape: (shape: ShapeMode) => void;
   points: Point[];
-  setPoints: (points: Point[]) => void;
+  setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
   lines: Line[];
-  setLines: (lines: Line[]) => void;
+  setLines: React.Dispatch<React.SetStateAction<Line[]>>;
   circles: Circle[];
-  setCircles: (circles: Circle[]) => void;
+  setCircles: React.Dispatch<React.SetStateAction<Circle[]>>;
   curves: Curve[];
-  setCurves: (curves: Curve[]) => void;
+  setCurves: React.Dispatch<React.SetStateAction<Curve[]>>;
   ellipses: Ellipse[];
-  setEllipses: (ellipses: Ellipse[]) => void;
+  setEllipses: React.Dispatch<React.SetStateAction<Ellipse[]>>;
   // Add other shape types as needed
+  canvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -67,6 +68,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [circles, setCircles] = useState<Circle[]>([]);
   const [curves, setCurves] = useState<Curve[]>([]);
   const [ellipses, setEllipses] = useState<Ellipse[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [shape, setShape] = useState<ShapeMode>(ShapeMode.Line);
   const value = {
@@ -98,6 +100,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setCurves,
     ellipses,
     setEllipses,
+    canvasRef
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

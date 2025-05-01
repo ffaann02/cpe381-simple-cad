@@ -33,7 +33,7 @@ const HomeTab = () => {
         onClick={handleNewProject}
       >
         <CiCirclePlus className="text-2xl text-neutral-600 mx-auto" />
-        <span className="text-slate-600 text-sm">New Project</span>
+        <span className="text-slate-600 text-sm">New Design</span>
       </button>
       <Divider />
       <button

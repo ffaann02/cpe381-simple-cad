@@ -89,7 +89,8 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setImportTimestamp,
     layers,
     setLayers,
-    setShowGrid
+    setShowGrid,
+    setCanvasSize
   } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
@@ -99,7 +100,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onNewProjectSubmit = () => {
+  const onNewDesignSubmit = () => {
     let hasErrors = false;
     const newErrors: { [key: string]: string } = {};
 
@@ -128,6 +129,11 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
       setCircles([]);
       setEllipses([]);
       setCurves([]);
+      setCanvasSize({
+        width: formData.width,
+        height: formData.height,
+        backgroundColor: "#ffffff",
+      });
     }
   };
 
@@ -344,7 +350,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                               onClick={() => setModalType("new")}
                             >
                               <FilePlus className="mr-2 h-4 w-4 inline-block" />
-                              New Project
+                              New Design
                             </button>
                             <button
                               className={`px-4 py-2 text-sm font-medium ${
@@ -377,15 +383,15 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                                 htmlFor="projectName"
                                 className="block text-sm font-medium text-gray-700"
                               >
-                                Project Name
+                                Design Name
                               </label>
                               <input
                                 id="projectName"
                                 name="projectName"
                                 value={formData.projectName}
                                 onChange={handleInputChange}
-                                placeholder="Enter project name"
-                                className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+                                placeholder="Enter design name"
+                                className={`px-2 py-2 border shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
                                   errors.projectName ? "border-red-500" : ""
                                 }`}
                               />
@@ -449,9 +455,9 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                               <button
                                 type="button"
                                 className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                                onClick={onNewProjectSubmit}
+                                onClick={onNewDesignSubmit}
                               >
-                                Create Project
+                                Create Design
                               </button>
                             </div>
                           </form>

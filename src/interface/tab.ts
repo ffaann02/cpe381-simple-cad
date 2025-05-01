@@ -6,7 +6,7 @@ export enum Tabs {
 
 export interface Layer{
   id: string;
-  icon: string;
+  icon?: string;
   name: string;
   is_selected: boolean;
   is_visible: boolean;

@@ -42,6 +42,8 @@ interface TabContextType {
   setEllipses: React.Dispatch<React.SetStateAction<Ellipse[]>>;
   // Add other shape types as needed
   canvasRef?: React.RefObject<HTMLCanvasElement | null>;
+  importTimestamp?: number;
+  setImportTimestamp?: React.Dispatch<React.SetStateAction<number | undefined>>;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -50,7 +52,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [modalType, setModalType] = useState<"new" | "import" | "export">(
     "new"
   );
-    const [openHomeModal, setOpenHomeModal] = useState<boolean>(false);
+  const [openHomeModal, setOpenHomeModal] = useState<boolean>(false);
 
   const [tab, setTab] = useState<string>(Tabs.Shape);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
@@ -69,6 +71,9 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [curves, setCurves] = useState<Curve[]>([]);
   const [ellipses, setEllipses] = useState<Ellipse[]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [importTimestamp, setImportTimestamp] = useState<number | undefined>(
+    undefined
+  );
 
   const [shape, setShape] = useState<ShapeMode>(ShapeMode.Line);
   const value = {
@@ -100,7 +105,9 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setCurves,
     ellipses,
     setEllipses,
-    canvasRef
+    canvasRef,
+    importTimestamp,
+    setImportTimestamp,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

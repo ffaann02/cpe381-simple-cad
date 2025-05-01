@@ -3,6 +3,8 @@ import { File, FilePlus, Image, FileText, Settings } from "lucide-react";
 import { RxCross2 } from "react-icons/rx";
 import { useTab } from "@/context/AppContext";
 import { Circle, Curve, Ellipse, Line, Point } from "@/interface/shape";
+import { Layer } from "@/interface/tab";
+import { clear } from "console";
 
 // CAD Export Format Definition
 // Example:
@@ -29,24 +31,31 @@ const generateCadText = (
   let cadText = `CANVAS,${canvasWidth},${canvasHeight}\n`; // First line with canvas width and height
 
   lines.forEach((line) => {
-    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${line.end.y},${line.color || "black"}\n`;
+    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${
+      line.end.y
+    },${line.color || "black"}\n`;
   });
 
   circles.forEach((circle) => {
-    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${circle.borderColor || "black"},${circle.backgroundColor || ""}\n`;
+    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${
+      circle.borderColor || "black"
+    },${circle.backgroundColor || ""}\n`;
   });
 
   ellipses.forEach((ellipse) => {
-    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${ellipse.ry},${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
+    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${
+      ellipse.ry
+    },${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
   });
 
   curves.forEach((curve) => {
-    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
+    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${
+      curve.p2.x
+    },${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
   });
 
   return cadText;
 };
-
 
 interface ExportModalProps {
   lines: Line[];
@@ -69,7 +78,19 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   setEllipses,
   setCurves,
 }) => {
-  const { modalType, setModalType, openHomeModal, setOpenHomeModal, canvasRef, canvasSize } = useTab();
+  const {
+    modalType,
+    setModalType,
+    openHomeModal,
+    setOpenHomeModal,
+    canvasRef,
+    canvasSize,
+    importTimestamp,
+    setImportTimestamp,
+    layers,
+    setLayers,
+    setShowGrid
+  } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
     width: 800,
@@ -114,8 +135,24 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const clearCurrentCanvas = () => {
+    setLines([]);
+    setCircles([]);
+    setEllipses([]);
+    setCurves([]);
+    setLayers([]);
+    if (canvasRef?.current) {
+      const ctx = canvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+      }
+    }
+  }
+
   const handleImport = () => {
     if (fileInputRef.current?.files?.[0]) {
+      clearCurrentCanvas(); // Clear the current canvas before importing
+      
       const file = fileInputRef.current.files[0];
       const reader = new FileReader();
   
@@ -125,73 +162,82 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         const circlesFromFile: Circle[] = [];
         const ellipsesFromFile: Ellipse[] = [];
         const curvesFromFile: Curve[] = [];
+        const newLayers: Layer[] = [];
+  
+        let layerIdCounter = 1;
   
         text?.split("\n").forEach((line) => {
           const parts = line.trim().split(",").map(p => p.trim());
-          console.log(parts)
           const command = parts[0]?.toUpperCase();
+  
+          const addLayer = (layerId: string, name: string) => {
+            newLayers.push({
+              id: layerId,
+              name,
+              is_selected: true,
+              is_visible: true,
+            });
+          };
   
           switch (command) {
             case "LINE":
               if (parts.length === 6) {
-                console.log("importing line")
-                linesFromFile.push({
-                  start: { x: parseFloat(parts[1]), y: parseFloat(parts[2])},
-                  end: { x: parseFloat(parts[3]), y: parseFloat(parts[4])},
+                const newLine = {
+                  start: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                  end: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
                   color: parts[5],
-                  layerId: "1", // Default layer ID, adjust as needed
-                });
+                  layerId: layerIdCounter.toString(),
+                };
+                linesFromFile.push(newLine);
+                addLayer(newLine.layerId, `Layer ${newLine.layerId}`);
+                layerIdCounter++;
               }
               break;
-  
             case "CIRCLE":
               if (parts.length >= 5) {
-                const circle: Circle = {
+                const newCircle: Circle = {
                   center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
                   radius: parseFloat(parts[3]),
                   borderColor: parts[4],
-                  layerId: "1", // Default layer ID, adjust as needed
-      
+                  layerId: layerIdCounter.toString(),
+                  backgroundColor: parts.length >= 6 ? parts[5] : undefined,
                 };
-                if (parts.length >= 6) {
-                  circle.backgroundColor = parts[5];
-                }
-                circlesFromFile.push(circle);
+                circlesFromFile.push(newCircle);
+                addLayer(newCircle.layerId, `Layer ${newCircle.layerId}`);
+                layerIdCounter++;
               }
               break;
-  
             case "ELLIPSE":
               if (parts.length >= 6) {
-                const ellipse: Ellipse = {
+                const newEllipse: Ellipse = {
                   center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
                   rx: parseFloat(parts[3]),
                   ry: parseFloat(parts[4]),
                   borderColor: parts[5],
-                  layerId: "1", // Default layer ID, adjust as needed
+                  layerId: layerIdCounter.toString(),
+                  backgroundColor: parts.length >= 7 ? parts[6] : undefined,
                 };
-                if (parts.length >= 7) {
-                  ellipse.backgroundColor = parts[6];
-                }
-                ellipsesFromFile.push(ellipse);
+                ellipsesFromFile.push(newEllipse);
+                addLayer(newEllipse.layerId, `Layer ${newEllipse.layerId}`);
+                layerIdCounter++;
               }
               break;
-  
             case "CURVE":
-              if (parts.length === 9) {
-                const color = parts[8];
-                curvesFromFile.push({
-                  p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]), color },
-                  p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]), color },
-                  p2: { x: parseFloat(parts[5]), y: parseFloat(parts[6]), color },
-                  p3: { x: parseFloat(parts[7]), y: parseFloat(parts[8]), color },
+              if (parts.length === 10) {
+                const newCurve = {
+                  p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]), color: parts[9] },
+                  p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]), color: parts[9] },
+                  p2: { x: parseFloat(parts[5]), y: parseFloat(parts[6]), color: parts[9] },
+                  p3: { x: parseFloat(parts[7]), y: parseFloat(parts[8]), color: parts[9] },
                   color: parts[9],
-                  layerId: "1", // Default layer ID, adjust as needed
-                });
+                  layerId: layerIdCounter.toString(),
+                };
+                curvesFromFile.push(newCurve);
+                addLayer(newCurve.layerId, `Layer ${newCurve.layerId}`);
+                layerIdCounter++;
               }
               break;
-  
             default:
-              console.log(command)
               console.warn(`Unknown CAD command: ${command}`);
           }
         });
@@ -200,21 +246,29 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         setCircles(circlesFromFile);
         setEllipses(ellipsesFromFile);
         setCurves(curvesFromFile);
+        setLayers([...layers, ...newLayers]);
         setOpenHomeModal(false);
-        console.log(lines);
-        console.log(circles);
-        console.log(ellipses);
-        console.log(curves);
+        if (setImportTimestamp) {
+          setImportTimestamp(Date.now());
+        }
       };
   
       reader.readAsText(file);
+      setShowGrid(true); // Hide grid after import
     }
   };
   
 
   const handleExport = (format: "jpg" | "png" | "cad") => {
     if (format === "cad") {
-      const cadText = generateCadText(lines, circles, ellipses, curves, canvasSize.width, canvasSize.height );
+      const cadText = generateCadText(
+        lines,
+        circles,
+        ellipses,
+        curves,
+        canvasSize.width,
+        canvasSize.height
+      );
       const blob = new Blob([cadText], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -267,7 +321,10 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                       >
                         Settings
                       </h3>
-                      <button className="absolute cursor-pointer top-3 right-3" onClick={() => setOpenHomeModal(false)}>
+                      <button
+                        className="absolute cursor-pointer top-3 right-3"
+                        onClick={() => setOpenHomeModal(false)}
+                      >
                         <RxCross2 className="text-xl" />
                       </button>
                       <div className="mt-2 mb-4">
@@ -417,7 +474,8 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
                                 className="w-full"
                               />
                               <p className="text-sm text-gray-500">
-                                Import a .cad or .txt file containing drawing data.
+                                Import a .cad or .txt file containing drawing
+                                data.
                               </p>
                             </div>
                           </div>

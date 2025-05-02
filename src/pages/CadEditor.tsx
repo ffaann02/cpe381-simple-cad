@@ -10,6 +10,7 @@ import { PiSelectionBold } from "react-icons/pi";
 import Canvas from "@/components/pages/editor/shape-canvas/Canvas";
 import PropertiesTab from "@/components/layout/PropertiesTab";
 import { MdGridOff, MdGridOn } from "react-icons/md";
+import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
 
 const gridOpacity = 0.4;
@@ -21,6 +22,8 @@ const CadEditor = () => {
     canvasSize,
     showGrid,
     setShowGrid,
+    snapEnabled,
+    setSnapEnabled,
     points,
     lines,
     curves,
@@ -74,7 +77,7 @@ const CadEditor = () => {
       <div className="relative grid grid-cols-12 gap-x-2 px-2 pb-2 h-[calc(100vh-12rem)]">
         <ToolsTab />
         <div className="relative bg-neutral-100 border rounded-md col-span-10 flex items-center justify-center">
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute grid grid-rows-2 top-2 right-2 z-10 gap-2">
             <button
               className="bg-neutral-200 cursor-pointer p-1 rounded-md hover:bg-neutral-300"
               onClick={() => setShowGrid(!showGrid)}
@@ -83,6 +86,24 @@ const CadEditor = () => {
                 <MdGridOff className="text-xl text-neutral-600" />
               ) : (
                 <MdGridOn className="text-xl text-neutral-600" />
+              )}
+            </button>
+
+            <button
+              className={`p-1 rounded-md ${
+                showGrid
+                  ? "bg-neutral-200 hover:bg-neutral-300 cursor-pointer"
+                  : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+              }`}
+              onClick={() => {
+                if (showGrid) setSnapEnabled((prev) => !prev);
+              }}
+              disabled={!showGrid}
+            >
+              {snapEnabled ? (
+                <TbMagnet className="text-xl text-neutral-600" />
+              ) : (
+                <TbMagnetOff className="text-xl text-neutral-600" />
               )}
             </button>
           </div>

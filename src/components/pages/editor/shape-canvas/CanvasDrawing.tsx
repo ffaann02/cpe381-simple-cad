@@ -38,8 +38,22 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     shape,
     tool,
     selectedLayerId,
+    snapEnabled,
+    showGrid,
   } = useTab();
 
+  const getSnappedPos = (pos: Point): Point => {
+    const gridSize = 20;
+    return {
+      x: Math.round(pos.x / gridSize) * gridSize,
+      y: Math.round(pos.y / gridSize) * gridSize,
+    };
+  };
+
+  const effectiveMousePos = (snapEnabled && showGrid && mousePos)
+    ? getSnappedPos(mousePos)
+    : mousePos;
+    
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -100,19 +114,19 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     );
 
     points.forEach((pt) => drawMarker(pt.x, pt.y, ctx));
-    if (points.length > 0 && mousePos) {
+    if (points.length > 0 && effectiveMousePos ) {
       if (shape === ShapeMode.Line && points.length === 1) {
         drawBresenhamLine(
           points[0].x,
           points[0].y,
-          mousePos.x,
-          mousePos.y,
+          effectiveMousePos .x,
+          effectiveMousePos .y,
           ctx,
           previewLineColor
         );
       } else if (shape === ShapeMode.Circle && points.length === 1) {
-        const dx = mousePos.x - points[0].x;
-        const dy = mousePos.y - points[0].y;
+        const dx = effectiveMousePos .x - points[0].x;
+        const dy = effectiveMousePos .y - points[0].y;
         drawCircle(
           points[0].x,
           points[0].y,
@@ -125,13 +139,13 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           points[0],
           points[1],
           points[2],
-          mousePos,
+          effectiveMousePos ,
           ctx,
           previewLineColor
         );
       } else if (shape === ShapeMode.Ellipse && points.length === 1) {
-        const dx = Math.abs(mousePos.x - points[0].x);
-        const dy = Math.abs(mousePos.y - points[0].y);
+        const dx = Math.abs(effectiveMousePos.x - points[0].x);
+        const dy = Math.abs(effectiveMousePos.y - points[0].y);
         drawEllipseMidpoint(
           points[0].x,
           points[0].y,
@@ -153,13 +167,13 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           curves.find((curve) => curve.layerId === selectedLayerId); // Find the selected object based on the layerId
         if (!selectedObject) return; // If no object is found, exit early
 
-        const { x, y } = mousePos || { x: 0, y: 0 }; // Use mouse position or default to (0, 0)
+        const { x, y } = effectiveMousePos || { x: 0, y: 0 }; // Use mouse position or default to (0, 0)
         drawBoundingBox(100, 100, 200, 200, ctx); // Draw the bounding box around the selected object
       }
     }
   }, [
     points,
-    mousePos,
+    effectiveMousePos,
     lines,
     circles,
     curves,

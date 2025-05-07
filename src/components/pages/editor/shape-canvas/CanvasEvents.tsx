@@ -534,8 +534,11 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
       const angle = Math.atan2(dy, dx);
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Snap to nearest 45-degree angle
-      const snapAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+      // Convert angle to degrees and snap to nearest 10 degrees
+      const angleInDegrees = angle * (180 / Math.PI);
+      const snappedDegrees = Math.round(angleInDegrees / 10) * 10;
+      const snapAngle = snappedDegrees * (Math.PI / 180);
+      
       const snappedX = startPoint.x + Math.cos(snapAngle) * distance;
       const snappedY = startPoint.y + Math.sin(snapAngle) * distance;
       

@@ -22,11 +22,6 @@ const ToolsTab = () => {
       type: Tools.Select,
     },
     {
-      label: "Hover",
-      icon: <PiSelectionBold className="text-2xl text-neutral-600" />,
-      type: Tools.Hover,
-    },
-    {
       label: "Move",
       icon: <MdOutlineOpenWith className="text-2xl text-neutral-600" />,
       type: Tools.Move,

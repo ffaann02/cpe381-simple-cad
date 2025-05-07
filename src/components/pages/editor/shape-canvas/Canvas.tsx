@@ -10,11 +10,13 @@ import { useTab } from "@/context/AppContext";
 import CanvasDrawing from "./CanvasDrawing";
 import CanvasEvents from "./CanvasEvents";
 import { Point } from "@/interface/shape";
+import { Line, Circle, Ellipse, Curve } from "@/interface/shape";
+import { Tools } from "@/interface/tool";
 
 interface CanvasProps {}
 
 const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
-  const { canvasSize, canvasRef, importTimestamp } = useTab();
+  const { canvasSize, canvasRef, importTimestamp, tool } = useTab();
   const [mousePos, setMousePos] = useState<Point | null>(null);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [selectedShape, setSelectedShape] = useState<{
@@ -44,12 +46,13 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
   }));
 
   return (
-    <div className="relative w-full h-full">
+    <div className={`relative w-full h-full ${tool === Tools.Eraser && "cursor-eraser"}`}
+    >
       <canvas
         ref={canvasRef}
         width={canvasSize.width}
         height={canvasSize.height}
-        className="border border-neutral-200 bg-white w-full h-full"
+        className={`border border-neutral-200 bg-white w-full h-full`}
       />
       <CanvasEvents
         canvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}

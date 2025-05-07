@@ -526,10 +526,29 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     )
       return;
 
-    setMousePos({
-      x: Math.floor(e.clientX - rect.left),
-      y: Math.floor(e.clientY - rect.top),
-    });
+    // Handle angle snapping for line drawing
+    if (shape === ShapeMode.Line && points.length === 1 && e.shiftKey) {
+      const startPoint = points[0];
+      const dx = x - startPoint.x;
+      const dy = y - startPoint.y;
+      const angle = Math.atan2(dy, dx);
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Snap to nearest 45-degree angle
+      const snapAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+      const snappedX = startPoint.x + Math.cos(snapAngle) * distance;
+      const snappedY = startPoint.y + Math.sin(snapAngle) * distance;
+      
+      setMousePos({
+        x: Math.round(snappedX),
+        y: Math.round(snappedY),
+      });
+    } else {
+      setMousePos({
+        x: Math.floor(e.clientX - rect.left),
+        y: Math.floor(e.clientY - rect.top),
+      });
+    }
   };
 
   return (

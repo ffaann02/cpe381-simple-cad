@@ -4,6 +4,7 @@ export enum Tools{
     Hover = "hover",
     Move = "move",
     Rotate = "rotate",
+    Flip = "flip",
     Color = "color",
     Eraser = "eraser",
     Undo = "undo",

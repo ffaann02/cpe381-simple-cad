@@ -1,4 +1,3 @@
-// components/Canvas/CanvasDrawing.tsx
 import React, { useEffect, useRef } from "react";
 import { useTab } from "@/context/AppContext";
 import {
@@ -11,7 +10,7 @@ import {
   getCircleStyle,
   getEllipseStyle,
   drawBoundingBox,
-} from "@/utils/drawing"; // Adjust import path
+} from "@/utils/drawing";
 import { Point, ShapeMode } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
 
@@ -53,85 +52,83 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   const effectiveMousePos = (snapEnabled && showGrid && mousePos)
     ? getSnappedPos(mousePos)
     : mousePos;
-    
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    lines.forEach(({ start, end, layerId, color }) => {
+  const canvas = canvasRef.current;
+  const ctx = canvas?.getContext("2d");
+
+  const clearCanvas = (context: CanvasRenderingContext2D) => {
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  };
+
+  const drawMarkers = (context: CanvasRenderingContext2D) => {
+    points.forEach((pt) => {
+      drawMarker(pt.x, pt.y, context);
+    });
+  };
+
+  const drawLines = (context: CanvasRenderingContext2D) => {
+    lines.forEach(({ start, end, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, lineWidth } = getShapeStyle(layer);
-        drawBresenhamLine(
-          start.x,
-          start.y,
-          end.x,
-          end.y,
-          ctx,
-          stroke,
-          lineWidth
-        );
+        const strokeColor = stroke;
+        drawBresenhamLine(start.x, start.y, end.x, end.y, context, strokeColor, lineWidth);
       }
     });
+  };
 
-    circles.forEach(
-      ({ center, radius, layerId, borderColor, backgroundColor }) => {
-        const layer = layers.find((l) => l.id === layerId);
-        if (layer?.is_visible) {
-          const { stroke, fill, lineWidth } = getCircleStyle(layer);
-          drawCircle(center.x, center.y, radius, ctx, stroke, fill, lineWidth);
-        }
+  const drawCircles = (context: CanvasRenderingContext2D) => {
+    circles.forEach(({ center, radius, layerId }) => {
+      const layer = layers.find((l) => l.id === layerId);
+      if (layer?.is_visible) {
+        const { stroke, fill, lineWidth } = getCircleStyle(layer);
+        const strokeColor = stroke;
+        drawCircle(center.x, center.y, radius, context, strokeColor, fill, lineWidth);
       }
-    );
+    });
+  };
 
-    curves.forEach(({ p0, p1, p2, p3, layerId, color }) => {
+  const drawCurves = (context: CanvasRenderingContext2D) => {
+    curves.forEach(({ p0, p1, p2, p3, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, lineWidth } = getShapeStyle(layer);
-        drawBezierCurve(p0, p1, p2, p3, ctx, stroke, lineWidth);
+        const strokeColor = stroke;
+        drawBezierCurve(p0, p1, p2, p3, context, strokeColor, lineWidth);
       }
     });
+  };
 
-    ellipses.forEach(
-      ({ center, rx, ry, layerId, borderColor, backgroundColor }) => {
-        const layer = layers.find((l) => l.id === layerId);
-        if (layer?.is_visible) {
-          const { stroke, fill, lineWidth } = getEllipseStyle(layer);
-          drawEllipseMidpoint(
-            center.x,
-            center.y,
-            rx,
-            ry,
-            ctx,
-            stroke,
-            lineWidth
-          );
-        }
+  const drawEllipses = (context: CanvasRenderingContext2D) => {
+    ellipses.forEach(({ center, rx, ry, layerId }) => {
+      const layer = layers.find((l) => l.id === layerId);
+      if (layer?.is_visible) {
+        const { stroke, fill, lineWidth } = getEllipseStyle(layer);
+        const strokeColor = stroke;
+        drawEllipseMidpoint(center.x, center.y, rx, ry, context, strokeColor, lineWidth);
       }
-    );
+    });
+  };
 
-    points.forEach((pt) => drawMarker(pt.x, pt.y, ctx));
-    if (points.length > 0 && effectiveMousePos ) {
+  const drawPreview = (context: CanvasRenderingContext2D) => {
+    if (points.length > 0 && effectiveMousePos && context) {
       if (shape === ShapeMode.Line && points.length === 1) {
         drawBresenhamLine(
           points[0].x,
           points[0].y,
-          effectiveMousePos .x,
-          effectiveMousePos .y,
-          ctx,
+          effectiveMousePos.x,
+          effectiveMousePos.y,
+          context,
           previewLineColor
         );
       } else if (shape === ShapeMode.Circle && points.length === 1) {
-        const dx = effectiveMousePos .x - points[0].x;
-        const dy = effectiveMousePos .y - points[0].y;
+        const dx = effectiveMousePos.x - points[0].x;
+        const dy = effectiveMousePos.y - points[0].y;
         drawCircle(
           points[0].x,
           points[0].y,
           Math.sqrt(dx * dx + dy * dy),
-          ctx,
+          context,
           previewLineColor
         );
       } else if (shape === ShapeMode.Curve && points.length === 3) {
@@ -139,8 +136,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           points[0],
           points[1],
           points[2],
-          effectiveMousePos ,
-          ctx,
+          effectiveMousePos,
+          context,
           previewLineColor
         );
       } else if (shape === ShapeMode.Ellipse && points.length === 1) {
@@ -151,39 +148,117 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           points[0].y,
           dx,
           dy,
-          ctx,
+          context,
           previewLineColor
         );
       }
     }
+  };
 
-    if (tool === Tools.Move) {
+  const drawBoundingBoxForSelected = (context: CanvasRenderingContext2D) => {
+    if (tool === Tools.Move && selectedLayerId && context) {
       const layer = layers.find((l) => l.id === selectedLayerId);
       if (layer?.is_visible) {
         const selectedObject =
           lines.find((line) => line.layerId === selectedLayerId) ||
           circles.find((circle) => circle.layerId === selectedLayerId) ||
           ellipses.find((ellipse) => ellipse.layerId === selectedLayerId) ||
-          curves.find((curve) => curve.layerId === selectedLayerId); // Find the selected object based on the layerId
-        if (!selectedObject) return; // If no object is found, exit early
+          curves.find((curve) => curve.layerId === selectedLayerId);
 
-        const { x, y } = effectiveMousePos || { x: 0, y: 0 }; // Use mouse position or default to (0, 0)
-        drawBoundingBox(100, 100, 200, 200, ctx); // Draw the bounding box around the selected object
+        if (selectedObject) {
+          let minX: number | undefined;
+          let minY: number | undefined;
+          let maxX: number | undefined;
+          let maxY: number | undefined;
+
+          if (selectedObject.start && selectedObject.end) {
+            minX = Math.min(selectedObject.start.x, selectedObject.end.x);
+            minY = Math.min(selectedObject.start.y, selectedObject.end.y);
+            maxX = Math.max(selectedObject.start.x, selectedObject.end.x);
+            maxY = Math.max(selectedObject.start.y, selectedObject.end.y);
+          } else if (selectedObject.center && selectedObject.radius) {
+            minX = selectedObject.center.x - selectedObject.radius;
+            minY = selectedObject.center.y - selectedObject.radius;
+            maxX = selectedObject.center.x + selectedObject.radius;
+            maxY = selectedObject.center.y + selectedObject.radius;
+          } else if (selectedObject.center && selectedObject.rx && selectedObject.ry) {
+            minX = selectedObject.center.x - selectedObject.rx;
+            minY = selectedObject.center.y - selectedObject.ry;
+            maxX = selectedObject.center.x + selectedObject.rx;
+            maxY = selectedObject.center.y + selectedObject.ry;
+          } else if (selectedObject.p0 && selectedObject.p3) {
+            const { minX: curveMinX, minY: curveMinY, maxX: curveMaxX, maxY: curveMaxY } =
+              getBezierBoundingBox(selectedObject.p0, selectedObject.p1, selectedObject.p2, selectedObject.p3);
+            minX = curveMinX;
+            minY = curveMinY;
+            maxX = curveMaxX;
+            maxY = curveMaxY;
+          }
+
+          if (minX !== undefined && minY !== undefined && maxX !== undefined && maxY !== undefined) {
+            drawBoundingBox(minX, minY, maxX - minX, maxY - minY, context);
+          }
+        }
       }
     }
-  }, [
-    points,
-    effectiveMousePos,
-    lines,
-    circles,
-    curves,
-    layers,
-    shape,
-    ellipses,
-    importTimestamp,
-  ]);
+  };
+
+  useEffect(() => {
+    if (!ctx) return;
+    clearCanvas(ctx);
+    drawMarkers(ctx); // Ensure markers are drawn
+    drawLines(ctx);
+    drawCircles(ctx);
+    drawCurves(ctx);
+    drawEllipses(ctx);
+    drawPreview(ctx);
+    drawBoundingBoxForSelected(ctx);
+  }, [points, effectiveMousePos, lines, circles, curves, ellipses, layers, shape, tool, selectedLayerId, importTimestamp]);
 
   return null; // This component doesn't render anything directly
 };
+
+function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { minX: number; minY: number; maxX: number; maxY: number } {
+  const bezierExtrema = (p0: number, p1: number, p2: number, p3: number) => {
+    const a = -p0 + 3 * p1 - 3 * p2 + p3;
+    const b = 2 * (p0 - 2 * p1 + p2);
+    const c = -p0 + p1;
+
+    const tValues: number[] = [];
+    if (Math.abs(a) > 1e-6) {
+      const discriminant = b * b - 4 * a * c;
+      if (discriminant >= 0) {
+        const sqrtDiscriminant = Math.sqrt(discriminant);
+        const t1 = (-b + sqrtDiscriminant) / (2 * a);
+        const t2 = (-b - sqrtDiscriminant) / (2 * a);
+        if (t1 >= 0 && t1 <= 1) tValues.push(t1);
+        if (t2 >= 0 && t2 <= 1) tValues.push(t2);
+      }
+    } else if (Math.abs(b) > 1e-6) {
+      const t = -c / b;
+      if (t >= 0 && t <= 1) tValues.push(t);
+    }
+
+    return tValues;
+  };
+
+  const evaluateBezier = (t: number, p0: number, p1: number, p2: number, p3: number) => {
+    const mt = 1 - t;
+    return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3;
+  };
+
+  const xExtrema = bezierExtrema(p0.x, p1.x, p2.x, p3.x);
+  const yExtrema = bezierExtrema(p0.y, p1.y, p2.y, p3.y);
+
+  const xValues = [p0.x, p3.x, ...xExtrema.map((t) => evaluateBezier(t, p0.x, p1.x, p2.x, p3.x))];
+  const yValues = [p0.y, p3.y, ...yExtrema.map((t) => evaluateBezier(t, p0.y, p1.y, p2.y, p3.y))];
+
+  const minX = Math.min(...xValues);
+  const minY = Math.min(...yValues);
+  const maxX = Math.max(...xValues);
+  const maxY = Math.max(...yValues);
+
+  return { minX, minY, maxX, maxY };
+}
 
 export default CanvasDrawing;

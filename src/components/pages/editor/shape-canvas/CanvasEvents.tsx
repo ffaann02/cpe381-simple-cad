@@ -137,10 +137,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     }
   };
 
-  useEffect(() => {
-    setPopupVisible(false);
-  }, [tool]);
-
   const handleClick = (e: React.MouseEvent) => {
     const canvas = canvasRef?.current;
     if (!canvas) return;
@@ -486,77 +482,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     }
   };
 
-  const flipShape = (direction: "horizontal" | "vertical") => {
-    if (!shapeToFlip) return;
-
-    switch (shapeToFlip.type) {
-      case "line":
-        const line = lines[shapeToFlip.index!];
-        const lineCenter = {
-          x: (line.start.x + line.end.x) / 2,
-          y: (line.start.y + line.end.y) / 2,
-        };
-
-        if (direction === "vertical") {
-          // Flip Y-axis
-          lines[shapeToFlip.index!] = {
-            ...line,
-            start: {
-              x: line.start.x,
-              y: 2 * lineCenter.y - line.start.y,
-            },
-            end: {
-              x: line.end.x,
-              y: 2 * lineCenter.y - line.end.y,
-            },
-          };
-        } else if (direction === "horizontal") {
-          // Flip X-axis
-          lines[shapeToFlip.index!] = {
-            ...line,
-            start: {
-              x: 2 * lineCenter.x - line.start.x,
-              y: line.start.y,
-            },
-            end: {
-              x: 2 * lineCenter.x - line.end.x,
-              y: line.end.y,
-            },
-          };
-        }
-        break;
-
-      case "curve":
-        const curve = curves[shapeToFlip.index!];
-        const curveCenter = {
-          x: (curve.p0.x + curve.p1.x + curve.p2.x + curve.p3.x) / 4,
-          y: (curve.p0.y + curve.p1.y + curve.p2.y + curve.p3.y) / 4,
-        };
-
-        curves[shapeToFlip.index!] = {
-          ...curve,
-          p0: direction === "vertical"
-            ? { x: curve.p0.x, y: 2 * curveCenter.y - curve.p0.y }
-            : { x: 2 * curveCenter.x - curve.p0.x, y: curve.p0.y },
-          p1: direction === "vertical"
-            ? { x: curve.p1.x, y: 2 * curveCenter.y - curve.p1.y }
-            : { x: 2 * curveCenter.x - curve.p1.x, y: curve.p1.y },
-          p2: direction === "vertical"
-            ? { x: curve.p2.x, y: 2 * curveCenter.y - curve.p2.y }
-            : { x: 2 * curveCenter.x - curve.p2.x, y: curve.p2.y },
-          p3: direction === "vertical"
-            ? { x: curve.p3.x, y: 2 * curveCenter.y - curve.p3.y }
-            : { x: 2 * curveCenter.x - curve.p3.x, y: curve.p3.y },
-        };
-        break;
-
-    }
-
-    // Reset popup and state
-    setPopupVisible(false);
-    setShapeToFlip(null);
-  };
-
   const handleMouseMove = (e: React.MouseEvent) => {
     const canvas = canvasRef?.current;
     if (!canvas) return;
@@ -603,6 +528,7 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
               }
               : line
           );
+          console.log("Updated Move Lines:", updatedLines);
           setLines(updatedLines);
           break;
         case "circle":
@@ -906,8 +832,73 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     setRotationAngle("");
   }, [rotationAngle, rotatingShape, setLines, setCircles, setEllipses, setCurves]);
 
+  function flipShape(direction: string): void {
+    if (!shapeToFlip) return;
+
+    const { layerId, index, type } = shapeToFlip;
+
+    const flipPoint = (point: Point, axis: "horizontal" | "vertical", center: Point): Point => {
+      if (axis === "horizontal") {
+        return { x: 2 * center.x - point.x, y: point.y };
+      } else {
+        return { x: point.x, y: 2 * center.y - point.y };
+      }
+    };
+
+    switch (type) {
+      case "line":
+        setLines((prevLines) =>
+          prevLines.map((line, i) =>
+            i === index && line.layerId === layerId
+              ? {
+                  ...line,
+                  start: flipPoint(line.start, direction as "horizontal" | "vertical", getShapeCenter(line, "line")),
+                  end: flipPoint(line.end, direction as "horizontal" | "vertical", getShapeCenter(line, "line")),
+                }
+              : line
+          )
+        );
+        break;
+      case "circle":
+        // Circles don't change on flipping
+        break;
+      case "ellipse":
+        setEllipses((prevEllipses) =>
+          prevEllipses.map((ellipse, i) =>
+            i === index && ellipse.layerId === layerId
+              ? {
+                  ...ellipse,
+                  center: flipPoint(ellipse.center, direction as "horizontal" | "vertical", getShapeCenter(ellipse, "ellipse")),
+                }
+              : ellipse
+          )
+        );
+        break;
+      case "curve":
+        setCurves((prevCurves) =>
+          prevCurves.map((curve, i) =>
+            i === index && curve.layerId === layerId
+              ? {
+                  ...curve,
+                  p0: flipPoint(curve.p0, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p1: flipPoint(curve.p1, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p2: flipPoint(curve.p2, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p3: flipPoint(curve.p3, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                }
+              : curve
+          )
+        );
+        break;
+      default:
+        break;
+    }
+
+    setPopupVisible(false);
+    setShapeToFlip(null);
+  }
+
   return (
-    <div>
+    <>
       <div
         className="absolute top-0 left-0 w-full h-full"
         onClick={handleClick}
@@ -932,94 +923,87 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
           </div>
         )}
       </div>
-      <div>
+      {erasingShape && popoverOpen && (
         <div
-          className="absolute top-0 left-0 w-full h-full"
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-        />
-        {erasingShape && popoverOpen && (
-          <div
-            ref={popoverRef}
-            className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]" // Tailwind classes
-            style={{
-              left: erasingShape.position.x,
-              top: erasingShape.position.y,
-              transform: "translate(-50%, -50%)", // Center the popover
-            }}
-          >
-            <div className="text-center">
-              <p className="text-sm text-gray-700 mb-2">
-                Are you sure you want to delete this shape?
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
-                  onClick={() => {
-                    deleteShape(erasingShape);
-                    setPopoverOpen(false);
-                    setErasingShape(null);
-                  }}
-                >
-                  Yes
-                </button>
-                <button
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                  onClick={() => {
-                    setPopoverOpen(false);
-                    setErasingShape(null);
-                  }}
-                >
-                  No
-                </button>
-              </div>
+          ref={popoverRef}
+          className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]" // Tailwind classes
+          style={{
+            left: erasingShape.position.x,
+            top: erasingShape.position.y,
+            transform: "translate(-50%, -50%)", // Center the popover
+          }}
+        >
+          <div className="text-center">
+            <p className="text-sm text-gray-700 mb-2">
+              Are you sure you want to delete this shape?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
+                onClick={() => {
+                  deleteShape(erasingShape);
+                  setPopoverOpen(false);
+                  setErasingShape(null);
+                }}
+              >
+                Yes
+              </button>
+              <button
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
+                onClick={() => {
+                  setPopoverOpen(false);
+                  setErasingShape(null);
+                }}
+              >
+                No
+              </button>
             </div>
           </div>
-        )}
-        {rotatingShape && rotatePopoverOpen && (
-          <div
-            ref={rotatePopoverRef}
-            className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]"
-            style={{
-              left: rotatingShape.center.x, // Position near the shape's center
-              top: rotatingShape.center.y,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <div className="text-center">
-              <p className="text-sm text-gray-700 mb-2">
-                Enter rotation angle (degrees):
-              </p>
-              <input
-                type="number"
-                value={rotationAngle}
-                onChange={(e) => setRotationAngle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-2"
-                placeholder="Angle"
-              />
-              <div className="flex justify-end gap-2">
-                <button
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-                  onClick={handleRotateShape}
-                >
-                  Confirm
-                </button>
-                <button
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                  onClick={() => {
-                    setRotatePopoverOpen(false);
-                    setRotatingShape(null);
-                    setRotationAngle("");
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
+        </div>
+      )}
+      {rotatingShape && rotatePopoverOpen && (
+        <div
+          ref={rotatePopoverRef}
+          className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]"
+          style={{
+            left: rotatingShape.center.x, // Position near the shape's center
+            top: rotatingShape.center.y,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="text-center">
+            <p className="text-sm text-gray-700 mb-2">
+              Enter rotation angle (degrees):
+            </p>
+            <input
+              type="number"
+              value={rotationAngle}
+              onChange={(e) => setRotationAngle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-2"
+              placeholder="Angle"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
+                onClick={handleRotateShape}
+              >
+                Confirm
+              </button>
+              <button
+                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
+                onClick={() => {
+                  setRotatePopoverOpen(false);
+                  setRotatingShape(null);
+                  setRotationAngle("");
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 

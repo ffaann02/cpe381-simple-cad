@@ -37,89 +37,126 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     shape,
     tool,
     selectedLayerId,
+    snapEnabled,
+    showGrid,
   } = useTab();
 
-  const clearCanvas = (ctx: CanvasRenderingContext2D) => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+  const getSnappedPos = (pos: Point): Point => {
+    const gridSize = 20;
+    return {
+      x: Math.round(pos.x / gridSize) * gridSize,
+      y: Math.round(pos.y / gridSize) * gridSize,
+    };
   };
 
-  const drawMarkers = (ctx: CanvasRenderingContext2D) => {
+  const effectiveMousePos = (snapEnabled && showGrid && mousePos)
+    ? getSnappedPos(mousePos)
+    : mousePos;
+
+  const canvas = canvasRef.current;
+  const ctx = canvas?.getContext("2d");
+
+  const clearCanvas = (context: CanvasRenderingContext2D) => {
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+  };
+
+  const drawMarkers = (context: CanvasRenderingContext2D) => {
     points.forEach((pt) => {
-      drawMarker(pt.x, pt.y, ctx);
+      drawMarker(pt.x, pt.y, context);
     });
   };
 
-  const drawLines = (ctx: CanvasRenderingContext2D) => {
+  const drawLines = (context: CanvasRenderingContext2D) => {
     lines.forEach(({ start, end, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, lineWidth } = getShapeStyle(layer);
-        // const strokeColor = tool === Tools.Eraser && selectedLayerId ? "#FF0000" : stroke;
         const strokeColor = stroke;
-        drawBresenhamLine(start.x, start.y, end.x, end.y, ctx, strokeColor, lineWidth);
+        drawBresenhamLine(start.x, start.y, end.x, end.y, context, strokeColor, lineWidth);
       }
     });
   };
 
-  const drawCircles = (ctx: CanvasRenderingContext2D) => {
+  const drawCircles = (context: CanvasRenderingContext2D) => {
     circles.forEach(({ center, radius, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, fill, lineWidth } = getCircleStyle(layer);
-        // const strokeColor = tool === Tools.Eraser && selectedLayerId ? "#FF0000" : stroke;
         const strokeColor = stroke;
-        drawCircle(center.x, center.y, radius, ctx, strokeColor, fill, lineWidth);
+        drawCircle(center.x, center.y, radius, context, strokeColor, fill, lineWidth);
       }
     });
   };
 
-  const drawCurves = (ctx: CanvasRenderingContext2D) => {
+  const drawCurves = (context: CanvasRenderingContext2D) => {
     curves.forEach(({ p0, p1, p2, p3, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, lineWidth } = getShapeStyle(layer);
-        // const strokeColor = tool === Tools.Eraser && selectedLayerId ? "#FF0000" : stroke;
         const strokeColor = stroke;
-        drawBezierCurve(p0, p1, p2, p3, ctx, strokeColor, lineWidth);
+        drawBezierCurve(p0, p1, p2, p3, context, strokeColor, lineWidth);
       }
     });
   };
 
-  const drawEllipses = (ctx: CanvasRenderingContext2D) => {
+  const drawEllipses = (context: CanvasRenderingContext2D) => {
     ellipses.forEach(({ center, rx, ry, layerId }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { stroke, fill, lineWidth } = getEllipseStyle(layer);
-        // const strokeColor = tool === Tools.Eraser && selectedLayerId ? "#FF0000" : stroke;
         const strokeColor = stroke;
-        drawEllipseMidpoint(center.x, center.y, rx, ry, ctx, strokeColor, lineWidth);
+        drawEllipseMidpoint(center.x, center.y, rx, ry, context, strokeColor, lineWidth);
       }
     });
   };
 
-  const drawPreview = (ctx: CanvasRenderingContext2D) => {
-    if (points.length > 0 && mousePos) {
+  const drawPreview = (context: CanvasRenderingContext2D) => {
+    if (points.length > 0 && effectiveMousePos && context) {
       if (shape === ShapeMode.Line && points.length === 1) {
-        drawBresenhamLine(points[0].x, points[0].y, mousePos.x, mousePos.y, ctx, previewLineColor);
+        drawBresenhamLine(
+          points[0].x,
+          points[0].y,
+          effectiveMousePos.x,
+          effectiveMousePos.y,
+          context,
+          previewLineColor
+        );
       } else if (shape === ShapeMode.Circle && points.length === 1) {
-        const dx = mousePos.x - points[0].x;
-        const dy = mousePos.y - points[0].y;
-        drawCircle(points[0].x, points[0].y, Math.sqrt(dx * dx + dy * dy), ctx, previewLineColor);
+        const dx = effectiveMousePos.x - points[0].x;
+        const dy = effectiveMousePos.y - points[0].y;
+        drawCircle(
+          points[0].x,
+          points[0].y,
+          Math.sqrt(dx * dx + dy * dy),
+          context,
+          previewLineColor
+        );
       } else if (shape === ShapeMode.Curve && points.length === 3) {
-        drawBezierCurve(points[0], points[1], points[2], mousePos, ctx, previewLineColor);
+        drawBezierCurve(
+          points[0],
+          points[1],
+          points[2],
+          effectiveMousePos,
+          context,
+          previewLineColor
+        );
       } else if (shape === ShapeMode.Ellipse && points.length === 1) {
-        const dx = Math.abs(mousePos.x - points[0].x);
-        const dy = Math.abs(mousePos.y - points[0].y);
-        drawEllipseMidpoint(points[0].x, points[0].y, dx, dy, ctx, previewLineColor);
+        const dx = Math.abs(effectiveMousePos.x - points[0].x);
+        const dy = Math.abs(effectiveMousePos.y - points[0].y);
+        drawEllipseMidpoint(
+          points[0].x,
+          points[0].y,
+          dx,
+          dy,
+          context,
+          previewLineColor
+        );
       }
     }
   };
 
-  const drawBoundingBoxForSelected = (ctx: CanvasRenderingContext2D) => {
-    if (tool === Tools.Move && selectedLayerId) {
+  const drawBoundingBoxForSelected = (context: CanvasRenderingContext2D) => {
+    if (tool === Tools.Move && selectedLayerId && context) {
       const layer = layers.find((l) => l.id === selectedLayerId);
       if (layer?.is_visible) {
         const selectedObject =
@@ -159,7 +196,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           }
 
           if (minX !== undefined && minY !== undefined && maxX !== undefined && maxY !== undefined) {
-            drawBoundingBox(minX, minY, maxX - minX, maxY - minY, ctx);
+            drawBoundingBox(minX, minY, maxX - minX, maxY - minY, context);
           }
         }
       }
@@ -167,9 +204,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     clearCanvas(ctx);
     drawMarkers(ctx); // Ensure markers are drawn
@@ -179,7 +213,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     drawEllipses(ctx);
     drawPreview(ctx);
     drawBoundingBoxForSelected(ctx);
-  }, [points, mousePos, lines, circles, curves, ellipses, layers, shape, tool, selectedLayerId, importTimestamp]);
+  }, [points, effectiveMousePos, lines, circles, curves, ellipses, layers, shape, tool, selectedLayerId, importTimestamp]);
 
   return null; // This component doesn't render anything directly
 };

@@ -22,6 +22,8 @@ interface TabContextType {
   setTool: (tool: Tools) => void;
   showGrid: boolean;
   setShowGrid: (showGrid: boolean) => void;
+  snapEnabled: boolean;
+  setSnapEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   layers: Layer[];
   setLayers: (layers: Layer[]) => void;
   selectedLayerId: string | null;
@@ -57,6 +59,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [tab, setTab] = useState<string>(Tabs.Shape);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
 
+  const [snapEnabled, setSnapEnabled] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
@@ -87,6 +90,8 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setTool,
     showGrid,
     setShowGrid,
+    snapEnabled,
+    setSnapEnabled,
     layers,
     setLayers,
     selectedLayerId,

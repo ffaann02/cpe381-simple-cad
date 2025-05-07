@@ -4,6 +4,7 @@ import { Point, ShapeMode } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
 import { v4 as uuidv4 } from "uuid";
 import { findShapeAtPoint } from "@/utils/selection"; // Adjust import path
+import { PiFlipHorizontalFill, PiFlipVerticalFill } from "react-icons/pi";
 import { Line } from "@/interface/shape";
 import { Circle } from "@/interface/shape";
 import { Ellipse } from "@/interface/shape";
@@ -40,6 +41,14 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
   selectedShape,
   setSelectedShape,
 }) => {
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupPosition, setPopupPosition] = useState<Point | null>(null);
+  const [shapeToFlip, setShapeToFlip] = useState<{
+    layerId: string | null;
+    index: number | null;
+    type: "line" | "circle" | "ellipse" | "curve" | null;
+  } | null>(null);
+
   const {
     points,
     setPoints,
@@ -301,6 +310,44 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
       }
     }
 
+    if (tool === Tools.Flip) {
+      const clickedShape = findShapeAtPoint(
+        x,
+        y,
+        lines,
+        circles,
+        ellipses,
+        curves,
+        layers
+      );
+
+      if (clickedShape.layerId) {
+        // Show popup to select flip direction
+        setPopupVisible(true);
+        setPopupPosition({ x, y });
+        setShapeToFlip(clickedShape);
+
+        // Highlight the selected shape
+        const updatedLayers = layers.map((layer) => ({
+          ...layer,
+          is_selected: layer.id === clickedShape.layerId,
+        }));
+        setLayers(updatedLayers);
+        setSelectedLayerId(clickedShape.layerId);
+        return;
+      } else {
+        // If no shape is clicked, deselect all
+        const updatedLayers = layers.map((layer) => ({
+          ...layer,
+          is_selected: false,
+        }));
+        setLayers(updatedLayers);
+        setSelectedLayerId(null);
+        setSelectedShape(null);
+      }
+    }
+
+
     if (tool === Tools.Draw) {
       // Regular drawing behavior from here
       const newPoints = [...points, { x, y, color: drawColor }];
@@ -472,13 +519,13 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
           const updatedLines = lines.map((line, index) =>
             index === selectedShape.index
               ? {
-                  ...line,
-                  start: { x: newX, y: newY },
-                  end: {
-                    x: line.end.x + (newX - line.start.x),
-                    y: line.end.y + (newY - line.start.y),
-                  },
-                }
+                ...line,
+                start: { x: newX, y: newY },
+                end: {
+                  x: line.end.x + (newX - line.start.x),
+                  y: line.end.y + (newY - line.start.y),
+                },
+              }
               : line
           );
           console.log("Updated Move Lines:", updatedLines);
@@ -761,7 +808,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
         );
         break;
       case "curve":
-        console.log("Rotating curve:", curves[index]);
         setCurves((prevCurves) =>
           prevCurves.map((curve, i) =>
             i === index && curve.layerId === layerId
@@ -786,13 +832,97 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     setRotationAngle("");
   }, [rotationAngle, rotatingShape, setLines, setCircles, setEllipses, setCurves]);
 
+  function flipShape(direction: string): void {
+    if (!shapeToFlip) return;
+
+    const { layerId, index, type } = shapeToFlip;
+
+    const flipPoint = (point: Point, axis: "horizontal" | "vertical", center: Point): Point => {
+      if (axis === "horizontal") {
+        return { x: 2 * center.x - point.x, y: point.y };
+      } else {
+        return { x: point.x, y: 2 * center.y - point.y };
+      }
+    };
+
+    switch (type) {
+      case "line":
+        setLines((prevLines) =>
+          prevLines.map((line, i) =>
+            i === index && line.layerId === layerId
+              ? {
+                  ...line,
+                  start: flipPoint(line.start, direction as "horizontal" | "vertical", getShapeCenter(line, "line")),
+                  end: flipPoint(line.end, direction as "horizontal" | "vertical", getShapeCenter(line, "line")),
+                }
+              : line
+          )
+        );
+        break;
+      case "circle":
+        // Circles don't change on flipping
+        break;
+      case "ellipse":
+        setEllipses((prevEllipses) =>
+          prevEllipses.map((ellipse, i) =>
+            i === index && ellipse.layerId === layerId
+              ? {
+                  ...ellipse,
+                  center: flipPoint(ellipse.center, direction as "horizontal" | "vertical", getShapeCenter(ellipse, "ellipse")),
+                }
+              : ellipse
+          )
+        );
+        break;
+      case "curve":
+        setCurves((prevCurves) =>
+          prevCurves.map((curve, i) =>
+            i === index && curve.layerId === layerId
+              ? {
+                  ...curve,
+                  p0: flipPoint(curve.p0, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p1: flipPoint(curve.p1, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p2: flipPoint(curve.p2, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                  p3: flipPoint(curve.p3, direction as "horizontal" | "vertical", getShapeCenter(curve, "curve")),
+                }
+              : curve
+          )
+        );
+        break;
+      default:
+        break;
+    }
+
+    setPopupVisible(false);
+    setShapeToFlip(null);
+  }
+
   return (
     <>
       <div
         className="absolute top-0 left-0 w-full h-full"
         onClick={handleClick}
         onMouseMove={handleMouseMove}
-      />
+      >
+        {popupVisible && popupPosition && (
+          <div className="absolute bg-white border rounded shadow-lg p-2 flex flex-col space-y-2"
+            style={{
+              left: popupPosition.x,
+              top: popupPosition.y,
+              zIndex: 50,
+            }}>
+            <button className="flex items-center space-x-2" onClick={() => flipShape("vertical")}>
+              <PiFlipVerticalFill className="text-xl text-neutral-600" />
+              <span>Flip Vertical</span>
+            </button>
+
+            <button className="flex items-center space-x-2" onClick={() => flipShape("horizontal")}>
+              <PiFlipHorizontalFill className="text-xl text-neutral-600" />
+              <span>Flip Horizontal</span>
+            </button>
+          </div>
+        )}
+      </div>
       {erasingShape && popoverOpen && (
         <div
           ref={popoverRef}

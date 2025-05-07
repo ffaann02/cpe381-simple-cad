@@ -3,6 +3,7 @@ import { FaPen } from "react-icons/fa6";
 import { LuMousePointer2 } from "react-icons/lu";
 import { PiSelectionBold } from "react-icons/pi";
 import { MdOutlineOpenWith, MdRotate90DegreesCcw } from "react-icons/md";
+import { PiFlipHorizontalFill } from "react-icons/pi";
 import { FaFillDrip, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
 import { Tools } from "@/interface/tool";
 import { useTab } from "@/context/AppContext";
@@ -29,6 +30,11 @@ const ToolsTab = () => {
       label: "Rotate",
       icon: <MdRotate90DegreesCcw className="text-2xl text-neutral-600" />,
       type: Tools.Rotate,
+    },
+    {
+      label: "Flip",
+      icon: <PiFlipHorizontalFill  className="text-2xl text-neutral-600" />,
+      type: Tools.Flip,
     },
     {
       label: "Color",

@@ -4,6 +4,7 @@ import { Layer } from "@/interface/tab";
 
 const previewLineColor = "#D4C9BE";
 const SELECTION_COLOR = "#3D90D7"; // Color for the selected shape
+const DELETE_COLOR = "#FF0000"; // Color for the delete shape
 const SELECTION_WIDTH_MULTIPLIER = 2; // Multiplier for the width of the selected shape
 
 export const drawMarker = (x: number, y: number, ctx: CanvasRenderingContext2D) => {
@@ -178,19 +179,48 @@ export const getEllipseStyle = (layer: Layer | undefined): { stroke: string; fil
 };
 
 export function drawBoundingBox(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    ctx: CanvasRenderingContext2D,
-    color: string = "red",
-    lineWidth: number = 1
-  ) {
-    ctx.save();
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  ctx: CanvasRenderingContext2D,
+  color: string = "blue",
+  lineWidth: number = 1
+) {
+  ctx.save();
+
+  // Draw dashed bounding box
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.setLineDash([4, 2]);
+  ctx.strokeRect(x, y, width, height);
+
+  // Draw 9 white square handles with blue borders
+  const handleSize = 8;
+  const half = handleSize / 2;
+
+  const points = [
+    [x, y], // top-left
+    [x + width / 2, y], // top-center
+    [x + width, y], // top-right
+    [x, y + height / 2], // middle-left
+    [x + width / 2, y + height / 2], // center
+    [x + width, y + height / 2], // middle-right
+    [x, y + height], // bottom-left
+    [x + width / 2, y + height], // bottom-center
+    [x + width, y + height], // bottom-right
+  ];
+
+  ctx.setLineDash([]); // Solid lines for handles
+  points.forEach(([px, py]) => {
+    ctx.fillStyle = "white";
     ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.setLineDash([4, 2]); // Dashed box
-    ctx.strokeRect(x, y, width, height);
-    ctx.restore();
-  }
+    ctx.lineWidth = 1;
+    ctx.fillRect(px - half, py - half, handleSize, handleSize);
+    ctx.strokeRect(px - half, py - half, handleSize, handleSize);
+  });
+
+  ctx.restore();
+}
+
   

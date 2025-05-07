@@ -40,3 +40,11 @@
 .read-the-docs {
   color: #888;
 }
+
+.eraser-cursor {
+  cursor: url(/public/eraser.png) 16 16, auto;
+}
+
+#eraser-cursor {
+  cursor: url('/eraser.png') 16 16, auto;
+}

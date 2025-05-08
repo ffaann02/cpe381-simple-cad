@@ -78,6 +78,23 @@ const ShapeTab = () => {
         />
         <span className="text-slate-600 text-sm">Ellipse</span>
       </button>
+      <Divider />
+      <button
+        className={`px-10 py-1.5 rounded-sm cursor-pointer ${
+          isSelected(ShapeMode.Polygon)
+            ? "border-2 border-neutral-300 bg-neutral-200"
+            : "hover:bg-neutral-100"
+        } ${isDrawToolActive ? "" : "pointer-events-none opacity-50"}`}
+        onClick={() => setShape(ShapeMode.Polygon)}
+        disabled={!isDrawToolActive}
+      >
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/274/274375.png"
+          alt="polygon"
+          className="w-[16px] text-neutral-600 mx-auto my-2"
+        />
+        <span className="text-slate-600 text-sm">Polygon</span>
+      </button>
     </div>
   );
 };

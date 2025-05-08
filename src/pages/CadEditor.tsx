@@ -12,7 +12,8 @@ import PropertiesTab from "@/components/layout/PropertiesTab";
 import { MdGridOff, MdGridOn } from "react-icons/md";
 import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
-
+import { Button, Drawer } from "antd";
+import { useState } from "react";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
@@ -34,6 +35,7 @@ const CadEditor = () => {
     setCurves,
     setEllipses,
     setCircles,
+    log,
   } = useTab();
 
   const handleTabChange = (value: string) => {
@@ -53,8 +55,10 @@ const CadEditor = () => {
     }
   };
 
+  const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
+  const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);
   return (
-    <div>
+    <div className="relative">
       <ModalSwitcher
         lines={lines}
         curves={curves}
@@ -66,7 +70,11 @@ const CadEditor = () => {
         setCircles={setCircles}
       />
       <div className="w-full bg-neutral-100 px-2 py-1 border-b">
-        <TopMenuTabs value={tab} handleTabChange={handleTabChange} />
+        <TopMenuTabs
+          value={tab}
+          handleTabChange={handleTabChange}
+          setOpenCodeEditor={setOpenCodeEditor}
+        />
       </div>
       <div className="bg-neutral-50 py-2 border-b">{renderTab()}</div>
       <div className="w-full my-1">
@@ -187,6 +195,37 @@ const CadEditor = () => {
           <RightTab />
         </div>
       </div>
+      <Drawer
+        title="Log"
+        placement="bottom"
+        height={240}
+        style={{ overflowY: "auto" }}
+        closable={true}
+        onClose={() => setOpenLogDrawer(false)}
+        open={openLogDrawer}
+      >
+        <div className="flex flex-col gap-2 p-2">
+          {[...log]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .map((entry, index) => (
+              <div
+                key={index}
+                className="flex items-center space-x-12 border-b pb-2"
+              >
+                <span className="text-neutral-700">
+                  {new Date(entry.timestamp).toLocaleString()}
+                </span>
+                <span>{entry.message}</span>
+              </div>
+            ))}
+        </div>
+      </Drawer>
+      <button
+        className="cursor-pointer fixed px-4 py-2 text-sm bottom-0 rounded-t-xl left-8 border border-neutral-400 bg-neutral-300 text-neutral-600"
+        onClick={() => setOpenLogDrawer(true)}
+      >
+        Open Log
+      </button>
     </div>
   );
 };

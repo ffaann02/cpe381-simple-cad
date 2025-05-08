@@ -2,7 +2,8 @@ export enum ShapeMode {
     Line = "line",
     Curve = "curve",
     Circle = "circle",
-    Ellipse = "ellipse"
+    Ellipse = "ellipse",
+    Polygon = "polygon",
 }
 
 export type Point = { 
@@ -47,3 +48,12 @@ export type Ellipse = {
     borderColor?: string;
     layerId: string; 
 };
+
+export type Polygon = {
+    points: Point[];
+    borderRadius?: string;
+    borderColor?: string;
+    backgroundColor?: string;
+    layerId: string;
+  };
+  

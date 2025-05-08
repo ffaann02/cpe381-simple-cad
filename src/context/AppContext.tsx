@@ -1,10 +1,12 @@
 import { Canvas } from "@/interface/canvas";
+import { LogEntry } from "@/interface/log";
 import {
   Circle,
   Curve,
   Ellipse,
   Line,
   Point,
+  Polygon,
   ShapeMode,
 } from "@/interface/shape";
 import { Layer, Tabs } from "@/interface/tab";
@@ -42,10 +44,16 @@ interface TabContextType {
   setCurves: React.Dispatch<React.SetStateAction<Curve[]>>;
   ellipses: Ellipse[];
   setEllipses: React.Dispatch<React.SetStateAction<Ellipse[]>>;
+  polygons: Polygon[];
+  setPolygons: React.Dispatch<React.SetStateAction<Polygon[]>>;
+  polygonCornerNumber: number;
+  setPolygonCornerNumber: React.Dispatch<React.SetStateAction<number>>;
   // Add other shape types as needed
   canvasRef?: React.RefObject<HTMLCanvasElement | null>;
   importTimestamp?: number;
   setImportTimestamp?: React.Dispatch<React.SetStateAction<number | undefined>>;
+  log: LogEntry[];
+  setLog: React.Dispatch<React.SetStateAction<LogEntry[]>>;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -73,12 +81,15 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [circles, setCircles] = useState<Circle[]>([]);
   const [curves, setCurves] = useState<Curve[]>([]);
   const [ellipses, setEllipses] = useState<Ellipse[]>([]);
+  const [polygons, setPolygons] = useState<Polygon[]>([]);
+  const [polygonCornerNumber, setPolygonCornerNumber] = useState<number>(3);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [importTimestamp, setImportTimestamp] = useState<number | undefined>(
     undefined
   );
 
   const [shape, setShape] = useState<ShapeMode>(ShapeMode.Line);
+  const [log, setLog] = useState<LogEntry[]>([]);
   const value = {
     modalType,
     setModalType,
@@ -110,9 +121,15 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setCurves,
     ellipses,
     setEllipses,
+    polygons,
+    setPolygons,
+    polygonCornerNumber,
+    setPolygonCornerNumber,
     canvasRef,
     importTimestamp,
     setImportTimestamp,
+    log,
+    setLog,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

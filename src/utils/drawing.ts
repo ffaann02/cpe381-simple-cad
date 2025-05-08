@@ -155,6 +155,44 @@ export const drawEllipseMidpoint = (
   }
 };
 
+export const drawPolygon = (
+  points: Point[],
+  ctx: CanvasRenderingContext2D,
+  strokeColor = "black",
+  fillColor = "transparent",
+  width = 1
+) => {
+  if (points.length < 2) return;
+
+  ctx.fillStyle = fillColor;
+
+  // Fill the polygon if a fill color is provided
+  if (fillColor !== "transparent") {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(points[0].x), Math.round(points[0].y));
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(Math.round(points[i].x), Math.round(points[i].y));
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw the polygon edges using Bresenham's line algorithm
+  for (let i = 0; i < points.length; i++) {
+    const start = points[i];
+    const end = points[(i + 1) % points.length]; // Connect the last point to the first
+    drawBresenhamLine(
+      Math.round(start.x),
+      Math.round(start.y),
+      Math.round(end.x),
+      Math.round(end.y),
+      ctx,
+      strokeColor,
+      width
+    );
+  }
+};
+
 export const getShapeStyle = (layer: Layer | undefined): { stroke: string; lineWidth: number } => {
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";

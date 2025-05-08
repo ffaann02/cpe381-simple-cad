@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTab } from "@/context/AppContext";
 import {
   drawMarker,
@@ -10,8 +10,9 @@ import {
   getCircleStyle,
   getEllipseStyle,
   drawBoundingBox,
+  drawPolygon, // Import drawPolygon
 } from "@/utils/drawing";
-import { Point, ShapeMode } from "@/interface/shape";
+import { Point, ShapeMode, Polygon } from "@/interface/shape"; // Import Polygon type
 import { Tools } from "@/interface/tool";
 
 const previewLineColor = "#D4C9BE";
@@ -29,16 +30,20 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 }) => {
   const {
     points,
+    setPoints, // Assuming you have a setPoints function
     lines,
     circles,
     curves,
     ellipses,
+    polygons,
+    setPolygons,
     layers,
     shape,
     tool,
     selectedLayerId,
     snapEnabled,
     showGrid,
+    polygonCornerNumber
   } = useTab();
 
   const getSnappedPos = (pos: Point): Point => {
@@ -55,6 +60,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
+  const [previewPolygonPoints, setPreviewPolygonPoints] = useState<Point[]>([]);
+  const [numPolygonCorners, setNumPolygonCorners] = useState<number>(5); // Default number of corners
 
   const clearCanvas = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -110,6 +117,26 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     });
   };
 
+  const drawPolygons = (context: CanvasRenderingContext2D) => {
+    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor, borderRadius }) => {
+      const layer = layers.find((l) => l.id === layerId);
+      if (layer?.is_visible && polygonPoints.length > 1) {
+        drawPolygon(polygonPoints, context, borderColor, backgroundColor, 1, borderRadius);
+      }
+    });
+  };
+
+  const generatePolygonPoints = (center: Point, radius: number, numCorners: number): Point[] => {
+    const points: Point[] = [];
+    for (let i = 0; i < numCorners; i++) {
+      const angle = (2 * Math.PI * i) / numCorners;
+      const x = center.x + radius * Math.cos(angle);
+      const y = center.y + radius * Math.sin(angle);
+      points.push({ x, y });
+    }
+    return points;
+  };
+
   const drawPreview = (context: CanvasRenderingContext2D) => {
     if (points.length > 0 && effectiveMousePos && context) {
       if (shape === ShapeMode.Line && points.length === 1) {
@@ -151,6 +178,22 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           context,
           previewLineColor
         );
+      } else if (shape === ShapeMode.Polygon && points.length === 1 && effectiveMousePos) {
+        const center = points[0];
+        const radius = Math.sqrt(
+          Math.pow(effectiveMousePos.x - center.x, 2) + Math.pow(effectiveMousePos.y - center.y, 2)
+        );
+        const numSides = polygonCornerNumber; // Use the number of corners from the state
+        const previewPoints = generatePolygonPoints(center, radius, numSides);
+        if (previewPoints.length > 0) {
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              drawPolygon(previewPoints, ctx, previewLineColor, "transparent"); // Use the same drawColor
+            }
+          }
+        }
       }
     }
   };
@@ -163,7 +206,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           lines.find((line) => line.layerId === selectedLayerId) ||
           circles.find((circle) => circle.layerId === selectedLayerId) ||
           ellipses.find((ellipse) => ellipse.layerId === selectedLayerId) ||
-          curves.find((curve) => curve.layerId === selectedLayerId);
+          curves.find((curve) => curve.layerId === selectedLayerId) ||
+          polygons.find((polygon) => polygon.layerId === selectedLayerId);
 
         if (selectedObject) {
           let minX: number | undefined;
@@ -171,28 +215,35 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           let maxX: number | undefined;
           let maxY: number | undefined;
 
-          if (selectedObject.start && selectedObject.end) {
+          if ("start" in selectedObject && "end" in selectedObject) {
             minX = Math.min(selectedObject.start.x, selectedObject.end.x);
             minY = Math.min(selectedObject.start.y, selectedObject.end.y);
             maxX = Math.max(selectedObject.start.x, selectedObject.end.x);
             maxY = Math.max(selectedObject.start.y, selectedObject.end.y);
-          } else if (selectedObject.center && selectedObject.radius) {
+          } else if ("center" in selectedObject && "radius" in selectedObject) {
             minX = selectedObject.center.x - selectedObject.radius;
             minY = selectedObject.center.y - selectedObject.radius;
             maxX = selectedObject.center.x + selectedObject.radius;
             maxY = selectedObject.center.y + selectedObject.radius;
-          } else if (selectedObject.center && selectedObject.rx && selectedObject.ry) {
+          } else if ("center" in selectedObject && "rx" in selectedObject && "ry" in selectedObject) {
             minX = selectedObject.center.x - selectedObject.rx;
             minY = selectedObject.center.y - selectedObject.ry;
             maxX = selectedObject.center.x + selectedObject.rx;
             maxY = selectedObject.center.y + selectedObject.ry;
-          } else if (selectedObject.p0 && selectedObject.p3) {
+          } else if ("p0" in selectedObject && "p3" in selectedObject) {
             const { minX: curveMinX, minY: curveMinY, maxX: curveMaxX, maxY: curveMaxY } =
               getBezierBoundingBox(selectedObject.p0, selectedObject.p1, selectedObject.p2, selectedObject.p3);
             minX = curveMinX;
             minY = curveMinY;
             maxX = curveMaxX;
             maxY = curveMaxY;
+          } else if ("points" in selectedObject && selectedObject.points.length > 0) {
+            selectedObject.points.forEach((p) => {
+              minX = minX === undefined ? p.x : Math.min(minX, p.x);
+              minY = minY === undefined ? p.y : Math.min(minY, p.y);
+              maxX = maxX === undefined ? p.x : Math.max(maxX, p.x);
+              maxY = maxY === undefined ? p.y : Math.max(maxY, p.y);
+            });
           }
 
           if (minX !== undefined && minY !== undefined && maxX !== undefined && maxY !== undefined) {
@@ -206,16 +257,61 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   useEffect(() => {
     if (!ctx) return;
     clearCanvas(ctx);
-    drawMarkers(ctx); // Ensure markers are drawn
+    drawMarkers(ctx);
     drawLines(ctx);
     drawCircles(ctx);
     drawCurves(ctx);
     drawEllipses(ctx);
+    drawPolygons(ctx);
     drawPreview(ctx);
     drawBoundingBoxForSelected(ctx);
-  }, [points, effectiveMousePos, lines, circles, curves, ellipses, layers, shape, tool, selectedLayerId, importTimestamp]);
+  }, [
+    points,
+    effectiveMousePos,
+    lines,
+    circles,
+    curves,
+    ellipses,
+    polygons,
+    layers,
+    shape,
+    tool,
+    selectedLayerId,
+    importTimestamp,
+    numPolygonCorners, // Re-render when the number of corners changes for preview
+  ]);
 
-  return null; // This component doesn't render anything directly
+  // Function to handle drawing the polygon after the second click
+  useEffect(() => {
+    if (ctx && shape === ShapeMode.Polygon && points.length === 2 && effectiveMousePos) {
+      const center = points[0];
+      const finalMousePos = points[1]; // The second clicked point determines the radius
+      const radius = Math.sqrt(
+        Math.pow(finalMousePos.x - center.x, 2) + Math.pow(finalMousePos.y - center.y, 2)
+      );
+      const currentLayerId = selectedLayerId || "default-layer-id";
+      const polygonPoints = generatePolygonPoints(center, radius, numPolygonCorners);
+      const newPolygon: Polygon = {
+        points: polygonPoints,
+        layerId: currentLayerId,
+        borderColor: "purple",
+        backgroundColor: "rgba(128, 0, 128, 0.3)",
+      };
+      setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
+      setPoints([]); // Reset points after drawing the polygon
+    }
+  }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, numPolygonCorners]);
+
+  // You might need a UI element to control the number of polygon corners
+  // For example, an input field that updates the `numPolygonCorners` state.
+  // <input
+  //   type="number"
+  //   value={numPolygonCorners}
+  //   onChange={(e) => setNumPolygonCorners(parseInt(e.target.value) || 3)}
+  //   min="3"
+  // />
+
+  return null;
 };
 
 function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { minX: number; minY: number; maxX: number; maxY: number } {

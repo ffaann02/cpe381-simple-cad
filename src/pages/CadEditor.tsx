@@ -5,14 +5,12 @@ import ShapeTab from "@/components/pages/editor/tabs/ShapeTab";
 import ToolsTab from "@/components/layout/ToolsTab";
 import { useTab } from "@/context/AppContext";
 import RightTab from "@/components/layout/RightTab";
-import { LuMousePointer2 } from "react-icons/lu";
-import { PiSelectionBold } from "react-icons/pi";
 import Canvas from "@/components/pages/editor/shape-canvas/Canvas";
 import PropertiesTab from "@/components/layout/PropertiesTab";
 import { MdGridOff, MdGridOn } from "react-icons/md";
 import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
-import { Button, Drawer } from "antd";
+import { Drawer } from "antd";
 import { useState } from "react";
 const gridOpacity = 0.4;
 

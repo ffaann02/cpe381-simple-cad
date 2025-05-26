@@ -302,15 +302,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     }
   }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, numPolygonCorners]);
 
-  // You might need a UI element to control the number of polygon corners
-  // For example, an input field that updates the `numPolygonCorners` state.
-  // <input
-  //   type="number"
-  //   value={numPolygonCorners}
-  //   onChange={(e) => setNumPolygonCorners(parseInt(e.target.value) || 3)}
-  //   min="3"
-  // />
-
   return null;
 };
 

@@ -11,7 +11,7 @@ import { MdGridOff, MdGridOn } from "react-icons/md";
 import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
 import { Drawer } from "antd";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
@@ -52,6 +52,35 @@ const CadEditor = () => {
         return null;
     }
   };
+
+  // useEffect(() => {
+  //   const saved = localStorage.getItem("cad_drawing_state");
+  //   if (saved) {
+  //     if (
+  //       window.confirm(
+  //         "Do you want to continue from your last saved drawing?"
+  //       )
+  //     ) {
+  //       try {
+  //         const state = JSON.parse(saved);
+  //         if (state.canvasSize) setTab("home");
+  //         if (state.points) setPoints(state.points);
+  //         if (state.lines) setLines(state.lines);
+  //         if (state.curves) setCurves(state.curves);
+  //         if (state.ellipses) setEllipses(state.ellipses);
+  //         if (state.circles) setCircles(state.circles);
+  //         // Add more setters if you have them (e.g., polygons, layers)
+  //         // if (state.polygons) setPolygons(state.polygons);
+  //         // if (state.layers) setLayers(state.layers);
+  //         // Optionally set canvas size if you have a setter
+  //         // if (state.canvasSize) setCanvasSize(state.canvasSize);
+  //       } catch (e) {
+  //         // ignore parse errors
+  //       }
+  //     }
+  //   }
+  //   // eslint-disable-next-line
+  // }, []);
 
   const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
   const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);

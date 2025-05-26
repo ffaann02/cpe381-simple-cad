@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
-import { File, FilePlus, Image, FileText, Settings } from "lucide-react";
-import { RxCross2 } from "react-icons/rx";
+import { File, FilePlus, Image, FileText, Upload as UploadIcon } from "lucide-react"; // Renamed Upload to UploadIcon to avoid conflict with Ant Design Upload
 import { useTab } from "@/context/AppContext";
-import { Circle, Curve, Ellipse, Line, Point } from "@/interface/shape";
+import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
-import { clear } from "console";
+import { Input, InputNumber, Modal, Button, message, Tabs, Upload } from "antd"; // Import Upload
+import { setgroups } from "process";
 
 // CAD Export Format Definition
 // Example:
@@ -85,12 +85,12 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setOpenHomeModal,
     canvasRef,
     canvasSize,
-    importTimestamp,
     setImportTimestamp,
     layers,
     setLayers,
     setShowGrid,
-    setCanvasSize
+    setCanvasSize,
+    setProjects
   } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
@@ -98,7 +98,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     height: 600,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // fileInputRef is no longer needed
 
   const onNewDesignSubmit = () => {
     let hasErrors = false;
@@ -118,12 +118,19 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     }
 
     setErrors(newErrors);
-
     if (!hasErrors) {
-      // Handle new project creation (e.g., create a new canvas, reset state)
       console.log("New Project Data:", formData);
-      setOpenHomeModal(false); // Close the modal
-      setFormData({ projectName: "", width: 800, height: 600 }); // Reset form
+      setProjects((prev) => [
+        ...prev,
+        {
+          id: `project-${Date.now()}`, // Unique ID based on timestamp
+          name: formData.projectName,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+      setOpenHomeModal(false);
+      setFormData({ projectName: "", width: 800, height: 600 });
       setErrors({});
       setLines([]);
       setCircles([]);
@@ -134,11 +141,17 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         height: formData.height,
         backgroundColor: "#ffffff",
       });
+      message.success("New design created!");
+      setShowGrid(true);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleNumberInputChange = (value: number | null, name: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearCurrentCanvas = () => {
@@ -153,117 +166,132 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
       }
     }
-  }
+  };
 
-  const handleImport = () => {
-    if (fileInputRef.current?.files?.[0]) {
-      clearCurrentCanvas(); // Clear the current canvas before importing
-      
-      const file = fileInputRef.current.files[0];
-      const reader = new FileReader();
-  
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
-        const linesFromFile: Line[] = [];
-        const circlesFromFile: Circle[] = [];
-        const ellipsesFromFile: Ellipse[] = [];
-        const curvesFromFile: Curve[] = [];
-        const newLayers: Layer[] = [];
-  
-        let layerIdCounter = 1;
-  
-        text?.split("\n").forEach((line) => {
-          const parts = line.trim().split(",").map(p => p.trim());
-          const command = parts[0]?.toUpperCase();
-  
-          const addLayer = (layerId: string, name: string) => {
+  const handleImportFile = (file: File) => { // Renamed from handleImport to avoid confusion with the previous one
+    clearCurrentCanvas();
+
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const linesFromFile: Line[] = [];
+      const circlesFromFile: Circle[] = [];
+      const ellipsesFromFile: Ellipse[] = [];
+      const curvesFromFile: Curve[] = [];
+      const newLayers: Layer[] = [];
+
+      let layerIdCounter = 1;
+
+      text?.split("\n").forEach((line) => {
+        const parts = line
+          .trim()
+          .split(",")
+          .map((p) => p.trim());
+        const command = parts[0]?.toUpperCase();
+
+        const addLayer = (layerId: string, name: string) => {
+          // Only add layer if it doesn't already exist to prevent duplicates on import
+          if (
+            !newLayers.some((layer) => layer.id === layerId) &&
+            !layers.some((layer) => layer.id === layerId)
+          ) {
             newLayers.push({
               id: layerId,
               name,
               is_selected: true,
               is_visible: true,
             });
-          };
-  
-          switch (command) {
-            case "LINE":
-              if (parts.length === 6) {
-                const newLine = {
-                  start: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
-                  end: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
-                  color: parts[5],
-                  layerId: layerIdCounter.toString(),
-                };
-                linesFromFile.push(newLine);
-                addLayer(newLine.layerId, `Layer ${newLine.layerId}`);
-                layerIdCounter++;
-              }
-              break;
-            case "CIRCLE":
-              if (parts.length >= 5) {
-                const newCircle: Circle = {
-                  center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
-                  radius: parseFloat(parts[3]),
-                  borderColor: parts[4],
-                  layerId: layerIdCounter.toString(),
-                  backgroundColor: parts.length >= 6 ? parts[5] : undefined,
-                };
-                circlesFromFile.push(newCircle);
-                addLayer(newCircle.layerId, `Layer ${newCircle.layerId}`);
-                layerIdCounter++;
-              }
-              break;
-            case "ELLIPSE":
-              if (parts.length >= 6) {
-                const newEllipse: Ellipse = {
-                  center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
-                  rx: parseFloat(parts[3]),
-                  ry: parseFloat(parts[4]),
-                  borderColor: parts[5],
-                  layerId: layerIdCounter.toString(),
-                  backgroundColor: parts.length >= 7 ? parts[6] : undefined,
-                };
-                ellipsesFromFile.push(newEllipse);
-                addLayer(newEllipse.layerId, `Layer ${newEllipse.layerId}`);
-                layerIdCounter++;
-              }
-              break;
-            case "CURVE":
-              if (parts.length === 10) {
-                const newCurve = {
-                  p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]), color: parts[9] },
-                  p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]), color: parts[9] },
-                  p2: { x: parseFloat(parts[5]), y: parseFloat(parts[6]), color: parts[9] },
-                  p3: { x: parseFloat(parts[7]), y: parseFloat(parts[8]), color: parts[9] },
-                  color: parts[9],
-                  layerId: layerIdCounter.toString(),
-                };
-                curvesFromFile.push(newCurve);
-                addLayer(newCurve.layerId, `Layer ${newCurve.layerId}`);
-                layerIdCounter++;
-              }
-              break;
-            default:
-              console.warn(`Unknown CAD command: ${command}`);
           }
-        });
-  
-        setLines(linesFromFile);
-        setCircles(circlesFromFile);
-        setEllipses(ellipsesFromFile);
-        setCurves(curvesFromFile);
-        setLayers([...layers, ...newLayers]);
-        setOpenHomeModal(false);
-        if (setImportTimestamp) {
-          setImportTimestamp(Date.now());
+        };
+
+        switch (command) {
+          case "CANVAS":
+            if (parts.length === 3) {
+              setCanvasSize({
+                width: parseFloat(parts[1]),
+                height: parseFloat(parts[2]),
+                backgroundColor: "#ffffff", // Default background for imported canvas
+              });
+            }
+            break;
+          case "LINE":
+            if (parts.length === 6) {
+              const newLine = {
+                start: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                end: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
+                color: parts[5],
+                layerId: `layer-${layerIdCounter}`,
+              };
+              linesFromFile.push(newLine);
+              addLayer(newLine.layerId, `Layer ${layerIdCounter}`);
+              layerIdCounter++;
+            }
+            break;
+          case "CIRCLE":
+            if (parts.length >= 5) {
+              const newCircle: Circle = {
+                center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                radius: parseFloat(parts[3]),
+                borderColor: parts[4],
+                layerId: `layer-${layerIdCounter}`,
+                backgroundColor: parts.length >= 6 ? parts[5] : undefined,
+              };
+              circlesFromFile.push(newCircle);
+              addLayer(newCircle.layerId, `Layer ${layerIdCounter}`);
+              layerIdCounter++;
+            }
+            break;
+          case "ELLIPSE":
+            if (parts.length >= 6) {
+              const newEllipse: Ellipse = {
+                center: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                rx: parseFloat(parts[3]),
+                ry: parseFloat(parts[4]),
+                borderColor: parts[5],
+                layerId: `layer-${layerIdCounter}`,
+                backgroundColor: parts.length >= 7 ? parts[6] : undefined,
+              };
+              ellipsesFromFile.push(newEllipse);
+              addLayer(newEllipse.layerId, `Layer ${layerIdCounter}`);
+              layerIdCounter++;
+            }
+            break;
+          case "CURVE":
+            if (parts.length === 10) {
+              const newCurve = {
+                p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
+                p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
+                p2: { x: parseFloat(parts[5]), y: parseFloat(parts[6]) },
+                p3: { x: parseFloat(parts[7]), y: parseFloat(parts[8]) },
+                color: parts[9],
+                layerId: `layer-${layerIdCounter}`,
+              };
+              curvesFromFile.push(newCurve);
+              addLayer(newCurve.layerId, `Layer ${layerIdCounter}`);
+              layerIdCounter++;
+            }
+            break;
+          default:
+            console.warn(`Unknown CAD command: ${command}`);
         }
-      };
-  
-      reader.readAsText(file);
-      setShowGrid(true); // Hide grid after import
-    }
+      });
+
+      setLines(linesFromFile);
+      setCircles(circlesFromFile);
+      setEllipses(ellipsesFromFile);
+      setCurves(curvesFromFile);
+      setLayers((prevLayers) => [...prevLayers, ...newLayers]);
+      setOpenHomeModal(false);
+      if (setImportTimestamp) {
+        setImportTimestamp(Date.now());
+      }
+      message.success("Design imported successfully!");
+    };
+
+    reader.readAsText(file);
+    setShowGrid(true);
   };
-  
 
   const handleExport = (format: "jpg" | "png" | "cad") => {
     if (format === "cad") {
@@ -279,253 +307,221 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "drawing.txt";
+      a.download = "drawing.cad"; // Changed to .cad extension
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      message.success("CAD file exported successfully!");
     } else {
-      console.log(`Exporting as ${format.toUpperCase()}...`);
-      alert(
-        `Exporting as ${format.toUpperCase()} is not fully implemented here. See console for CAD output.`
+      message.info(
+        `Exporting as ${format.toUpperCase()} is not yet fully implemented. CAD data logged to console.`
       );
       console.log(generateCadText(lines, circles, ellipses, curves));
     }
     setOpenHomeModal(false);
   };
 
-  return (
-    <>
-      <div className="relative">
-        {openHomeModal && (
-          <div className="fixed z-100 inset-0 overflow-y-auto">
-            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              {/* Modal backdrop */}
-              <div
-                className="fixed inset-0 transition-opacity"
-                aria-hidden="true"
+  const draggerProps = {
+    name: 'file',
+    multiple: false,
+    accept: '.cad,.txt',
+    beforeUpload: (file: File) => {
+      // Prevent Ant Design from automatically uploading the file
+      // We will handle the file reading manually
+      handleImportFile(file);
+      return false;
+    },
+    // customRequest: () => { /* No operation as beforeUpload handles the file */ },
+    onDrop(e: React.DragEvent<HTMLDivElement>) {
+      console.log('Dropped files', e.dataTransfer.files);
+    },
+  };
+
+  const getModalContent = () => {
+    switch (modalType) {
+      case "new":
+        return (
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <label
+                htmlFor="projectName"
+                className="block text-sm font-medium text-gray-700"
               >
-                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                Design Name
+              </label>
+              <Input
+                id="projectName"
+                name="projectName"
+                size="large"
+                value={formData.projectName}
+                onChange={handleInputChange}
+                placeholder="Enter design name"
+              />
+              {errors.projectName && (
+                <p className="text-red-500 text-sm">{errors.projectName}</p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label
+                  htmlFor="width"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Width
+                </label>
+                <InputNumber
+                  style={{ width: "100%" }}
+                  id="width"
+                  name="width"
+                  size="large"
+                  min={1}
+                  max={100000}
+                  value={formData.width}
+                  onChange={(value) => handleNumberInputChange(value, "width")}
+                />
+                {errors.width && (
+                  <p className="text-red-500 text-sm">{errors.width}</p>
+                )}
               </div>
-
-              {/* This element is to trick the browser into centering the modal content. */}
-              <span
-                className="hidden sm:inline-block sm:align-middle sm:h-screen"
-                aria-hidden="true"
-              >
-                &#8203;
-              </span>
-
-              {/* Modal panel */}
-              <div className="fixed left-1/2 top-1/2 z-[9999] transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg text-left overflow-hidden shadow-xl transition-all sm:max-w-lg sm:w-full">
-                <div className="bg-white px-4 py-5">
-                  <div className="sm:flex sm:items-start">
-                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                      <h3
-                        className="text-lg leading-6 font-medium text-gray-900"
-                        id="modal-title"
-                      >
-                        Settings
-                      </h3>
-                      <button
-                        className="absolute cursor-pointer top-3 right-3"
-                        onClick={() => setOpenHomeModal(false)}
-                      >
-                        <RxCross2 className="text-xl" />
-                      </button>
-                      <div className="mt-2 mb-4">
-                        <p className="text-sm text-gray-500">
-                          Manage project settings, import, and export.
-                        </p>
-                      </div>
-                      <div className="w-full">
-                        <div className="border-b border-gray-200">
-                          <div className="flex space-x-4">
-                            <button
-                              className={`px-4 py-2 text-sm font-medium ${
-                                modalType === "new"
-                                  ? "border-b-2 border-blue-500 text-blue-600"
-                                  : "text-gray-500 hover:text-gray-700"
-                              }`}
-                              onClick={() => setModalType("new")}
-                            >
-                              <FilePlus className="mr-2 h-4 w-4 inline-block" />
-                              New Design
-                            </button>
-                            <button
-                              className={`px-4 py-2 text-sm font-medium ${
-                                modalType === "import"
-                                  ? "border-b-2 border-blue-500 text-blue-600"
-                                  : "text-gray-500 hover:text-gray-700"
-                              }`}
-                              onClick={() => setModalType("import")}
-                            >
-                              <File className="mr-2 h-4 w-4 inline-block" />
-                              Import
-                            </button>
-                            <button
-                              className={`px-4 py-2 text-sm font-medium ${
-                                modalType === "export"
-                                  ? "border-b-2 border-blue-500 text-blue-600"
-                                  : "text-gray-500 hover:text-gray-700"
-                              }`}
-                              onClick={() => setModalType("export")}
-                            >
-                              <Image className="mr-2 h-4 w-4 inline-block" />
-                              Export
-                            </button>
-                          </div>
-                        </div>
-                        {modalType === "new" && (
-                          <form className="mt-4 space-y-4">
-                            <div className="space-y-2">
-                              <label
-                                htmlFor="projectName"
-                                className="block text-sm font-medium text-gray-700"
-                              >
-                                Design Name
-                              </label>
-                              <input
-                                id="projectName"
-                                name="projectName"
-                                value={formData.projectName}
-                                onChange={handleInputChange}
-                                placeholder="Enter design name"
-                                className={`px-2 py-2 border shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
-                                  errors.projectName ? "border-red-500" : ""
-                                }`}
-                              />
-                              {errors.projectName && (
-                                <p className="text-red-500 text-sm">
-                                  {errors.projectName}
-                                </p>
-                              )}
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label
-                                  htmlFor="width"
-                                  className="block text-sm font-medium text-gray-700"
-                                >
-                                  Width
-                                </label>
-                                <input
-                                  id="width"
-                                  type="number"
-                                  name="width"
-                                  value={formData.width}
-                                  onChange={handleInputChange}
-                                  placeholder="Width"
-                                  className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
-                                    errors.width ? "border-red-500" : ""
-                                  }`}
-                                />
-                                {errors.width && (
-                                  <p className="text-red-500 text-sm">
-                                    {errors.width}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="space-y-2">
-                                <label
-                                  htmlFor="height"
-                                  className="block text-sm font-medium text-gray-700"
-                                >
-                                  Height
-                                </label>
-                                <input
-                                  id="height"
-                                  type="number"
-                                  name="height"
-                                  value={formData.height}
-                                  onChange={handleInputChange}
-                                  placeholder="Height"
-                                  className={`shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md ${
-                                    errors.height ? "border-red-500" : ""
-                                  }`}
-                                />
-                                {errors.height && (
-                                  <p className="text-red-500 text-sm">
-                                    {errors.height}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="mt-4 sm:mt-6 sm:flex sm:justify-end">
-                              <button
-                                type="button"
-                                className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                                onClick={onNewDesignSubmit}
-                              >
-                                Create Design
-                              </button>
-                            </div>
-                          </form>
-                        )}
-                        {modalType === "import" && (
-                          <div className="mt-4 space-y-4">
-                            <div className="space-y-2">
-                              <label
-                                htmlFor="importFile"
-                                className="block text-sm font-medium text-gray-700"
-                              >
-                                Import File
-                              </label>
-                              <input
-                                id="importFile"
-                                type="file"
-                                accept=".cad, .txt"
-                                ref={fileInputRef}
-                                onChange={handleImport}
-                                className="w-full"
-                              />
-                              <p className="text-sm text-gray-500">
-                                Import a .cad or .txt file containing drawing
-                                data.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {modalType === "export" && (
-                          <div className="mt-4 space-y-4">
-                            <p className="text-sm text-gray-700">
-                              Export your drawing in various formats.
-                            </p>
-                            <div className="flex gap-4">
-                              <button
-                                onClick={() => handleExport("jpg")}
-                                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                              >
-                                <Image className="mr-2 h-4 w-4" />
-                                JPG
-                              </button>
-                              <button
-                                onClick={() => handleExport("png")}
-                                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                              >
-                                <Image className="mr-2 h-4 w-4" />
-                                PNG
-                              </button>
-                              <button
-                                onClick={() => handleExport("cad")}
-                                className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                              >
-                                <FileText className="mr-2 h-4 w-4" />
-                                CAD
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <label
+                  htmlFor="height"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Height
+                </label>
+                <InputNumber
+                  style={{ width: "100%" }}
+                  id="height"
+                  name="height"
+                  size="large"
+                  min={1}
+                  max={100000}
+                  value={formData.height}
+                  onChange={(value) => handleNumberInputChange(value, "height")}
+                />
+                {errors.height && (
+                  <p className="text-red-500 text-sm">{errors.height}</p>
+                )}
               </div>
             </div>
+            <div className="sm:mt-6 sm:flex sm:justify-end">
+              <Button
+                type="primary"
+                size="large"
+                onClick={onNewDesignSubmit}
+                className="w-full sm:w-auto"
+              >
+                Create Design
+              </Button>
+            </div>
+          </form>
+        );
+      case "import":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Upload.Dragger {...draggerProps}>
+                <p className="ant-upload-drag-icon">
+                  <UploadIcon className="mx-auto text-neutral-400" />
+                </p>
+                <p className="ant-upload-text">Click or drag file to this area to upload</p>
+                <p className="ant-upload-hint">
+                  Support for a single .cad or .txt file.
+                </p>
+              </Upload.Dragger>
+            </div>
           </div>
-        )}
+        );
+      case "export":
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Export your drawing in various formats.
+            </p>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => handleExport("jpg")}
+                className="flex items-center"
+                size="large"
+              >
+                <Image className="mr-2 h-4 w-4" />
+                JPG
+              </Button>
+              <Button
+                onClick={() => handleExport("png")}
+                className="flex items-center"
+                size="large"
+              >
+                <Image className="mr-2 h-4 w-4" />
+                PNG
+              </Button>
+              <Button
+                onClick={() => handleExport("cad")}
+                className="flex items-center"
+                size="large"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                CAD
+              </Button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Modal
+      title="Project Settings"
+      open={openHomeModal}
+      onCancel={() => setOpenHomeModal(false)}
+      footer={null} // Hide default Ant Design modal footer
+      width={600}
+    >
+      <p className="text-sm text-gray-500 mb-4">
+        Manage project settings, import, and export.
+      </p>
+      <div>
+        <Tabs
+          activeKey={modalType}
+          onChange={(key) => setModalType(key as "new" | "import" | "export")}
+          items={[
+            {
+              key: "new",
+              label: (
+                <span>
+                  <FilePlus className="mr-2 h-4 w-4 inline-block" />
+                  New Design
+                </span>
+              ),
+            },
+            {
+              key: "import",
+              label: (
+                <span>
+                  <File className="mr-2 h-4 w-4 inline-block" />
+                  Import
+                </span>
+              ),
+            },
+            {
+              key: "export",
+              label: (
+                <span>
+                  <Image className="mr-2 h-4 w-4 inline-block" />
+                  Export
+                </span>
+              ),
+            },
+          ]}
+          tabBarGutter={24}
+        />
       </div>
-    </>
+      {getModalContent()}
+    </Modal>
   );
 };
 

@@ -1,5 +1,6 @@
 import { Canvas } from "@/interface/canvas";
 import { LogEntry } from "@/interface/log";
+import { Project } from "@/interface/project";
 import {
   Circle,
   Curve,
@@ -18,6 +19,8 @@ interface TabContextType {
   setModalType: (value: "new" | "import" | "export") => void;
   openHomeModal: boolean;
   setOpenHomeModal: (value: boolean) => void;
+  projects: Project[];
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   tab: string;
   setTab: (value: string) => void;
   tool: Tools;
@@ -67,6 +70,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
   const [tab, setTab] = useState<string>(Tabs.Shape);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   const [snapEnabled, setSnapEnabled] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
@@ -94,7 +98,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
   const addLogEntry = (entry: LogEntry) => {
     setLog((prevLog) => [...prevLog, entry]);
-  }
+  };
 
   const value = {
     modalType,
@@ -136,7 +140,9 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setImportTimestamp,
     log,
     setLog,
-    addLogEntry
+    addLogEntry,
+    projects,
+    setProjects,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

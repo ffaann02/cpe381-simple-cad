@@ -1,9 +1,9 @@
 import React from "react";
 import { Point } from "@/interface/shape";
-import DrawPolygonModal from "@/components/ui/modal/DrawPolygonModal";
-import RotateModal from "@/components/ui/modal/RotateModal";
-import EraseShapeModal from "@/components/ui/modal/EraseShapeModal";
-import FlipShapeModal from "@/components/ui/modal/FlipShapeModal";
+import DrawPolygonModal from "@/components/ui/modal/canvas/DrawPolygonModal";
+import RotateModal from "@/components/ui/modal/canvas/RotateModal";
+import EraseShapeModal from "@/components/ui/modal/canvas/EraseShapeModal";
+import FlipShapeModal from "@/components/ui/modal/canvas/FlipShapeModal";
 import { useCanvasEvents } from "@/hooks/useCanvas";
 import { useTab } from "@/context/AppContext";
 

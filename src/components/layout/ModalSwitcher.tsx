@@ -4,7 +4,6 @@ import { useTab } from "@/context/AppContext";
 import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
 import { Input, InputNumber, Modal, Button, message, Tabs, Upload } from "antd"; // Import Upload
-import { setgroups } from "process";
 
 // CAD Export Format Definition
 // Example:

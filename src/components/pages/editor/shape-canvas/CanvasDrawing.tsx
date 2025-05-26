@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react"; // Added useCallback
 import { useTab } from "@/context/AppContext";
 import {
   drawMarker,
@@ -10,12 +10,14 @@ import {
   getCircleStyle,
   getEllipseStyle,
   drawBoundingBox,
-  drawPolygon, // Import drawPolygon
+  drawPolygon,
 } from "@/utils/drawing";
-import { Point, ShapeMode, Polygon } from "@/interface/shape"; // Import Polygon type
+import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape"; // Import individual shape types for clearer type inference
 import { Tools } from "@/interface/tool";
+import { Layer } from "@/interface/tab"; // Import Layer for clarity
 
 const previewLineColor = "#D4C9BE";
+const LOCAL_STORAGE_KEY = "cad_drawing_state";
 
 interface CanvasDrawingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -30,20 +32,27 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 }) => {
   const {
     points,
-    setPoints, // Assuming you have a setPoints function
+    setPoints,
     lines,
+    setLines, // Make sure setLines is available
     circles,
+    setCircles, // Make sure setCircles is available
     curves,
+    setCurves, // Make sure setCurves is available
     ellipses,
+    setEllipses, // Make sure setEllipses is available
     polygons,
     setPolygons,
     layers,
+    setLayers, // Make sure setLayers is available
     shape,
     tool,
     selectedLayerId,
     snapEnabled,
     showGrid,
-    polygonCornerNumber
+    polygonCornerNumber,
+    canvasSize, // Make sure canvasSize is available
+    setCanvasSize, // Make sure setCanvasSize is available
   } = useTab();
 
   const getSnappedPos = (pos: Point): Point => {
@@ -60,8 +69,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
-  const [previewPolygonPoints, setPreviewPolygonPoints] = useState<Point[]>([]);
-  const [numPolygonCorners, setNumPolygonCorners] = useState<number>(5); // Default number of corners
+  const [previewPolygonPoints, setPreviewPolygonPoints] = useState<Point[]>([]); // This state is not directly used for drawing preview, consider removing or using it.
 
   const clearCanvas = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
@@ -118,7 +126,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   const drawPolygons = (context: CanvasRenderingContext2D) => {
-    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor, borderRadius }) => {
+    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => { // Removed borderRadius as it's not used in drawPolygon
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible && polygonPoints.length > 1) {
         drawPolygon(polygonPoints, context, borderColor, backgroundColor, 1);
@@ -202,6 +210,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     if (tool === Tools.Move && selectedLayerId && context) {
       const layer = layers.find((l) => l.id === selectedLayerId);
       if (layer?.is_visible) {
+        // Find the selected object across all shape arrays
         const selectedObject =
           lines.find((line) => line.layerId === selectedLayerId) ||
           circles.find((circle) => circle.layerId === selectedLayerId) ||
@@ -215,30 +224,36 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           let maxX: number | undefined;
           let maxY: number | undefined;
 
-          if ("start" in selectedObject && "end" in selectedObject) {
-            minX = Math.min(selectedObject.start.x, selectedObject.end.x);
-            minY = Math.min(selectedObject.start.y, selectedObject.end.y);
-            maxX = Math.max(selectedObject.start.x, selectedObject.end.x);
-            maxY = Math.max(selectedObject.start.y, selectedObject.end.y);
-          } else if ("center" in selectedObject && "radius" in selectedObject) {
-            minX = selectedObject.center.x - selectedObject.radius;
-            minY = selectedObject.center.y - selectedObject.radius;
-            maxX = selectedObject.center.x + selectedObject.radius;
-            maxY = selectedObject.center.y + selectedObject.radius;
-          } else if ("center" in selectedObject && "rx" in selectedObject && "ry" in selectedObject) {
-            minX = selectedObject.center.x - selectedObject.rx;
-            minY = selectedObject.center.y - selectedObject.ry;
-            maxX = selectedObject.center.x + selectedObject.rx;
-            maxY = selectedObject.center.y + selectedObject.ry;
-          } else if ("p0" in selectedObject && "p3" in selectedObject) {
+          // Type guards to determine the shape type
+          if ((selectedObject as Line).start && (selectedObject as Line).end) {
+            const line = selectedObject as Line;
+            minX = Math.min(line.start.x, line.end.x);
+            minY = Math.min(line.start.y, line.end.y);
+            maxX = Math.max(line.start.x, line.end.x);
+            maxY = Math.max(line.start.y, line.end.y);
+          } else if ((selectedObject as Circle).center && (selectedObject as Circle).radius) {
+            const circle = selectedObject as Circle;
+            minX = circle.center.x - circle.radius;
+            minY = circle.center.y - circle.radius;
+            maxX = circle.center.x + circle.radius;
+            maxY = circle.center.y + circle.radius;
+          } else if ((selectedObject as Ellipse).center && (selectedObject as Ellipse).rx && (selectedObject as Ellipse).ry) {
+            const ellipse = selectedObject as Ellipse;
+            minX = ellipse.center.x - ellipse.rx;
+            minY = ellipse.center.y - ellipse.ry;
+            maxX = ellipse.center.x + ellipse.rx;
+            maxY = ellipse.center.y + ellipse.ry;
+          } else if ((selectedObject as Curve).p0 && (selectedObject as Curve).p3) {
+            const curve = selectedObject as Curve;
             const { minX: curveMinX, minY: curveMinY, maxX: curveMaxX, maxY: curveMaxY } =
-              getBezierBoundingBox(selectedObject.p0, selectedObject.p1, selectedObject.p2, selectedObject.p3);
+              getBezierBoundingBox(curve.p0, curve.p1, curve.p2, curve.p3);
             minX = curveMinX;
             minY = curveMinY;
             maxX = curveMaxX;
             maxY = curveMaxY;
-          } else if ("points" in selectedObject && selectedObject.points.length > 0) {
-            selectedObject.points.forEach((p) => {
+          } else if ((selectedObject as Polygon).points && (selectedObject as Polygon).points.length > 0) {
+            const polygon = selectedObject as Polygon;
+            polygon.points.forEach((p) => {
               minX = minX === undefined ? p.x : Math.min(minX, p.x);
               minY = minY === undefined ? p.y : Math.min(minY, p.y);
               maxX = maxX === undefined ? p.x : Math.max(maxX, p.x);
@@ -253,6 +268,66 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       }
     }
   };
+
+  // Function to save the canvas state to localStorage
+  const saveCanvasState = useCallback(() => {
+    try {
+      const stateToSave = {
+        lines,
+        circles,
+        curves,
+        ellipses,
+        polygons,
+        layers,
+        canvasSize,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+      // console.log("Canvas state saved to localStorage."); // Optional: for debugging
+    } catch (error) {
+      console.error("Failed to save canvas state to localStorage:", error);
+    }
+  }, [lines, circles, curves, ellipses, polygons, layers, canvasSize]);
+
+  // Effect to load canvas state from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const parsedState = savedState ? JSON.parse(savedState) : null;
+      console.log("Loaded canvas state:", parsedState); // Optional: for debugging
+      console.log(parsedState.lines)
+      if (savedState) {
+        setLines(parsedState.lines || []);
+        setCircles(parsedState.circles || []);
+        setCurves(parsedState.curves || []);
+        setEllipses(parsedState.ellipses || []);
+        setPolygons(parsedState.polygons || []);
+        setLayers(parsedState.layers || []);
+        setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
+        console.log("Canvas state loaded from localStorage.");
+      }
+    } catch (error) {
+      console.error("Failed to load canvas state from localStorage:", error);
+      // Clear localStorage if data is corrupted
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+  }, []); // Empty dependency array means this runs only once on mount
+
+  // Effect to save canvas state whenever drawing data changes
+  useEffect(() => {
+    // Debounce the save operation if performance is an issue,
+    // but for now, we'll save on every relevant change.
+    saveCanvasState();
+  }, [
+    lines,
+    circles,
+    curves,
+    ellipses,
+    polygons,
+    layers,
+    canvasSize,
+    saveCanvasState, // Include saveCanvasState to ensure it runs when needed if it changes (though it's memoized)
+  ]);
+
 
   useEffect(() => {
     if (!ctx) return;
@@ -278,7 +353,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     tool,
     selectedLayerId,
     importTimestamp,
-    numPolygonCorners, // Re-render when the number of corners changes for preview
+    polygonCornerNumber,
+    ctx // Add ctx to dependencies to ensure re-render if context somehow changes
   ]);
 
   // Function to handle drawing the polygon after the second click
@@ -289,18 +365,20 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       const radius = Math.sqrt(
         Math.pow(finalMousePos.x - center.x, 2) + Math.pow(finalMousePos.y - center.y, 2)
       );
-      const currentLayerId = selectedLayerId || "default-layer-id";
-      const polygonPoints = generatePolygonPoints(center, radius, numPolygonCorners);
+      // Ensure selectedLayerId is valid or provide a default
+      const currentLayerId = selectedLayerId && layers.some(l => l.id === selectedLayerId) ? selectedLayerId : layers[0]?.id || "default-layer-id";
+
+      const polygonPoints = generatePolygonPoints(center, radius, polygonCornerNumber);
       const newPolygon: Polygon = {
         points: polygonPoints,
         layerId: currentLayerId,
-        borderColor: "purple",
-        backgroundColor: "rgba(128, 0, 128, 0.3)",
+        borderColor: "purple", // Default border color for new polygons
+        backgroundColor: "rgba(128, 0, 128, 0.3)", // Default background color
       };
       setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
       setPoints([]); // Reset points after drawing the polygon
     }
-  }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, numPolygonCorners]);
+  }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, polygonCornerNumber, layers]); // Added layers to dependencies for currentLayerId logic
 
   return null;
 };

@@ -4,7 +4,7 @@ interface EreaseShapeModalProps {
   erasingShape: { position: { x: number; y: number } };
   setErasingShape: (shape: null) => void;
   deleteShape: (shape: any) => void;
-  popoverRef: React.RefObject<HTMLDivElement>;
+  popoverRef: React.RefObject<HTMLDivElement | null>;
   setErasingModalVisible: (visible: boolean) => void;
 }
 

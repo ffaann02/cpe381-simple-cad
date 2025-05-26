@@ -3,12 +3,14 @@ import { useTab } from "@/context/AppContext";
 import { Point, Polygon, ShapeMode } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
 import { v4 as uuidv4 } from "uuid";
-import { findShapeAtPoint } from "@/utils/selection"; // Adjust import path
-import { PiFlipHorizontalFill, PiFlipVerticalFill } from "react-icons/pi";
-import { Line } from "@/interface/shape";
-import { Circle } from "@/interface/shape";
-import { Ellipse } from "@/interface/shape";
-import { Curve } from "@/interface/shape";
+import { findShapeAtPoint } from "@/utils/selection";
+import { getShapeCenter } from "@/utils/position";
+import DrawPolygonModal from "@/components/ui/modal/DrawPolygonModal";
+import RotateModal from "@/components/ui/modal/RotateModal";
+import EraseShapeModal from "@/components/ui/modal/EraseShapeModal";
+import FlipShapeModal from "@/components/ui/modal/FlipShapeModal";
+import { flipPoint, rotatePoint } from "@/utils/transform";
+import { GlobalColor } from "@/interface/color";
 
 interface CanvasEventsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -31,7 +33,7 @@ interface CanvasEventsProps {
   >;
 }
 
-const drawColor = "#D4C9BE"; // Default color for drawing
+const drawColor = GlobalColor.DraftDrawColor;
 
 const CanvasEvents: React.FC<CanvasEventsProps> = ({
   canvasRef,
@@ -41,8 +43,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
   selectedShape,
   setSelectedShape,
 }) => {
-  const [popupVisible, setPopupVisible] = useState(false);
-  const [popupPosition, setPopupPosition] = useState<Point | null>(null);
+  const [flipModalVisible, setFlipModalVisible] = useState<boolean>(false);
+  const [modalPosition, setModalPosition] = useState<Point | null>(null);
   const [shapeToFlip, setShapeToFlip] = useState<{
     layerId: string | null;
     index: number | null;
@@ -67,12 +69,10 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     layers,
     setLayers,
     setSelectedLayerId,
-    setImportTimestamp,
     polygons,
     setPolygons,
     polygonCornerNumber,
     setPolygonCornerNumber,
-    log,
     setLog,
   } = useTab();
   const [isErasing, setIsErasing] = useState(false); // State to track if erasing is in progress
@@ -82,7 +82,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     type: string;
     position: Point;
   } | null>(null); // Add position
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [erasingModalVisible, setErasingModalVisible] =
+    useState<boolean>(false); // State to control the visibility of the erasing modal
   const [rotatePopoverOpen, setRotatePopoverOpen] = useState(false); // State for rotate popover
   const [rotationAngle, setRotationAngle] = useState<number | string>(""); // State to store rotation angle, can be a number or empty string
   const [rotatingShape, setRotatingShape] = useState<{
@@ -91,17 +92,16 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     type: string;
     center: Point;
   } | null>(null); // Shape being rotated
-  const popoverRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null!);
   const rotatePopoverRef = useRef<HTMLDivElement>(null); // Ref for rotate popover
 
-  // Function to handle clicks outside the popover
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target as Node)
       ) {
-        setPopoverOpen(false);
+        setErasingModalVisible(false);
         setErasingShape(null);
       }
       if (
@@ -114,35 +114,36 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
       }
     };
 
-    if (popoverOpen || rotatePopoverOpen) {
+    if (erasingModalVisible || rotatePopoverOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [popoverOpen, rotatePopoverOpen]);
+  }, [erasingModalVisible, rotatePopoverOpen]);
 
-  const getShapeCenter = (
-    shape: Line | Circle | Ellipse | Curve | undefined,
-    type: string
-  ): Point => {
-    if (!shape) return { x: 0, y: 0 };
-    switch (type) {
-      case "line":
-        return {
-          x: (shape.start.x + shape.end.x) / 2,
-          y: (shape.start.y + shape.end.y) / 2,
-        };
-      case "circle":
-        return shape.center;
-      case "ellipse":
-        return shape.center;
-      case "curve":
-        return shape.p0; // Using p0 as an approximation of the center.  For more precise, calculate the bounding box.
-      default:
-        return { x: 0, y: 0 };
-    }
+  const highlightShape = (clickedShape: {
+    layerId: string | null;
+    index: number | null;
+    type: "line" | "circle" | "ellipse" | "curve" | null;
+  }) => {
+    const updatedLayers = layers.map((layer) => ({
+      ...layer,
+      is_selected: layer.id === clickedShape.layerId,
+    }));
+    setLayers(updatedLayers);
+    setSelectedLayerId(clickedShape.layerId);
+    return;
+  };
+
+  const cancelHighlightShape = () => {
+    const updatedLayers = layers.map((layer) => ({
+      ...layer,
+      is_selected: false,
+    }));
+    setLayers(updatedLayers);
+    setSelectedLayerId(null);
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -152,118 +153,68 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     const x = Math.floor(e.clientX - rect.left);
     const y = Math.floor(e.clientY - rect.top);
 
-    // If tool is "select", try to select a shape
+    const clickedShape = findShapeAtPoint(
+      x,
+      y,
+      lines,
+      circles,
+      ellipses,
+      curves,
+      layers
+    );
     if (tool === Tools.Select) {
-      const selectedShapeInfo = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
-      if (selectedShapeInfo.layerId) {
-        // Update the layers to mark the selected one
-        const updatedLayers = layers.map((layer) => ({
-          ...layer,
-          is_selected: layer.id === selectedShapeInfo.layerId,
-        }));
-        setLayers(updatedLayers);
-        setSelectedLayerId(selectedShapeInfo.layerId);
+      if (clickedShape.layerId) {
+        highlightShape(clickedShape);
+        return;
+      } else {
+        cancelHighlightShape();
         return;
       }
-      // If no shape was selected, deselect all
-      const updatedLayers = layers.map((layer) => ({
-        ...layer,
-        is_selected: false,
-      }));
-      setLayers(updatedLayers);
-      setSelectedLayerId(null);
-      return;
     }
 
-    // If tool is "move"
     if (tool === Tools.Move) {
-      const clickedShape = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
       if (clickedShape.layerId) {
         if (clickedShape.layerId && isMoving) {
-          setSelectedShape(null);
-          const updatedLayers = layers.map((layer) => ({
-            ...layer,
-            is_selected: false,
-          }));
-          setLayers(updatedLayers);
+          cancelHighlightShape();
           setSelectedLayerId(null);
           setIsMoving(false); // Stop moving state
           return;
+        } else {
+          setIsMoving(true);
+          let shapePosition: Point = { x: 0, y: 0 };
+          switch (clickedShape.type) {
+            case "line":
+              shapePosition = lines[clickedShape.index!].start;
+              break;
+            case "circle":
+              shapePosition = circles[clickedShape.index!].center;
+              break;
+            case "ellipse":
+              shapePosition = ellipses[clickedShape.index!].center;
+              break;
+            case "curve":
+              shapePosition = curves[clickedShape.index!].p0;
+              break;
+          }
+          highlightShape(clickedShape);
+          setSelectedShape({
+            ...clickedShape,
+            offset: {
+              x: x - shapePosition.x,
+              y: y - shapePosition.y,
+            },
+          });
         }
-        setIsMoving(true);
-        let shapePosition: Point = { x: 0, y: 0 };
-        switch (clickedShape.type) {
-          case "line":
-            shapePosition = lines[clickedShape.index!].start;
-            break;
-          case "circle":
-            shapePosition = circles[clickedShape.index!].center;
-            break;
-          case "ellipse":
-            shapePosition = ellipses[clickedShape.index!].center;
-            break;
-          case "curve":
-            shapePosition = curves[clickedShape.index!].p0;
-            break;
-        }
-
-        // Highlight the selected shape
-        const updatedLayers = layers.map((layer) => ({
-          ...layer,
-          is_selected: layer.id === clickedShape.layerId,
-        }));
-        setLayers(updatedLayers);
-        setSelectedLayerId(clickedShape.layerId);
-
-        setSelectedShape({
-          ...clickedShape,
-          offset: {
-            x: x - shapePosition.x,
-            y: y - shapePosition.y,
-          },
-        });
         return;
       } else {
-        // Clicked empty space, clear selection
-        setSelectedShape(null);
-        const updatedLayers = layers.map((layer) => ({
-          ...layer,
-          is_selected: false,
-        }));
-        setLayers(updatedLayers);
-        setSelectedLayerId(null);
+        cancelHighlightShape();
         return;
       }
     }
 
     if (tool === Tools.Rotate) {
-      const clickedShape = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
       if (clickedShape.layerId) {
-        let shapeCenter: Point = { x: 0, y: 0 }; // Rename to shapeCenter
+        let shapeCenter: Point = { x: 0, y: 0 };
         switch (clickedShape.type) {
           case "line":
             shapeCenter = {
@@ -285,17 +236,11 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
             shapeCenter = ellipses[clickedShape.index!].center;
             break;
           case "curve":
-            shapeCenter = curves[clickedShape.index!].p0; // Approximation
+            shapeCenter = curves[clickedShape.index!].p0;
             break;
         }
 
-        // Highlight the selected shape
-        const updatedLayers = layers.map((layer) => ({
-          ...layer,
-          is_selected: layer.id === clickedShape.layerId,
-        }));
-        setLayers(updatedLayers);
-        setSelectedLayerId(clickedShape.layerId);
+        highlightShape(clickedShape);
         setRotatingShape({
           layerId: clickedShape.layerId,
           index: clickedShape.index || 0,
@@ -326,20 +271,11 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     }
 
     if (tool === Tools.Flip) {
-      const clickedShape = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
-
       if (clickedShape.layerId) {
         // Show popup to select flip direction
-        setPopupVisible(true);
-        setPopupPosition({ x, y });
+        setFlipModalVisible(true);
+        setErasingModalVisible(false);
+        setModalPosition({ x, y });
         setShapeToFlip(clickedShape);
 
         // Highlight the selected shape
@@ -543,17 +479,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
       }
     }
 
-    // If tool is "move"
+    // If tool is eraser
     if (tool === Tools.Eraser) {
-      const clickedShape = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
       if (clickedShape.layerId) {
         // Highlight the selected shape
         const updatedLayers = layers.map((layer) => ({
@@ -624,7 +551,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
                 }
               : line
           );
-          console.log("Updated Move Lines:", updatedLines);
           setLines(updatedLines);
           setLog((prev) => [
             ...prev,
@@ -714,17 +640,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     if (tool === Tools.Eraser && isErasing) {
       handleEraser(x, y);
     }
-    if (tool === Tools.Eraser) {
-      const erasedShape = findShapeAtPoint(
-        x,
-        y,
-        lines,
-        circles,
-        ellipses,
-        curves,
-        layers
-      );
-    }
 
     if (
       (shape === ShapeMode.Line && points.length !== 1) ||
@@ -744,7 +659,7 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
 
       // Convert angle to degrees and snap to nearest 10 degrees
       const angleInDegrees = angle * (180 / Math.PI);
-      const snappedDegrees = Math.round(angleInDegrees / 10) * 10;
+      const snappedDegrees = Math.round(angleInDegrees / 5) * 5;
       const snapAngle = snappedDegrees * (Math.PI / 180);
 
       const snappedX = startPoint.x + Math.cos(snapAngle) * distance;
@@ -759,24 +674,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
         x: Math.floor(e.clientX - rect.left),
         y: Math.floor(e.clientY - rect.top),
       });
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (tool === Tools.Eraser) {
-      setIsErasing(true);
-      const canvas = canvasRef?.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.floor(e.clientX - rect.left);
-      const y = Math.floor(e.clientY - rect.top);
-      handleEraser(x, y);
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (tool === Tools.Eraser) {
-      setIsErasing(false);
     }
   };
 
@@ -822,8 +719,19 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
               break;
           }
           // Store the shape to be erased and ask for confirmation
-          setErasingShape({ ...erasedShape, position: shapePosition }); // Store the position
-          setPopoverOpen(true); // Open the popover
+          if (
+            erasedShape.layerId !== null &&
+            erasedShape.index !== null &&
+            erasedShape.type !== null
+          ) {
+            setErasingShape({
+              layerId: erasedShape.layerId,
+              index: erasedShape.index,
+              type: erasedShape.type,
+              position: shapePosition,
+            }); // Store the position
+            setErasingModalVisible(true); // Show the modal
+          }
         }
       }
     },
@@ -896,14 +804,32 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.addEventListener("mousedown", handleMouseDown);
-    canvas.addEventListener("mouseup", handleMouseUp);
+    // Native event handlers for addEventListener
+    const nativeHandleMouseDown = (e: MouseEvent) => {
+      // Convert native event to coordinates and call handleMouseDown logic
+      if (tool === Tools.Eraser) {
+        setIsErasing(true);
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor(e.clientX - rect.left);
+        const y = Math.floor(e.clientY - rect.top);
+        handleEraser(x, y);
+      }
+    };
+
+    const nativeHandleMouseUp = () => {
+      if (tool === Tools.Eraser) {
+        setIsErasing(false);
+      }
+    };
+
+    canvas.addEventListener("mousedown", nativeHandleMouseDown);
+    canvas.addEventListener("mouseup", nativeHandleMouseUp);
 
     return () => {
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      canvas.removeEventListener("mouseup", handleMouseUp);
+      canvas.removeEventListener("mousedown", nativeHandleMouseDown);
+      canvas.removeEventListener("mouseup", nativeHandleMouseUp);
     };
-  }, [tool, handleMouseDown, handleMouseUp]);
+  }, [tool, handleEraser]);
 
   const handleRotateShape = useCallback(() => {
     const angle = Number(rotationAngle);
@@ -913,23 +839,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     }
 
     const { layerId, index, type, center } = rotatingShape;
-
-    const rotatePoint = (
-      point: Point,
-      center: Point,
-      angleRad: number
-    ): Point => {
-      const s = Math.sin(angleRad);
-      const c = Math.cos(angleRad);
-
-      const px = point.x - center.x;
-      const py = point.y - center.y;
-
-      const newX = px * c + py * s;
-      const newY = -px * s + py * c;
-
-      return { x: newX + center.x, y: newY + center.y };
-    };
 
     const angleRad = (angle * Math.PI) / 180;
 
@@ -1035,19 +944,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
     if (!shapeToFlip) return;
 
     const { layerId, index, type } = shapeToFlip;
-
-    const flipPoint = (
-      point: Point,
-      axis: "horizontal" | "vertical",
-      center: Point
-    ): Point => {
-      if (axis === "horizontal") {
-        return { x: 2 * center.x - point.x, y: point.y };
-      } else {
-        return { x: point.x, y: 2 * center.y - point.y };
-      }
-    };
-
     switch (type) {
       case "line":
         setLines((prevLines) =>
@@ -1079,7 +975,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
         ]);
         break;
       case "circle":
-        // Circles don't change on flipping
         break;
       case "ellipse":
         setEllipses((prevEllipses) =>
@@ -1148,7 +1043,7 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
         break;
     }
 
-    setPopupVisible(false);
+    setFlipModalVisible(false);
     setShapeToFlip(null);
   }
 
@@ -1159,142 +1054,38 @@ const CanvasEvents: React.FC<CanvasEventsProps> = ({
         onClick={handleClick}
         onMouseMove={handleMouseMove}
       >
-        {popupVisible && popupPosition && (
-          <div
-            className="absolute bg-white border rounded shadow-lg p-2 flex flex-col space-y-2"
-            style={{
-              left: popupPosition.x,
-              top: popupPosition.y,
-              zIndex: 50,
-            }}
-          >
-            <button
-              className="flex items-center space-x-2"
-              onClick={() => flipShape("vertical")}
-            >
-              <PiFlipVerticalFill className="text-xl text-neutral-600" />
-              <span>Flip Vertical</span>
-            </button>
-
-            <button
-              className="flex items-center space-x-2"
-              onClick={() => flipShape("horizontal")}
-            >
-              <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-              <span>Flip Horizontal</span>
-            </button>
-          </div>
+        {flipModalVisible && modalPosition && (
+          <FlipShapeModal modalPosition={modalPosition} flipShape={flipShape} />
+        )}
+        {erasingShape && erasingModalVisible && (
+          <EraseShapeModal
+            erasingShape={erasingShape}
+            setErasingShape={setErasingShape}
+            deleteShape={deleteShape}
+            popoverRef={popoverRef}
+            setErasingModalVisible={setErasingModalVisible}
+          />
+        )}
+        {rotatingShape && rotatePopoverOpen && (
+          <RotateModal
+            rotatePopoverRef={rotatePopoverRef}
+            rotatingShape={rotatingShape}
+            rotationAngle={rotationAngle}
+            setRotationAngle={setRotationAngle}
+            handleRotateShape={handleRotateShape}
+            setRotatePopoverOpen={setRotatePopoverOpen}
+            setRotatingShape={setRotatingShape}
+          />
+        )}
+        {willingToDrawPolygon && points.length > 0 && (
+          <DrawPolygonModal
+            points={points}
+            polygonCornerNumber={polygonCornerNumber}
+            setPolygonCornerNumber={setPolygonCornerNumber}
+            setWillingToDrawPolygon={setWillingToDrawPolygon}
+          />
         )}
       </div>
-      {erasingShape && popoverOpen && (
-        <div
-          ref={popoverRef}
-          className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]" // Tailwind classes
-          style={{
-            left: erasingShape.position.x,
-            top: erasingShape.position.y,
-            transform: "translate(-50%, -50%)", // Center the popover
-          }}
-        >
-          <div className="text-center">
-            <p className="text-sm text-gray-700 mb-2">
-              Are you sure you want to delete this shape?
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm"
-                onClick={() => {
-                  deleteShape(erasingShape);
-                  setPopoverOpen(false);
-                  setErasingShape(null);
-                }}
-              >
-                Yes
-              </button>
-              <button
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                onClick={() => {
-                  setPopoverOpen(false);
-                  setErasingShape(null);
-                }}
-              >
-                No
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {rotatingShape && rotatePopoverOpen && (
-        <div
-          ref={rotatePopoverRef}
-          className="w-auto bg-white border rounded-md shadow-lg p-4 absolute z-[50]"
-          style={{
-            left: rotatingShape.center.x, // Position near the shape's center
-            top: rotatingShape.center.y,
-            transform: "translate(-50%, -50%)",
-          }}
-        >
-          <div className="text-center">
-            <p className="text-sm text-gray-700 mb-2">
-              Enter rotation angle (degrees):
-            </p>
-            <input
-              type="number"
-              value={rotationAngle}
-              onChange={(e) => setRotationAngle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm mb-2"
-              placeholder="Angle"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-                onClick={handleRotateShape}
-              >
-                Confirm
-              </button>
-              <button
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm"
-                onClick={() => {
-                  setRotatePopoverOpen(false);
-                  setRotatingShape(null);
-                  setRotationAngle("");
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {willingToDrawPolygon && points.length > 0 && (
-        <div
-          className="absolute bg-white border rounded shadow-lg p-4 flex flex-col space-y-4"
-          style={{
-            left: points[0].x + 50,
-            top: points[0].y - 50,
-            zIndex: 50,
-          }}
-        >
-          <p className="text-sm text-gray-700">Select number of corners:</p>
-          <input
-            type="range"
-            min="3"
-            max="16"
-            value={polygonCornerNumber}
-            onChange={(e) => setPolygonCornerNumber(Number(e.target.value))}
-            className="w-full"
-          />
-          <div className="text-center text-sm text-gray-700">
-            {polygonCornerNumber} corners
-          </div>
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-            onClick={() => setWillingToDrawPolygon(false)}
-          >
-            Confirm
-          </button>
-        </div>
-      )}
     </>
   );
 };

@@ -54,6 +54,7 @@ interface TabContextType {
   setImportTimestamp?: React.Dispatch<React.SetStateAction<number | undefined>>;
   log: LogEntry[];
   setLog: React.Dispatch<React.SetStateAction<LogEntry[]>>;
+  addLogEntry: (entry: LogEntry) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -90,6 +91,11 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
   const [shape, setShape] = useState<ShapeMode>(ShapeMode.Line);
   const [log, setLog] = useState<LogEntry[]>([]);
+
+  const addLogEntry = (entry: LogEntry) => {
+    setLog((prevLog) => [...prevLog, entry]);
+  }
+
   const value = {
     modalType,
     setModalType,
@@ -130,6 +136,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setImportTimestamp,
     log,
     setLog,
+    addLogEntry
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

@@ -121,7 +121,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor, borderRadius }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible && polygonPoints.length > 1) {
-        drawPolygon(polygonPoints, context, borderColor, backgroundColor, 1, borderRadius);
+        drawPolygon(polygonPoints, context, borderColor, backgroundColor, 1);
       }
     });
   };

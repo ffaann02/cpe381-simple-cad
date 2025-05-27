@@ -326,7 +326,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   const draggerProps = {
     name: 'file',
     multiple: false,
-    accept: '.cad,.txt',
+    accept: '.txt,.cad', // Accept only .txt or .cad files
     beforeUpload: (file: File) => {
       // Prevent Ant Design from automatically uploading the file
       // We will handle the file reading manually

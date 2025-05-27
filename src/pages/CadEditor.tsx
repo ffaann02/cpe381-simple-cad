@@ -10,9 +10,12 @@ import PropertiesTab from "@/components/layout/PropertiesTab";
 import { MdGridOff, MdGridOn } from "react-icons/md";
 import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
-import { Drawer } from "antd";
+import { Drawer, Upload } from "antd";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { IoDocumentOutline } from "react-icons/io5";
+import { FiBox } from "react-icons/fi";
+import { UploadIcon } from "lucide-react";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
@@ -37,7 +40,9 @@ const CadEditor = () => {
     setCircles,
     log,
     projects,
-    currentProject
+    currentProject,
+    handleImportFile,
+    setCurrentProject
   } = useTab();
 
   const handleTabChange = (value: string) => {
@@ -62,10 +67,66 @@ const CadEditor = () => {
     // if (!currentProject && projects.length === 0) {
     //   navigate("/");
     // }
-  },[]);
+  }, []);
+
+  const draggerProps = {
+    name: "file",
+    multiple: false,
+    accept: ".cad,.txt",
+    beforeUpload: (file: File) => {
+      // Prevent Ant Design from automatically uploading the file
+      // We will handle the file reading manually
+      // Remove .cad or .txt extension before setting as current project
+      const projectName = file.name.replace(/\.(cad|txt)$/i, "");
+      setCurrentProject(projectName);
+      handleImportFile(file);
+      console.log("File ready for import:", file);
+      return false;
+    },
+    // customRequest: () => { /* No operation as beforeUpload handles the file */ },
+    onDrop(e: React.DragEvent<HTMLDivElement>) {
+      console.log("Dropped files", e.dataTransfer.files);
+    },
+  };
 
   const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
   const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);
+  if (!currentProject && projects.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center max-w-5xl mx-auto mt-16">
+        <img
+          src="https://png.pngtree.com/png-vector/20220902/ourmid/pngtree-text-effect-for-logo-word-png-image_236809.png"
+          className="bg-red-200 h-72"
+        />
+        <div className="flex space-x-4 mt-4">
+          <button className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer">
+            <IoDocumentOutline className="text-4xl text-neutral-500" />
+            <p className="text-xl my-auto">New Project</p>
+          </button>
+          <button className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer">
+            <FiBox className="text-4xl text-neutral-500" />
+            <p className="text-xl my-auto">Template</p>
+          </button>
+        </div>
+        <div className="mt-6 w-1/2">
+          <Upload.Dragger {...draggerProps}>
+            <p className="ant-upload-drag-icon">
+              <UploadIcon className="mx-auto text-neutral-400" />
+            </p>
+            <p className="ant-upload-text">
+              Click or drag file to this area to upload
+            </p>
+            <p className="ant-upload-hint">
+              Support for a single .cad or .txt file.
+            </p>
+          </Upload.Dragger>
+        </div>
+        <h1 className="text-2xl text-neutral-600 my-6">
+          Please create or select a project.
+        </h1>
+      </div>
+    );
+  }
   return (
     <div className="relative">
       <ModalSwitcher
@@ -85,7 +146,9 @@ const CadEditor = () => {
           setOpenCodeEditor={setOpenCodeEditor}
         />
       </div>
-      <div className="bg-neutral-50 py-2 border-b border-t-0">{renderTab()}</div>
+      <div className="bg-neutral-50 py-2 border-b border-t-0">
+        {renderTab()}
+      </div>
       <div className="w-full my-1">
         <div className="w-full bg-neutral-200 p-1">
           <FileWorkspaceTab />

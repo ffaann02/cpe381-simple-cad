@@ -2,7 +2,7 @@ import Divider from "@/components/ui/divider";
 import { useTab } from "@/context/AppContext";
 import { CiCirclePlus, CiImport, CiExport } from "react-icons/ci";
 
-const HomeTab = () => {
+const FileTab = () => {
   const { setModalType, setShowGrid, setOpenHomeModal } = useTab();
 
   const handleNewProject = () => {
@@ -55,4 +55,4 @@ const HomeTab = () => {
   );
 };
 
-export default HomeTab;
+export default FileTab;

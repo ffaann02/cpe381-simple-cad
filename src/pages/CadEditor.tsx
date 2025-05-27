@@ -1,6 +1,6 @@
-import FileTab from "@/components/pages/editor/FileTab";
+import FileWorkspaceTab from "@/components/pages/editor/FileTab";
 import TopMenuTabs from "@/components/pages/editor/Tabs";
-import HomeTab from "@/components/pages/editor/tabs/HomeTab";
+import FileTab from "@/components/pages/editor/tabs/FileTab";
 import ShapeTab from "@/components/pages/editor/tabs/ShapeTab";
 import ToolsTab from "@/components/layout/ToolsTab";
 import { useTab } from "@/context/AppContext";
@@ -42,8 +42,8 @@ const CadEditor = () => {
 
   const renderTab = () => {
     switch (tab) {
-      case "home":
-        return <HomeTab />;
+      case "file":
+        return <FileTab />;
       case "shape":
         return <ShapeTab />;
       case "tools":
@@ -52,35 +52,6 @@ const CadEditor = () => {
         return null;
     }
   };
-
-  // useEffect(() => {
-  //   const saved = localStorage.getItem("cad_drawing_state");
-  //   if (saved) {
-  //     if (
-  //       window.confirm(
-  //         "Do you want to continue from your last saved drawing?"
-  //       )
-  //     ) {
-  //       try {
-  //         const state = JSON.parse(saved);
-  //         if (state.canvasSize) setTab("home");
-  //         if (state.points) setPoints(state.points);
-  //         if (state.lines) setLines(state.lines);
-  //         if (state.curves) setCurves(state.curves);
-  //         if (state.ellipses) setEllipses(state.ellipses);
-  //         if (state.circles) setCircles(state.circles);
-  //         // Add more setters if you have them (e.g., polygons, layers)
-  //         // if (state.polygons) setPolygons(state.polygons);
-  //         // if (state.layers) setLayers(state.layers);
-  //         // Optionally set canvas size if you have a setter
-  //         // if (state.canvasSize) setCanvasSize(state.canvasSize);
-  //       } catch (e) {
-  //         // ignore parse errors
-  //       }
-  //     }
-  //   }
-  //   // eslint-disable-next-line
-  // }, []);
 
   const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
   const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);
@@ -103,10 +74,10 @@ const CadEditor = () => {
           setOpenCodeEditor={setOpenCodeEditor}
         />
       </div>
-      <div className="bg-neutral-50 py-2 border-b">{renderTab()}</div>
+      <div className="bg-neutral-50 py-2 border-b border-t-0">{renderTab()}</div>
       <div className="w-full my-1">
         <div className="w-full bg-neutral-200 p-1">
-          <FileTab />
+          <FileWorkspaceTab />
         </div>
       </div>
       <div className="relative grid grid-cols-12 gap-x-2 px-2 pb-2 h-[calc(100vh-12rem)]">

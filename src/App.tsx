@@ -1,3 +1,4 @@
+import Navbar from "./components/layout/Navbar";
 import { TabProvider } from "./context/AppContext";
 import CadEditor from "./pages/CadEditor";
 import Home from "./pages/Home";
@@ -7,12 +8,13 @@ function App() {
   return (
     <Router>
       <TabProvider>
-      <div className="relative">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/editor" element={<CadEditor />} />
-        </Routes>
-      </div>
+        <Navbar />
+        <div className="relative">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/editor" element={<CadEditor />} />
+          </Routes>
+        </div>
       </TabProvider>
     </Router>
   );

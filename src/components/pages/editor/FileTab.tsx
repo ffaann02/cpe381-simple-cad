@@ -4,15 +4,15 @@ import { MdAdd, MdClose } from "react-icons/md";
 const FileTab = () => {
   const { setOpenHomeModal, setShowGrid, setModalType, projects } = useTab();
   return (
-    <div className="flex gap-x-2">
+    <div className="flex gap-x-1">
       {projects.length > 0 &&
         projects.map((project, index) => (
           <button
             key={index}
-            className="flex rounded-sm border border-neutral-300 items-center bg-white px-2 py-0.5"
+            className="flex rounded-sm border border-neutral-300 items-center bg-white pl-2 pr-1 py-0.5"
             onClick={() => {
-              // setOpenHomeModal(true);
-              // console.log(`Project ${project.name} clicked`);
+              setOpenHomeModal(true);
+              console.log(`Project ${project.name} clicked`);
             }}
           >
             <p>{project.name}</p>
@@ -20,7 +20,7 @@ const FileTab = () => {
           </button>
         ))}
       <button
-        className="flex rounded-sm border border-neutral-300 bg-neutral-100 px-2 py-0.5 space-x-2 cursor-pointer"
+        className="flex rounded-sm border border-neutral-300 bg-neutral-100 px-0.5 py-0.5 space-x-2 cursor-pointer"
         onClick={() => {
           setShowGrid(false);
           setModalType("new");
@@ -28,8 +28,7 @@ const FileTab = () => {
           console.log("New Project triggered");
         }}
       >
-        {projects.length <= 0  && <p>New project</p>}
-        <MdAdd className="text-lg text-neutral-600 m-auto" />
+        <MdAdd className="text-xl text-neutral-600 m-auto" />
       </button>
     </div>
   );

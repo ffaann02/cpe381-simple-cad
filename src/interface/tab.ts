@@ -1,5 +1,5 @@
 export enum Tabs {
-  Home = "home",
+  File = "file",
   Shape = "shape",
   Tools = "tools",
 }

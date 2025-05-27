@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react"; // Added useCallback
+import React, { useEffect, useState, useCallback } from "react"; // Added useCallback
 import { useTab } from "@/context/AppContext";
 import {
   drawMarker,
@@ -14,7 +14,6 @@ import {
 } from "@/utils/drawing";
 import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape"; // Import individual shape types for clearer type inference
 import { Tools } from "@/interface/tool";
-import { Layer } from "@/interface/tab"; // Import Layer for clarity
 
 const previewLineColor = "#D4C9BE";
 const LOCAL_STORAGE_KEY = "cad_drawing_state";
@@ -69,7 +68,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
-  const [previewPolygonPoints, setPreviewPolygonPoints] = useState<Point[]>([]); // This state is not directly used for drawing preview, consider removing or using it.
 
   const clearCanvas = (context: CanvasRenderingContext2D) => {
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);

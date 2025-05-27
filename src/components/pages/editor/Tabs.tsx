@@ -1,4 +1,4 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "antd";
 
 interface TopMenuTabsProps {
   value: string;
@@ -12,22 +12,35 @@ const TopMenuTabs = ({
   setOpenCodeEditor,
 }: TopMenuTabsProps) => {
   return (
-    <Tabs
-      defaultValue={value}
-      onValueChange={(value) => {
-        console.log("Selected tab:", value);
-        handleTabChange(value);
-      }}
-    >
-      <TabsList className="flex gap-x-2 bg-neutral-100">
-        <TabsTrigger value="home" className="rounded-sm">
-          Home
-        </TabsTrigger>
-        <TabsTrigger value="shape" className="rounded-sm">
-          Shape
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
+    <div className="-mb-5">
+      <Tabs
+        type="card"
+        size="small"
+        activeKey={value}
+        onChange={(key) => {
+          if (key === "docs") {
+            window.open("/docs", "_blank");
+            return;
+          }
+          handleTabChange(key);
+        }}
+        items={[
+          {
+            label: "File",
+            key: "file",
+          },
+          {
+            label: "Shape",
+            key: "shape",
+          },
+          {
+            label: "Docs (manual)",
+            key: "docs",
+          }
+        ]}
+        className="bg-neutral-100"
+      />
+    </div>
   );
 };
 

@@ -303,7 +303,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         setPolygons(parsedState.polygons || []);
         setLayers(parsedState.layers || []);
         setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
-        console.log("Canvas state loaded from localStorage.");
       }
     } catch (error) {
       console.error("Failed to load canvas state from localStorage:", error);
@@ -312,7 +311,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     }
   }, []); // Empty dependency array means this runs only once on mount
 
-  // Effect to save canvas state whenever drawing data changes
   useEffect(() => {
     // Debounce the save operation if performance is an issue,
     // but for now, we'll save on every relevant change.

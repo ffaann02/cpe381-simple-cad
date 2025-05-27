@@ -14,7 +14,7 @@ export const rotatePoint = (
     const newX = px * c + py * s;
     const newY = -px * s + py * c;
 
-    return { x: newX + center.x, y: newY + center.y };
+    return { x: Math.round(newX + center.x), y: Math.round(newY + center.y) };
 };
 
 export const flipPoint = (

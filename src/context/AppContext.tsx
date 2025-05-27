@@ -68,7 +68,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   );
   const [openHomeModal, setOpenHomeModal] = useState<boolean>(false);
 
-  const [tab, setTab] = useState<string>(Tabs.Shape);
+  const [tab, setTab] = useState<string>(Tabs.File);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
   const [projects, setProjects] = useState<Project[]>([]);
 

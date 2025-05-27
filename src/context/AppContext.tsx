@@ -12,7 +12,14 @@ import {
 } from "@/interface/shape";
 import { Layer, Tabs } from "@/interface/tab";
 import { Tools } from "@/interface/tool";
-import { createContext, useContext, useState, ReactNode, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useRef,
+  useCallback,
+} from "react";
 
 interface TabContextType {
   modalType: "new" | "import" | "export";
@@ -21,6 +28,8 @@ interface TabContextType {
   setOpenHomeModal: (value: boolean) => void;
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  currentProject: string | null;
+  setCurrentProject: React.Dispatch<React.SetStateAction<string | null>>;
   tab: string;
   setTab: (value: string) => void;
   tool: Tools;
@@ -58,6 +67,7 @@ interface TabContextType {
   log: LogEntry[];
   setLog: React.Dispatch<React.SetStateAction<LogEntry[]>>;
   addLogEntry: (entry: LogEntry) => void;
+  resetCanvasState: () => void; // Function to reset all drawing states
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -71,6 +81,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [tab, setTab] = useState<string>(Tabs.File);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProject, setCurrentProject] = useState<string | null>(null);
 
   const [snapEnabled, setSnapEnabled] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
@@ -99,6 +110,24 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const addLogEntry = (entry: LogEntry) => {
     setLog((prevLog) => [...prevLog, entry]);
   };
+
+  // Function to reset all relevant canvas states
+  const resetCanvasState = useCallback(() => {
+    setPoints([]);
+    setLines([]);
+    setCircles([]);
+    setCurves([]);
+    setEllipses([]);
+    setPolygons([]);
+    // Reset layers to a default if you want to start fresh, or clear them
+    setLayers([]);
+    setCanvasSize({ width: 100, height: 600, backgroundColor: "#ffffff" });
+    // setSelectedLayerId("default-layer-id"); // Reset selected layer
+    // Optionally reset other drawing-related states like shape, tool, etc.
+    setShape(ShapeMode.Line);
+    setTool(Tools.Draw);
+    console.log("TEST")
+  }, []);
 
   const value = {
     modalType,
@@ -143,6 +172,9 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     addLogEntry,
     projects,
     setProjects,
+    currentProject,
+    setCurrentProject,
+    resetCanvasState,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

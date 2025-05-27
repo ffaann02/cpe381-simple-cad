@@ -12,9 +12,11 @@ import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
 import { Drawer } from "antd";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
+  const navigate = useNavigate();
   const {
     tab,
     setTab,
@@ -34,6 +36,8 @@ const CadEditor = () => {
     setEllipses,
     setCircles,
     log,
+    projects,
+    currentProject
   } = useTab();
 
   const handleTabChange = (value: string) => {
@@ -52,6 +56,13 @@ const CadEditor = () => {
         return null;
     }
   };
+
+  useEffect(() => {
+    // remove comment after home page is implemented
+    // if (!currentProject && projects.length === 0) {
+    //   navigate("/");
+    // }
+  },[]);
 
   const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
   const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);

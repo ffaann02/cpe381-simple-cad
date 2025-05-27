@@ -78,7 +78,7 @@ const FileTab = () => {
                   setCurrentProject(project.name);
                 }}
               >
-                {project.name}
+                {project.name}.cad
               </p>
               <MdClose
                 className="text-lg text-neutral-600 m-auto ml-2 cursor-pointer"

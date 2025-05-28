@@ -209,7 +209,7 @@ const PropertiesTab: React.FC = () => {
     }
   };
 
-  const handleFlip = () => {
+  const handleFlip = (direction: "horizontal" | "vertical") => {
     if (!selectedLayerId) return;
 
     // Find the shape and its index
@@ -248,8 +248,8 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...l,
-                    start: flipPoint(l.start, flipDirection, shapeCenter),
-                    end: flipPoint(l.end, flipDirection, shapeCenter),
+                    start: flipPoint(l.start, direction, shapeCenter),
+                    end: flipPoint(l.end, direction, shapeCenter),
                   }
                 : l
             )
@@ -261,7 +261,7 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...c,
-                    center: flipPoint(c.center, flipDirection, shapeCenter),
+                    center: flipPoint(c.center, direction, shapeCenter),
                   }
                 : c
             )
@@ -273,7 +273,7 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...e,
-                    center: flipPoint(e.center, flipDirection, shapeCenter),
+                    center: flipPoint(e.center, direction, shapeCenter),
                   }
                 : e
             )
@@ -285,10 +285,10 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...c,
-                    p0: flipPoint(c.p0, flipDirection, shapeCenter),
-                    p1: flipPoint(c.p1, flipDirection, shapeCenter),
-                    p2: flipPoint(c.p2, flipDirection, shapeCenter),
-                    p3: flipPoint(c.p3, flipDirection, shapeCenter),
+                    p0: flipPoint(c.p0, direction, shapeCenter),
+                    p1: flipPoint(c.p1, direction, shapeCenter),
+                    p2: flipPoint(c.p2, direction, shapeCenter),
+                    p3: flipPoint(c.p3, direction, shapeCenter),
                   }
                 : c
             )
@@ -300,7 +300,7 @@ const PropertiesTab: React.FC = () => {
         ...prev,
         {
           type: "info",
-          message: `${shapeType} ${shapeIndex} flipped ${flipDirection}ly`,
+          message: `${shapeType} ${shapeIndex} flipped ${direction}ly`,
           timestamp: Date.now(),
         },
       ]);
@@ -769,20 +769,14 @@ const PropertiesTab: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setFlipDirection("horizontal");
-                    handleFlip();
-                  }}
+                  onClick={() => handleFlip("horizontal")}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600" />
                   <span className="text-sm text-neutral-600">Flip Horizontal</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setFlipDirection("vertical");
-                    handleFlip();
-                  }}
+                  onClick={() => handleFlip("vertical")}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />

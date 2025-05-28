@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTab } from "@/context/AppContext";
 import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
 import { MdRotate90DegreesCcw } from "react-icons/md";
 import { PiFlipHorizontalFill } from "react-icons/pi";
 import { Tools } from "@/interface/tool";
+import { Layer } from "@/interface/tab";
+import { rotatePoint, flipPoint } from "@/utils/transform";
+import { getShapeCenter } from "@/utils/position";
 
 const PropertiesTab: React.FC = () => {
   const {
@@ -19,7 +22,13 @@ const PropertiesTab: React.FC = () => {
     setEllipses,
     selectedLayerId,
     setTool,
+    tool,
+    setLog,
   } = useTab();
+
+  const [showRotationForm, setShowRotationForm] = useState(false);
+  const [rotationAngle, setRotationAngle] = useState<number>(90);
+  const [rotationCenter, setRotationCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
   const line = lines.find((l) => l.layerId === selectedLayerId);
@@ -106,6 +115,145 @@ const PropertiesTab: React.FC = () => {
     );
     setEllipses(updatedEllipses);
   };
+
+  const handleRotate = () => {
+    if (!selectedLayerId) return;
+
+    // Find the shape and its index
+    const lineIndex = lines.findIndex(l => l.layerId === selectedLayerId);
+    const circleIndex = circles.findIndex(c => c.layerId === selectedLayerId);
+    const curveIndex = curves.findIndex(c => c.layerId === selectedLayerId);
+    const ellipseIndex = ellipses.findIndex(e => e.layerId === selectedLayerId);
+
+    let shapeType: "line" | "circle" | "ellipse" | "curve" | null = null;
+    let shapeIndex = -1;
+
+    if (lineIndex !== -1) {
+      shapeType = "line";
+      shapeIndex = lineIndex;
+    } else if (circleIndex !== -1) {
+      shapeType = "circle";
+      shapeIndex = circleIndex;
+    } else if (curveIndex !== -1) {
+      shapeType = "curve";
+      shapeIndex = curveIndex;
+    } else if (ellipseIndex !== -1) {
+      shapeType = "ellipse";
+      shapeIndex = ellipseIndex;
+    }
+
+    if (shapeType && shapeIndex !== -1) {
+      // Get the shape and its center
+      let shape;
+      const center = rotationCenter;
+
+      switch (shapeType) {
+        case "line":
+          shape = lines[shapeIndex];
+          setLines(prevLines =>
+            prevLines.map((l, i) =>
+              i === shapeIndex
+                ? {
+                    ...l,
+                    start: rotatePoint(l.start, center, (rotationAngle * Math.PI) / 180),
+                    end: rotatePoint(l.end, center, (rotationAngle * Math.PI) / 180),
+                  }
+                : l
+            )
+          );
+          break;
+        case "circle":
+          // Circles don't change visually when rotated
+          break;
+        case "ellipse":
+          shape = ellipses[shapeIndex];
+          setEllipses(prevEllipses =>
+            prevEllipses.map((e, i) =>
+              i === shapeIndex
+                ? {
+                    ...e,
+                    center: rotatePoint(e.center, center, (rotationAngle * Math.PI) / 180),
+                  }
+                : e
+            )
+          );
+          break;
+        case "curve":
+          shape = curves[shapeIndex];
+          setCurves(prevCurves =>
+            prevCurves.map((c, i) =>
+              i === shapeIndex
+                ? {
+                    ...c,
+                    p0: rotatePoint(c.p0, center, (rotationAngle * Math.PI) / 180),
+                    p1: rotatePoint(c.p1, center, (rotationAngle * Math.PI) / 180),
+                    p2: rotatePoint(c.p2, center, (rotationAngle * Math.PI) / 180),
+                    p3: rotatePoint(c.p3, center, (rotationAngle * Math.PI) / 180),
+                  }
+                : c
+            )
+          );
+          break;
+      }
+
+      setLog(prev => [
+        ...prev,
+        {
+          type: "info",
+          message: `${shapeType} ${shapeIndex} rotated by ${rotationAngle} degrees`,
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+  };
+
+  // Update rotation center when shape changes
+  useEffect(() => {
+    if (!selectedLayerId) return;
+
+    const line = lines.find(l => l.layerId === selectedLayerId);
+    const circle = circles.find(c => c.layerId === selectedLayerId);
+    const curve = curves.find(c => c.layerId === selectedLayerId);
+    const ellipse = ellipses.find(e => e.layerId === selectedLayerId);
+
+    if (line) {
+      setRotationCenter(getShapeCenter(line, "line"));
+    } else if (circle) {
+      setRotationCenter(circle.center);
+    } else if (curve) {
+      setRotationCenter(getShapeCenter(curve, "curve"));
+    } else if (ellipse) {
+      setRotationCenter(ellipse.center);
+    }
+  }, [selectedLayerId, lines, circles, curves, ellipses]);
+
+  // Add effect to handle transform tool selection
+  useEffect(() => {
+    if (tool === Tools.Rotate || tool === Tools.Flip) {
+      // If no shape is selected, select the first visible shape
+      if (!selectedLayerId) {
+        const firstVisibleLayer = layers.find(layer => layer.is_visible);
+        if (firstVisibleLayer) {
+          // Find the first shape in this layer
+          const line = lines.find(l => l.layerId === firstVisibleLayer.id);
+          const circle = circles.find(c => c.layerId === firstVisibleLayer.id);
+          const curve = curves.find(c => c.layerId === firstVisibleLayer.id);
+          const ellipse = ellipses.find(e => e.layerId === firstVisibleLayer.id);
+
+          if (line || circle || curve || ellipse) {
+            // Set the selected layer ID to the first visible layer
+            setLayers(prevLayers => 
+              prevLayers.map(layer => 
+                layer.id === firstVisibleLayer.id 
+                  ? { ...layer, is_selected: true }
+                  : { ...layer, is_selected: false }
+              )
+            );
+          }
+        }
+      }
+    }
+  }, [tool, selectedLayerId, layers, lines, circles, curves, ellipses]);
 
   return (
     <div className="pt-2 p-4 border rounded-md">

@@ -103,18 +103,6 @@ const ToolsTab = () => {
       onClick: () => setTool(Tools.Move),
     },
     {
-      label: "Rotate",
-      icon: <MdRotate90DegreesCcw className="text-2xl text-neutral-600" />,
-      type: Tools.Rotate,
-      onClick: () => setTool(Tools.Rotate),
-    },
-    {
-      label: "Flip",
-      icon: <PiFlipHorizontalFill className="text-2xl text-neutral-600" />,
-      type: Tools.Flip,
-      onClick: () => setTool(Tools.Flip),
-    },
-    {
       label: "Eraser",
       icon: <FaEraser className="text-2xl text-neutral-600" />,
       type: Tools.Eraser,

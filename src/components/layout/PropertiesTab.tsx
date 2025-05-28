@@ -1,6 +1,9 @@
 import React from "react";
 import { useTab } from "@/context/AppContext";
 import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
+import { MdRotate90DegreesCcw } from "react-icons/md";
+import { PiFlipHorizontalFill } from "react-icons/pi";
+import { Tools } from "@/interface/tool";
 
 const PropertiesTab: React.FC = () => {
   const {
@@ -15,6 +18,7 @@ const PropertiesTab: React.FC = () => {
     ellipses,
     setEllipses,
     selectedLayerId,
+    setTool,
   } = useTab();
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
@@ -436,6 +440,28 @@ const PropertiesTab: React.FC = () => {
       {!line && !circle && !curve && !ellipse && (
         <div className="mt-4 text-sm text-gray-500">
           No layer selected
+        </div>
+      )}
+
+      {(line || circle || curve || ellipse) && (
+        <div className="mt-4 border-t pt-4">
+          <h3 className="font-semibold mb-2">Transform</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setTool(Tools.Rotate)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+            >
+              <MdRotate90DegreesCcw className="text-xl text-neutral-600" />
+              <span className="text-sm text-neutral-600">Rotate</span>
+            </button>
+            <button
+              onClick={() => setTool(Tools.Flip)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+            >
+              <PiFlipHorizontalFill className="text-xl text-neutral-600" />
+              <span className="text-sm text-neutral-600">Flip</span>
+            </button>
+          </div>
         </div>
       )}
     </div>

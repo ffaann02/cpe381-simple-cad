@@ -29,6 +29,8 @@ const PropertiesTab: React.FC = () => {
   const [showRotationForm, setShowRotationForm] = useState(false);
   const [rotationAngle, setRotationAngle] = useState<number>(90);
   const [rotationCenter, setRotationCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isCenterManuallySet, setIsCenterManuallySet] = useState(false);
+  const [flipDirection, setFlipDirection] = useState<"horizontal" | "vertical">("horizontal");
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
   const line = lines.find((l) => l.layerId === selectedLayerId);
@@ -207,6 +209,101 @@ const PropertiesTab: React.FC = () => {
     }
   };
 
+  const handleFlip = () => {
+    if (!selectedLayerId) return;
+
+    // Find the shape and its index
+    const lineIndex = lines.findIndex(l => l.layerId === selectedLayerId);
+    const circleIndex = circles.findIndex(c => c.layerId === selectedLayerId);
+    const curveIndex = curves.findIndex(c => c.layerId === selectedLayerId);
+    const ellipseIndex = ellipses.findIndex(e => e.layerId === selectedLayerId);
+
+    let shapeType: "line" | "circle" | "ellipse" | "curve" | null = null;
+    let shapeIndex = -1;
+
+    if (lineIndex !== -1) {
+      shapeType = "line";
+      shapeIndex = lineIndex;
+    } else if (circleIndex !== -1) {
+      shapeType = "circle";
+      shapeIndex = circleIndex;
+    } else if (curveIndex !== -1) {
+      shapeType = "curve";
+      shapeIndex = curveIndex;
+    } else if (ellipseIndex !== -1) {
+      shapeType = "ellipse";
+      shapeIndex = ellipseIndex;
+    }
+
+    if (shapeType && shapeIndex !== -1) {
+      const center = rotationCenter;
+
+      switch (shapeType) {
+        case "line":
+          setLines(prevLines =>
+            prevLines.map((l, i) =>
+              i === shapeIndex
+                ? {
+                    ...l,
+                    start: flipPoint(l.start, flipDirection, center),
+                    end: flipPoint(l.end, flipDirection, center),
+                  }
+                : l
+            )
+          );
+          break;
+        case "circle":
+          setCircles(prevCircles =>
+            prevCircles.map((c, i) =>
+              i === shapeIndex
+                ? {
+                    ...c,
+                    center: flipPoint(c.center, flipDirection, center),
+                  }
+                : c
+            )
+          );
+          break;
+        case "ellipse":
+          setEllipses(prevEllipses =>
+            prevEllipses.map((e, i) =>
+              i === shapeIndex
+                ? {
+                    ...e,
+                    center: flipPoint(e.center, flipDirection, center),
+                  }
+                : e
+            )
+          );
+          break;
+        case "curve":
+          setCurves(prevCurves =>
+            prevCurves.map((c, i) =>
+              i === shapeIndex
+                ? {
+                    ...c,
+                    p0: flipPoint(c.p0, flipDirection, center),
+                    p1: flipPoint(c.p1, flipDirection, center),
+                    p2: flipPoint(c.p2, flipDirection, center),
+                    p3: flipPoint(c.p3, flipDirection, center),
+                  }
+                : c
+            )
+          );
+          break;
+      }
+
+      setLog(prev => [
+        ...prev,
+        {
+          type: "info",
+          message: `${shapeType} ${shapeIndex} flipped ${flipDirection}ly`,
+          timestamp: Date.now(),
+        },
+      ]);
+    }
+  };
+
   // Update rotation center when shape changes
   useEffect(() => {
     if (!selectedLayerId) return;
@@ -216,16 +313,19 @@ const PropertiesTab: React.FC = () => {
     const curve = curves.find(c => c.layerId === selectedLayerId);
     const ellipse = ellipses.find(e => e.layerId === selectedLayerId);
 
-    if (line) {
-      setRotationCenter(getShapeCenter(line, "line"));
-    } else if (circle) {
-      setRotationCenter(circle.center);
-    } else if (curve) {
-      setRotationCenter(getShapeCenter(curve, "curve"));
-    } else if (ellipse) {
-      setRotationCenter(ellipse.center);
+    // Only set the rotation center if it hasn't been manually set
+    if (!isCenterManuallySet) {
+      if (line) {
+        setRotationCenter(getShapeCenter(line, "line"));
+      } else if (circle) {
+        setRotationCenter(circle.center);
+      } else if (curve) {
+        setRotationCenter(getShapeCenter(curve, "curve"));
+      } else if (ellipse) {
+        setRotationCenter(ellipse.center);
+      }
     }
-  }, [selectedLayerId, lines, circles, curves, ellipses]);
+  }, [selectedLayerId, lines, circles, curves, ellipses, isCenterManuallySet]);
 
   // Add effect to handle transform tool selection
   useEffect(() => {
@@ -242,18 +342,23 @@ const PropertiesTab: React.FC = () => {
 
           if (line || circle || curve || ellipse) {
             // Set the selected layer ID to the first visible layer
-            setLayers(prevLayers => 
-              prevLayers.map(layer => 
-                layer.id === firstVisibleLayer.id 
-                  ? { ...layer, is_selected: true }
-                  : { ...layer, is_selected: false }
-              )
-            );
+            const updatedLayers = layers.map((layer: Layer) => ({
+              ...layer,
+              is_selected: layer.id === firstVisibleLayer.id
+            }));
+            setLayers(updatedLayers);
           }
         }
       }
     }
   }, [tool, selectedLayerId, layers, lines, circles, curves, ellipses]);
+
+  // Add effect to automatically set transform tool when shape is selected
+  useEffect(() => {
+    if (selectedLayerId && (line || circle || curve || ellipse)) {
+      setTool(Tools.Rotate);
+    }
+  }, [selectedLayerId, line, circle, curve, ellipse, setTool]);
 
   return (
     <div className="pt-2 p-4 border rounded-md">
@@ -594,21 +699,95 @@ const PropertiesTab: React.FC = () => {
       {(line || circle || curve || ellipse) && (
         <div className="mt-4 border-t pt-4">
           <h3 className="font-semibold mb-2">Transform</h3>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setTool(Tools.Rotate)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
-            >
-              <MdRotate90DegreesCcw className="text-xl text-neutral-600" />
-              <span className="text-sm text-neutral-600">Rotate</span>
-            </button>
-            <button
-              onClick={() => setTool(Tools.Flip)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
-            >
-              <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-              <span className="text-sm text-neutral-600">Flip</span>
-            </button>
+          <div className="space-y-4">
+            {/* Rotation Controls */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowRotationForm(!showRotationForm)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+                >
+                  <MdRotate90DegreesCcw className="text-xl text-neutral-600" />
+                  <span className="text-sm text-neutral-600">Rotate</span>
+                </button>
+                {showRotationForm && (
+                  <button
+                    onClick={handleRotate}
+                    className="px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+              {showRotationForm && (
+                <div className="space-y-2 pl-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-sm text-gray-700">
+                      Angle (degrees):
+                      <input
+                        type="number"
+                        value={rotationAngle}
+                        onChange={(e) => setRotationAngle(parseFloat(e.target.value))}
+                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="text-sm text-gray-700">
+                      Center X:
+                      <input
+                        type="number"
+                        value={rotationCenter.x}
+                        onChange={(e) => {
+                          setRotationCenter(prev => ({ ...prev, x: parseFloat(e.target.value) }));
+                          setIsCenterManuallySet(true);
+                        }}
+                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </label>
+                    <label className="text-sm text-gray-700">
+                      Center Y:
+                      <input
+                        type="number"
+                        value={rotationCenter.y}
+                        onChange={(e) => {
+                          setRotationCenter(prev => ({ ...prev, y: parseFloat(e.target.value) }));
+                          setIsCenterManuallySet(true);
+                        }}
+                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Flip Controls */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTool(Tools.Flip)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+                >
+                  <PiFlipHorizontalFill className="text-xl text-neutral-600" />
+                  <span className="text-sm text-neutral-600">Flip</span>
+                </button>
+                <select
+                  value={flipDirection}
+                  onChange={(e) => setFlipDirection(e.target.value as "horizontal" | "vertical")}
+                  className="border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                >
+                  <option value="horizontal">Horizontal</option>
+                  <option value="vertical">Vertical</option>
+                </select>
+                <button
+                  onClick={handleFlip}
+                  className="px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

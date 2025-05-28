@@ -767,17 +767,17 @@ const PropertiesTab: React.FC = () => {
 
             {/* Flip Controls */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2">
                 <button
                   onClick={() => handleFlip("horizontal")}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600" />
                   <span className="text-sm text-neutral-600">Flip Horizontal</span>
                 </button>
                 <button
                   onClick={() => handleFlip("vertical")}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
                   <span className="text-sm text-neutral-600">Flip Vertical</span>

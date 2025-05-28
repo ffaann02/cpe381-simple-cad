@@ -220,24 +220,27 @@ const PropertiesTab: React.FC = () => {
 
     let shapeType: "line" | "circle" | "ellipse" | "curve" | null = null;
     let shapeIndex = -1;
+    let shapeCenter: { x: number; y: number } = { x: 0, y: 0 };
 
     if (lineIndex !== -1) {
       shapeType = "line";
       shapeIndex = lineIndex;
+      shapeCenter = getShapeCenter(lines[lineIndex], "line");
     } else if (circleIndex !== -1) {
       shapeType = "circle";
       shapeIndex = circleIndex;
+      shapeCenter = circles[circleIndex].center;
     } else if (curveIndex !== -1) {
       shapeType = "curve";
       shapeIndex = curveIndex;
+      shapeCenter = getShapeCenter(curves[curveIndex], "curve");
     } else if (ellipseIndex !== -1) {
       shapeType = "ellipse";
       shapeIndex = ellipseIndex;
+      shapeCenter = ellipses[ellipseIndex].center;
     }
 
     if (shapeType && shapeIndex !== -1) {
-      const center = rotationCenter;
-
       switch (shapeType) {
         case "line":
           setLines(prevLines =>
@@ -245,8 +248,8 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...l,
-                    start: flipPoint(l.start, flipDirection, center),
-                    end: flipPoint(l.end, flipDirection, center),
+                    start: flipPoint(l.start, flipDirection, shapeCenter),
+                    end: flipPoint(l.end, flipDirection, shapeCenter),
                   }
                 : l
             )
@@ -258,7 +261,7 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...c,
-                    center: flipPoint(c.center, flipDirection, center),
+                    center: flipPoint(c.center, flipDirection, shapeCenter),
                   }
                 : c
             )
@@ -270,7 +273,7 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...e,
-                    center: flipPoint(e.center, flipDirection, center),
+                    center: flipPoint(e.center, flipDirection, shapeCenter),
                   }
                 : e
             )
@@ -282,10 +285,10 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...c,
-                    p0: flipPoint(c.p0, flipDirection, center),
-                    p1: flipPoint(c.p1, flipDirection, center),
-                    p2: flipPoint(c.p2, flipDirection, center),
-                    p3: flipPoint(c.p3, flipDirection, center),
+                    p0: flipPoint(c.p0, flipDirection, shapeCenter),
+                    p1: flipPoint(c.p1, flipDirection, shapeCenter),
+                    p2: flipPoint(c.p2, flipDirection, shapeCenter),
+                    p3: flipPoint(c.p3, flipDirection, shapeCenter),
                   }
                 : c
             )
@@ -766,25 +769,24 @@ const PropertiesTab: React.FC = () => {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setTool(Tools.Flip)}
+                  onClick={() => {
+                    setFlipDirection("horizontal");
+                    handleFlip();
+                  }}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-                  <span className="text-sm text-neutral-600">Flip</span>
+                  <span className="text-sm text-neutral-600">Flip Horizontal</span>
                 </button>
-                <select
-                  value={flipDirection}
-                  onChange={(e) => setFlipDirection(e.target.value as "horizontal" | "vertical")}
-                  className="border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                  <option value="horizontal">Horizontal</option>
-                  <option value="vertical">Vertical</option>
-                </select>
                 <button
-                  onClick={handleFlip}
-                  className="px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                  onClick={() => {
+                    setFlipDirection("vertical");
+                    handleFlip();
+                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
                 >
-                  Apply
+                  <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
+                  <span className="text-sm text-neutral-600">Flip Vertical</span>
                 </button>
               </div>
             </div>

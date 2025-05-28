@@ -202,7 +202,7 @@ const PropertiesTab: React.FC = () => {
         ...prev,
         {
           type: "info",
-          message: `${shapeType} ${shapeIndex} rotated by ${rotationAngle} degrees`,
+          message: `${shapeType} ${shapeIndex} rotated by ${rotationAngle} degrees around center (${center.x}, ${center.y})`,
           timestamp: Date.now(),
         },
       ]);

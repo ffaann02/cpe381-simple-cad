@@ -305,27 +305,15 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
     setCurrentProject(projectName);
 
-    // Clear current canvas state
-    setLines([]);
-    setCircles([]);
-    setEllipses([]);
-    setCurves([]);
-    setLayers([]);
-    if (canvasRef?.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-      }
-    }
-
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const text = e.target?.result as string;
       const linesFromFile: Line[] = [];
       const circlesFromFile: Circle[] = [];
       const ellipsesFromFile: Ellipse[] = [];
       const curvesFromFile: Curve[] = [];
+      const polygonsFromFile: Polygon[] = [];
       const newLayers: Layer[] = [];
 
       let layerIdCounter = 1;
@@ -339,13 +327,12 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
         const addLayer = (layerId: string, name: string) => {
           if (
-            !newLayers.some((layer) => layer.id === layerId) &&
-            !layers.some((layer) => layer.id === layerId)
+            !newLayers.some((layer) => layer.id === layerId)
           ) {
             newLayers.push({
               id: layerId,
               name,
-              is_selected: true,
+              is_selected: false,
               is_visible: true,
             });
           }
@@ -353,11 +340,11 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
         switch (command) {
           case "CANVAS":
-            if (parts.length === 3) {
+            if (parts.length >= 3) {
               setCanvasSize({
                 width: parseFloat(parts[1]),
                 height: parseFloat(parts[2]),
-                backgroundColor: "#ffffff",
+                backgroundColor: parts.length >= 4 ? parts[3] : "#ffffff",
               });
             }
             break;
@@ -418,38 +405,84 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
               layerIdCounter++;
             }
             break;
+          case "POLYGON":
+            if (parts.length >= 4) {
+              const points: Point[] = [];
+              for (let i = 1; i < parts.length - 2; i += 2) {
+                if (parts[i] && parts[i + 1]) {
+                  points.push({
+                    x: parseFloat(parts[i]),
+                    y: parseFloat(parts[i + 1])
+                  });
+                }
+              }
+              
+              if (points.length >= 3) {
+                const newPolygon: Polygon = {
+                  points,
+                  borderColor: parts[parts.length - 2] || "black",
+                  backgroundColor: parts[parts.length - 1] || "",
+                  layerId: `layer-${layerIdCounter}`,
+                };
+                polygonsFromFile.push(newPolygon);
+                addLayer(newPolygon.layerId, `Layer ${layerIdCounter}`);
+                layerIdCounter++;
+              }
+            }
+            break;
           default:
             console.warn(`Unknown CAD command: ${command}`);
         }
       });
 
+      console.log("Lines from file:", linesFromFile);
+      console.log("Circles from file:", circlesFromFile);
+      console.log("Ellipses from file:", ellipsesFromFile);
+      console.log("Curves from file:", curvesFromFile);
+      console.log("Polygons from file:", polygonsFromFile);
+      console.log("New layers:", newLayers);
+
+      // Clear canvas first
+      if (canvasRef?.current) {
+        const ctx = canvasRef.current.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+        }
+      }
+
+      // Update all states at once
       setLines(linesFromFile);
       setCircles(circlesFromFile);
       setEllipses(ellipsesFromFile);
       setCurves(curvesFromFile);
-      setLayers((prevLayers) => [...prevLayers, ...newLayers]);
+      setPolygons(polygonsFromFile);
+      setLayers(newLayers);
+      setPoints([]); // Clear any existing points
       setOpenHomeModal(false);
-      if (setImportTimestamp) {
-        setImportTimestamp(Date.now());
-      }
-      setShowGrid(true);
-
-      // Save imported data to localStorage under the new project key
+      
+      // Save imported data to localStorage
       const stateToSave = {
         lines: linesFromFile,
         circles: circlesFromFile,
         ellipses: ellipsesFromFile,
         curves: curvesFromFile,
+        polygons: polygonsFromFile,
         layers: newLayers,
         canvasSize,
         lastSaved: Date.now(),
       };
-      console.log("TEST 3")
-      console.log(stateToSave)
+      
       localStorage.setItem(
         `cad_drawing_state_${projectName}`,
         JSON.stringify(stateToSave)
       );
+
+      // Force a redraw by updating the import timestamp after a short delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      if (setImportTimestamp) {
+        setImportTimestamp(Date.now());
+      }
+      setShowGrid(true);
 
       message.success("Design imported successfully!");
     };

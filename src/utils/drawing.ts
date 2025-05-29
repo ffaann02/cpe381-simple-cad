@@ -152,60 +152,119 @@ export const drawEllipseMidpoint = (
   ry: number,
   ctx: CanvasRenderingContext2D,
   color = "black",
-  width = 1
+  width = 1,
+  fillColor = ""
 ) => {
+  // Round center coordinates and radii for midpoint algorithm
+  const x = Math.round(cx);
+  const y = Math.round(cy);
+  const rx1 = Math.round(rx);
+  const ry1 = Math.round(ry);
+
+  // Fill the ellipse if fill color is provided
+  if (fillColor) {
+    ctx.fillStyle = fillColor;
+    let x1 = 0;
+    let y1 = ry1;
+    const rxSq = rx1 * rx1;
+    const rySq = ry1 * ry1;
+    let dx = 2 * rySq * x1;
+    let dy = 2 * rxSq * y1;
+    let d1 = rySq - rxSq * ry1 + 0.25 * rxSq;
+
+    // First region
+    while (dx < dy) {
+      // Fill horizontal lines for each quadrant
+      for (let i = -x1; i <= x1; i++) {
+        ctx.fillRect(x + i, y + y1, 1, 1);
+        ctx.fillRect(x + i, y - y1, 1, 1);
+      }
+      if (d1 < 0) {
+        x1++;
+        dx += 2 * rySq;
+        d1 += dx + rySq;
+      } else {
+        x1++;
+        y1--;
+        dx += 2 * rySq;
+        dy -= 2 * rxSq;
+        d1 += dx - dy + rySq;
+      }
+    }
+
+    // Second region
+    let d2 = rySq * (x1 + 0.5) * (x1 + 0.5) + rxSq * (y1 - 1) * (y1 - 1) - rxSq * rySq;
+    while (y1 >= 0) {
+      // Fill horizontal lines for each quadrant
+      for (let i = -x1; i <= x1; i++) {
+        ctx.fillRect(x + i, y + y1, 1, 1);
+        ctx.fillRect(x + i, y - y1, 1, 1);
+      }
+      if (d2 > 0) {
+        y1--;
+        dy -= 2 * rxSq;
+        d2 += rxSq - dy;
+      } else {
+        y1--;
+        x1++;
+        dx += 2 * rySq;
+        dy -= 2 * rxSq;
+        d2 += dx - dy + rxSq;
+      }
+    }
+  }
+
+  // Draw the border using midpoint algorithm
   ctx.fillStyle = color;
-  const points: Point[] = []; // Store points to draw later
-  let x = 0;
-  let y = ry;
-  const rxSq = rx * rx;
-  const rySq = ry * ry;
-  let dx = 2 * rySq * x;
-  let dy = 2 * rxSq * y;
-  let d1 = rySq - rxSq * ry + 0.25 * rxSq;
+  let x1 = 0;
+  let y1 = ry1;
+  const rxSq = rx1 * rx1;
+  const rySq = ry1 * ry1;
+  let dx = 2 * rySq * x1;
+  let dy = 2 * rxSq * y1;
+  let d1 = rySq - rxSq * ry1 + 0.25 * rxSq;
+
+  const plotPoints = (x1: number, y1: number) => {
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < width; j++) {
+        ctx.fillRect(x + x1 + i, y + y1 + j, 1, 1);
+        ctx.fillRect(x - x1 + i, y + y1 + j, 1, 1);
+        ctx.fillRect(x + x1 + i, y - y1 + j, 1, 1);
+        ctx.fillRect(x - x1 + i, y - y1 + j, 1, 1);
+      }
+    }
+  };
+
+  // First region
   while (dx < dy) {
-    points.push({ x: cx + x, y: cy + y });
-    points.push({ x: cx - x, y: cy + y });
-    points.push({ x: cx + x, y: cy - y });
-    points.push({ x: cx - x, y: cy - y });
+    plotPoints(x1, y1);
     if (d1 < 0) {
-      x++;
+      x1++;
       dx += 2 * rySq;
       d1 += dx + rySq;
     } else {
-      x++;
-      y--;
+      x1++;
+      y1--;
       dx += 2 * rySq;
       dy -= 2 * rxSq;
       d1 += dx - dy + rySq;
     }
   }
-  let d2 =
-    rySq * (x + 0.5) * (x + 0.5) + rxSq * (y - 1) * (y - 1) - rxSq * rySq;
-  while (y >= 0) {
-    points.push({ x: cx + x, y: cy + y });
-    points.push({ x: cx - x, y: cy + y });
-    points.push({ x: cx + x, y: cy - y });
-    points.push({ x: cx - x, y: cy - y });
+
+  // Second region
+  let d2 = rySq * (x1 + 0.5) * (x1 + 0.5) + rxSq * (y1 - 1) * (y1 - 1) - rxSq * rySq;
+  while (y1 >= 0) {
+    plotPoints(x1, y1);
     if (d2 > 0) {
-      y--;
+      y1--;
       dy -= 2 * rxSq;
       d2 += rxSq - dy;
     } else {
-      y--;
-      x++;
+      y1--;
+      x1++;
       dx += 2 * rySq;
       dy -= 2 * rxSq;
       d2 += dx - dy + rxSq;
-    }
-  }
-
-  // Draw the points with the specified width
-  for (const p of points) {
-    for (let i = 0; i < width; i++) {
-      for (let j = 0; j < width; j++) {
-        ctx.fillRect(p.x + i, p.y + j, 1, 1);
-      }
     }
   }
 };
@@ -324,19 +383,5 @@ export function drawBoundingBox(
 
   ctx.restore();
 }
-
-const drawPolygons = (
-  context: CanvasRenderingContext2D,
-  polygons: Polygon[],
-  layers: Layer[]
-) => {
-  polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => {
-    const layer = layers.find((l) => l.id === layerId);
-    if (layer?.is_visible && polygonPoints.length > 1) {
-      const { stroke, fill, lineWidth } = getShapeStyle(layer);
-      drawPolygon(polygonPoints, context, stroke, fill, lineWidth);
-    }
-  });
-};
 
   

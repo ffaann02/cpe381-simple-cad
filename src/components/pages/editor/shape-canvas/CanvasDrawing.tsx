@@ -128,11 +128,11 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   const drawEllipses = (context: CanvasRenderingContext2D) => {
-    ellipses.forEach(({ center, rx, ry, layerId, borderColor, backgroundColor }) => { // Use shape's specific colors
+    ellipses.forEach(({ center, rx, ry, layerId, borderColor, backgroundColor }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
-        const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
-        drawEllipseMidpoint(center.x, center.y, rx, ry, context, borderColor, lineWidth); // Use shape's specific colors
+        const { lineWidth } = getShapeStyle(layer);
+        drawEllipseMidpoint(center.x, center.y, rx, ry, context, borderColor, lineWidth, backgroundColor);
       }
     });
   };
@@ -325,7 +325,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   // Function to save the canvas state to localStorage, now dependent on currentProject
-  const saveCanvasState = useCallback((shouldGenerateThumbnail = false) => {
+  const saveCanvasState = useCallback(
+    () => {
     if (!currentProject) {
       console.warn("No current project selected. Not saving canvas state.");
       return;
@@ -333,8 +334,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
     try {
       let thumbnail: string | null = null;
-      if (shouldGenerateThumbnail && canvasRef.current) {
-        // Only generate thumbnail when explicitly requested (e.g., after movement is complete)
+      if (canvasRef.current) {
+        // Always generate thumbnail when saving state
         thumbnail = canvasRef.current.toDataURL('image/png');
       }
 
@@ -407,7 +408,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   useEffect(() => {
     // Debounce the save operation to avoid too frequent saves
     const timeoutId = setTimeout(() => {
-      saveCanvasState(false); // Don't generate thumbnail during regular saves
+      saveCanvasState();
     }, 1000); // 1 second debounce
 
     return () => clearTimeout(timeoutId);
@@ -427,9 +428,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   useEffect(() => {
     if (onMovementComplete) {
       onMovementComplete();
-      saveCanvasState(true); // Generate thumbnail when movement is complete
     }
-  }, [onMovementComplete, saveCanvasState]);
+  }, [onMovementComplete]);
 
   // Main drawing effect
   useEffect(() => {

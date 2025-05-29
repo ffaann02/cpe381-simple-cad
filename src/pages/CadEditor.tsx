@@ -56,18 +56,18 @@ const CadEditor = () => {
 
   useEffect(() => {
     // Check if there's a currentProject in localStorage
-    const savedProject = localStorage.getItem('currentProject');
+    const savedProject = localStorage.getItem("currentProject");
     if (savedProject) {
       // If the project exists in localStorage but not in projects array, add it
-      if (!projects.some(p => p.name === savedProject)) {
-        setProjects(prev => [
+      if (!projects.some((p) => p.name === savedProject)) {
+        setProjects((prev) => [
           ...prev,
           {
             id: `project-${Date.now()}`,
             name: savedProject,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          },
         ]);
       }
       setCurrentProject(savedProject);
@@ -146,17 +146,17 @@ const CadEditor = () => {
     <>
       {projects.length <= 0 || !currentProject ? (
         <>
-          <div className="w-full mt-6 mb-2 max-w-5xl mx-auto text-neutral-500 hover:text-neutral-600">
+          <div className="w-full mt-6 max-w-5xl mx-auto text-neutral-500 hover:text-neutral-600">
             <Link to="/" className="underline mb-4">
               <FaChevronLeft className="inline mr-1" />
               Back to Home
             </Link>
           </div>
-          <div className="flex flex-col items-center justify-center max-w-5xl mx-auto h-[85vh] border rounded-xl mb-4 shadow-md border-neutral-100">
-            <img
-              src="/logo_typo.svg"
-              className="h-82 mb-24"
-            />
+          <div className="mt-2 flex flex-col items-center justify-center max-w-5xl mx-auto h-[85vh] border rounded-xl mb-4 shadow-md border-neutral-100">
+            <img src="/logo_typo.svg" className="h-82" />
+            <h1 className="text-2xl text-neutral-600 my-6">
+              Please create or select a project.
+            </h1>
             <div className="flex space-x-4 mt-4">
               <button
                 className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer"
@@ -164,10 +164,6 @@ const CadEditor = () => {
               >
                 <IoDocumentOutline className="text-4xl text-neutral-500" />
                 <p className="text-xl my-auto">New Project</p>
-              </button>
-              <button className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer">
-                <FiBox className="text-4xl text-neutral-500" />
-                <p className="text-xl my-auto">Template</p>
               </button>
             </div>
             <div className="mt-6 w-1/2">
@@ -183,26 +179,25 @@ const CadEditor = () => {
                 </p>
               </Upload.Dragger>
             </div>
-            <h1 className="text-2xl text-neutral-600 my-6">
-              Please create or select a project.
-            </h1>
           </div>
         </>
       ) : (
         <div className="relative">
-          <div className="w-full bg-neutral-100 px-2 py-1 border-b">
-            <TopMenuTabs
-              value={tab}
-              handleTabChange={handleTabChange}
-              setOpenCodeEditor={setOpenCodeEditor}
-            />
-          </div>
-          <div className="bg-neutral-50 py-2 border-b border-t-0">
-            {renderTab()}
-          </div>
-          <div className="w-full my-1">
-            <div className="w-full bg-neutral-200 p-1">
-              <FileWorkspaceTab />
+          <div className="sticky top-10 z-[500] bg-neutral-50">
+            <div className="w-full bg-neutral-100 px-2 py-1 border-b">
+              <TopMenuTabs
+                value={tab}
+                handleTabChange={handleTabChange}
+                setOpenCodeEditor={setOpenCodeEditor}
+              />
+            </div>
+            <div className="bg-neutral-50 py-2 border-b border-t-0">
+              {renderTab()}
+            </div>
+            <div className="w-full my-1">
+              <div className="w-full bg-neutral-200 p-1">
+                <FileWorkspaceTab />
+              </div>
             </div>
           </div>
           <div className="relative grid grid-cols-12 gap-x-2 px-2 pb-2 h-[calc(100vh-12rem)]">
@@ -238,7 +233,7 @@ const CadEditor = () => {
                   )}
                 </button>
               </div>
-              <div className="relative w-full h-full flex items-center justify-center">
+              <div className="relative w-full h-full flex items-center justify-center bg-neutral-100">
                 <div
                   id="main-canvas"
                   className="relative"

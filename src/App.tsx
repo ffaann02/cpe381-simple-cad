@@ -13,7 +13,7 @@ function App() {
       <TabProvider>
         <div>
           <Navbar />
-          <main>
+          <main className="mb-6 pt-10">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/editor" element={<CadEditor />} />
@@ -21,7 +21,7 @@ function App() {
               <Route path="/docs" element={<Docs />} />
             </Routes>
           </main>
-          {/* <Footer /> */}
+          <Footer />
         </div>
       </TabProvider>
     </Router>

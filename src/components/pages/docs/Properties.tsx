@@ -2,19 +2,41 @@ import { LuTableProperties } from "react-icons/lu";
 import { TbLine, TbTopologyRing } from "react-icons/tb";
 import { PiBezierCurveDuotone } from "react-icons/pi";
 import { LuBringToFront } from "react-icons/lu";
+import React, { useRef, useState } from 'react';
 
 const Properties = () => {
+  const [activeSection, setActiveSection] = useState<
+    "properties" | "position" | "radius" | "color" | "transform" | "layer"
+  >("properties");
+
+  const PropertiesRef = useRef<HTMLDivElement>(null);
+  const PositionRef = useRef<HTMLDivElement>(null);
+  const RadiusRef = useRef<HTMLDivElement>(null);
+  const ColorRef = useRef<HTMLDivElement>(null);
+  const TransformRef = useRef<HTMLDivElement>(null);
+  const LayerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToHeading = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    section: typeof activeSection
+  ) => {
+    if (ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveSection(section);
+    }
+  };
+
   return (
-    <div className="p-4 w-full h-full min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <div className="grid grid-cols-7 gap-4 w-full h-full min-h-screen">
+      <div className="col-span-4 col-start-2">
         <div className="flex flex-col gap-4 h-auto">
           <div>
-            <p className="text-3xl font-bold">Properties</p>
+            <p ref={PropertiesRef} className="text-3xl font-bold">Properties</p>
             <p className="text-lg">The Properties panel provides precise control over shape attributes and transformations. Each shape has its own set of properties that can be adjusted to customize its appearance and behavior.</p>
           </div>
 
           {/* Position Card */}
-          <div className="p-4 rounded-lg shadow-md">
+          <div ref={PositionRef} className="p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Position</h3>
             <p className="text-sm text-gray-600 mb-4">
               Control the position of shapes by editing their points and coordinates.
@@ -42,13 +64,13 @@ const Properties = () => {
           </div>
 
           {/* Radius Card */}
-          <div className="p-4 rounded-lg shadow-md">
+          <div ref={RadiusRef} className="p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Radius</h3>
             <p className="text-sm text-gray-600 mb-4">
               Control the size of circles by adjusting their radius.
             </p>
             <div className="flex items-center gap-2">
-            <img src="\public\doc\properties\radius.png" alt="Position before" className="border" />
+              <img src="\public\doc\properties\radius.png" alt="Position before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Radius Controls</h4>
@@ -69,7 +91,7 @@ const Properties = () => {
           </div>
 
           {/* Color Card */}
-          <div className="p-4 rounded-lg shadow-md">
+          <div ref={ColorRef} className="p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Color</h3>
             <p className="text-sm text-gray-600 mb-4">
               Customize the appearance of shapes by editing border and background colors.
@@ -84,8 +106,8 @@ const Properties = () => {
                 <li>Default: Black (#000000)</li>
               </ul>
               <div className="flex items-center gap-2 mt-4">
-              <img src="\public\doc\properties\bg-color.png" alt="Color before" className="border" />
-            </div>
+                <img src="\public\doc\properties\bg-color.png" alt="Color before" className="border" />
+              </div>
               <h4 className="font-medium mt-4 mb-2">Background Color</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
                 <li>Click color picker to select fill color</li>
@@ -95,7 +117,7 @@ const Properties = () => {
           </div>
 
           {/* Transform Card */}
-          <div className="p-4 rounded-lg shadow-md">
+          <div ref={TransformRef} className="p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Transform</h3>
             <p className="text-sm text-gray-600 mb-4">
               Modify shapes with rotation and flip operations.
@@ -105,7 +127,7 @@ const Properties = () => {
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Rotation</h4>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2 ">
+              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
                 <li>Edit angle: -360° to 360°</li>
                 <li>Set rotation point (X, Y)</li>
                 <li>Default angle: 90°</li>
@@ -123,7 +145,7 @@ const Properties = () => {
           </div>
 
           {/* Layer Card */}
-          <div className="p-4 rounded-lg shadow-md">
+          <div ref={LayerRef} className="p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Layer</h3>
             <p className="text-sm text-gray-600 mb-4">
               Manage layers and their properties.
@@ -138,8 +160,8 @@ const Properties = () => {
                 <li>View layer properties</li>
               </ul>
               <div className="flex items-center gap-2 mt-4">
-              <img src="\public\doc\properties\visual.png" alt="Layer before" className="border" />
-            </div>
+                <img src="\public\doc\properties\visual.png" alt="Layer before" className="border" />
+              </div>
               <h4 className="font-medium mt-4 mb-2">Layer Visibility</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
                 <li>Toggle layer visibility</li>
@@ -148,6 +170,76 @@ const Properties = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Sidebar Navigation */}
+      <div className="flex flex-col sticky top-8 h-fit col-span-2 col-start-7">
+        <button
+          onClick={() => scrollToHeading(PropertiesRef, "properties")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "properties"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          Properties
+        </button>
+        <button
+          onClick={() => scrollToHeading(PositionRef, "position")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "position"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          - Position
+        </button>
+        <button
+          onClick={() => scrollToHeading(RadiusRef, "radius")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "radius"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          - Radius
+        </button>
+        <button
+          onClick={() => scrollToHeading(ColorRef, "color")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "color"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          - Color
+        </button>
+        <button
+          onClick={() => scrollToHeading(TransformRef, "transform")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "transform"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          - Transform
+        </button>
+        <button
+          onClick={() => scrollToHeading(LayerRef, "layer")}
+          className={`flex items-center min-h-[44px] p-2 text-lg font-semibold transition-all
+              ${
+                activeSection === "layer"
+                  ? "border-l-4 border-blue-400 text-blue-500 bg-blue-50"
+                  : "border-l-1 border-neutral-400 text-neutral-600 bg-transparent"
+              }`}
+        >
+          - Layer
+        </button>
       </div>
     </div>
   );

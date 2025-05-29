@@ -1,6 +1,6 @@
 // hooks/useFlip.ts
 import { useState, useCallback } from "react";
-import { Point } from "@/interface/shape";
+import { Point, Polygon } from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 import { flipPoint } from "@/utils/transform";
@@ -9,7 +9,7 @@ import { getShapeCenter } from "@/utils/position";
 interface ShapeToFlip {
   layerId: string | null;
   index: number | null;
-  type: "line" | "circle" | "ellipse" | "curve" | null;
+  type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
 }
 
 export const useFlip = () => {
@@ -17,22 +17,33 @@ export const useFlip = () => {
   const [modalPosition, setModalPosition] = useState<Point | null>(null);
   const [shapeToFlip, setShapeToFlip] = useState<ShapeToFlip | null>(null);
 
-  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, layers, setLayers, setSelectedLayerId, setLog } = useTab();
+  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, polygons, setPolygons, layers, setLayers, setSelectedLayerId, setLog } = useTab();
 
   const handleFlipClick = useCallback(
     (x: number, y: number) => {
-      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
       if (clickedShape.layerId) {
-        setFlipModalVisible(true);
-        setModalPosition({ x, y });
-        setShapeToFlip(clickedShape);
+        if (clickedShape.index !== null && clickedShape.type !== null) {
+          setFlipModalVisible(true);
+          setModalPosition({ x, y });
+          setShapeToFlip(clickedShape);
 
-        const updatedLayers = layers.map((layer) => ({
-          ...layer,
-          is_selected: layer.id === clickedShape.layerId,
-        }));
-        setLayers(updatedLayers);
-        setSelectedLayerId(clickedShape.layerId);
+          const updatedLayers = layers.map((layer) => ({
+            ...layer,
+            is_selected: layer.id === clickedShape.layerId,
+          }));
+          setLayers(updatedLayers);
+          setSelectedLayerId(clickedShape.layerId);
+        } else {
+          const updatedLayers = layers.map((layer) => ({
+            ...layer,
+            is_selected: false,
+          }));
+          setLayers(updatedLayers);
+          setSelectedLayerId(null);
+          setFlipModalVisible(false);
+          setShapeToFlip(null);
+        }
       } else {
         const updatedLayers = layers.map((layer) => ({
           ...layer,
@@ -40,9 +51,11 @@ export const useFlip = () => {
         }));
         setLayers(updatedLayers);
         setSelectedLayerId(null);
+        setFlipModalVisible(false);
+        setShapeToFlip(null);
       }
     },
-    [lines, circles, ellipses, curves, layers, setLayers, setSelectedLayerId]
+    [lines, circles, ellipses, curves, polygons, layers, setLayers, setSelectedLayerId]
   );
 
   const flipShape = useCallback(
@@ -50,6 +63,21 @@ export const useFlip = () => {
       if (!shapeToFlip) return;
 
       const { layerId, index, type } = shapeToFlip;
+      const shapeObject = (() => {
+        switch (type) {
+          case "line": return lines[index!];
+          case "circle": return circles[index!];
+          case "ellipse": return ellipses[index!];
+          case "curve": return curves[index!];
+          case "polygon": return polygons[index!];
+          default: return undefined;
+        }
+      })();
+
+      if (!shapeObject) return;
+
+      const shapeCenter = getShapeCenter(shapeObject as any, type!);
+
       switch (type) {
         case "line":
           setLines((prevLines) =>
@@ -57,8 +85,8 @@ export const useFlip = () => {
               i === index && line.layerId === layerId
                 ? {
                     ...line,
-                    start: flipPoint(line.start, direction, getShapeCenter(line, "line")),
-                    end: flipPoint(line.end, direction, getShapeCenter(line, "line")),
+                    start: flipPoint(line.start, direction, shapeCenter),
+                    end: flipPoint(line.end, direction, shapeCenter),
                   }
                 : line
             )
@@ -73,7 +101,6 @@ export const useFlip = () => {
           ]);
           break;
         case "circle":
-          // Circles don't change visually when flipped
           break;
         case "ellipse":
           setEllipses((prevEllipses) =>
@@ -81,7 +108,7 @@ export const useFlip = () => {
               i === index && ellipse.layerId === layerId
                 ? {
                     ...ellipse,
-                    center: flipPoint(ellipse.center, direction, getShapeCenter(ellipse, "ellipse")),
+                    center: flipPoint(ellipse.center, direction, shapeCenter),
                   }
                 : ellipse
             )
@@ -101,10 +128,10 @@ export const useFlip = () => {
               i === index && curve.layerId === layerId
                 ? {
                     ...curve,
-                    p0: flipPoint(curve.p0, direction, getShapeCenter(curve, "curve")),
-                    p1: flipPoint(curve.p1, direction, getShapeCenter(curve, "curve")),
-                    p2: flipPoint(curve.p2, direction, getShapeCenter(curve, "curve")),
-                    p3: flipPoint(curve.p3, direction, getShapeCenter(curve, "curve")),
+                    p0: flipPoint(curve.p0, direction, shapeCenter),
+                    p1: flipPoint(curve.p1, direction, shapeCenter),
+                    p2: flipPoint(curve.p2, direction, shapeCenter),
+                    p3: flipPoint(curve.p3, direction, shapeCenter),
                   }
                 : curve
             )
@@ -118,6 +145,26 @@ export const useFlip = () => {
             },
           ]);
           break;
+        case "polygon":
+          setPolygons((prevPolygons) =>
+            prevPolygons.map((polygon, i) =>
+              i === index && polygon.layerId === layerId
+                ? {
+                    ...polygon,
+                    points: polygon.points.map(point => flipPoint(point, direction, shapeCenter))
+                  }
+                : polygon
+            )
+          );
+          setLog((prev) => [
+            ...prev,
+            {
+              type: "info",
+              message: `Polygon ${index} flipped ${direction}`,
+              timestamp: Date.now(),
+            },
+          ]);
+          break;
         default:
           break;
       }
@@ -125,7 +172,7 @@ export const useFlip = () => {
       setFlipModalVisible(false);
       setShapeToFlip(null);
     },
-    [shapeToFlip, setLines, setCircles, setEllipses, setCurves, setLog]
+    [shapeToFlip, setLines, setCircles, setEllipses, setCurves, setPolygons, setLog]
   );
 
   return { flipModalVisible, setFlipModalVisible, modalPosition, shapeToFlip, handleFlipClick, flipShape };

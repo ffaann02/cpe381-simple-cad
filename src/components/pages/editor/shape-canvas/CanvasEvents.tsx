@@ -16,17 +16,18 @@ interface CanvasEventsProps {
   selectedShape: {
     layerId: string | null;
     index: number | null;
-    type: "line" | "circle" | "ellipse" | "curve" | null;
+    type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
     offset: Point;
   } | null;
   setSelectedShape: React.Dispatch<
     React.SetStateAction<{
       layerId: string | null;
       index: number | null;
-      type: "line" | "circle" | "ellipse" | "curve" | null;
+      type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
       offset: Point;
     } | null>
   >;
+  currentProject: string;
 }
 
 const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
@@ -51,25 +52,34 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
     modalPosition,
     shapeToFlip,
     flipShape,
-    willingToDrawPolygon,
-    setWillingToDrawPolygon,
-  } = useCanvasEvents(props);
+  } = useCanvasEvents({ ...props, currentProject: props.currentProject });
 
-  const { points, polygonCornerNumber, setPolygonCornerNumber, tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY } = useTab();
+  const { points, polygonCornerNumber, setPolygonCornerNumber, tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY, currentProject } = useTab();
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (tool === Tools.Zoom && e.shiftKey) {
-      e.preventDefault();
       const rect = e.currentTarget.getBoundingClientRect();
+      // Get mouse position relative to the canvas element
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
+
       const oldZoom = zoomLevel;
+      // Ensure newZoom doesn't go below 1.0
       const newZoom = Math.max(1.0, Math.min(10, zoomLevel + (e.deltaY < 0 ? 0.1 : -0.1)));
+      
       if (newZoom !== oldZoom) {
-        // Adjust offset so the point under the mouse stays fixed
-        const scale = newZoom / oldZoom;
-        setZoomOffsetX(mouseX - scale * (mouseX - zoomOffsetX));
-        setZoomOffsetY(mouseY - scale * (mouseY - zoomOffsetY));
+        // If zooming out to the original level, reset offsets to 0
+        if (newZoom === 1.0) {
+          setZoomOffsetX(0);
+          setZoomOffsetY(0);
+        } else {
+          // Calculate the scale factor
+          const scale = newZoom / oldZoom;
+          
+          // Calculate new offsets to keep the point under the mouse fixed
+          setZoomOffsetX(mouseX - scale * (mouseX - zoomOffsetX));
+          setZoomOffsetY(mouseY - scale * (mouseY - zoomOffsetY));
+        }
         setZoomLevel(newZoom);
       }
     }
@@ -107,14 +117,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
             handleRotateShape={handleRotateShape}
             setRotatePopoverOpen={setRotatePopoverOpen}
             setRotatingShape={setRotatingShape}
-          />
-        )}
-        {willingToDrawPolygon && points.length > 0 && (
-          <DrawPolygonModal
-            points={points}
-            polygonCornerNumber={polygonCornerNumber}
-            setPolygonCornerNumber={setPolygonCornerNumber}
-            setWillingToDrawPolygon={setWillingToDrawPolygon}
           />
         )}
       </div>

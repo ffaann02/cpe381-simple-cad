@@ -90,6 +90,8 @@ interface TabContextType {
   setZoomOffsetX: (x: number) => void;
   zoomOffsetY: number;
   setZoomOffsetY: (y: number) => void;
+  currentColor: string;
+  setCurrentColor: (color: string) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -131,6 +133,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [zoomOffsetX, setZoomOffsetX] = useState<number>(0);
   const [zoomOffsetY, setZoomOffsetY] = useState<number>(0);
+  const [currentColor, setCurrentColor] = useState<string>("#000000");
 
   const history = useRef<HistoryState[]>([]);
   const currentIndex = useRef<number>(-1);
@@ -498,6 +501,8 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setZoomOffsetX,
     zoomOffsetY,
     setZoomOffsetY,
+    currentColor,
+    setCurrentColor,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

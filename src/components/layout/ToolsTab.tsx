@@ -36,8 +36,9 @@ const shapeButtons = [
 ];
 
 const ToolsTab = () => {
-  const { tool, setTool, shape, setShape, handleUndo, handleRedo } = useTab();
+  const { tool, setTool, shape, setShape, handleUndo, handleRedo, currentColor, setCurrentColor, polygonCornerNumber, setPolygonCornerNumber } = useTab();
   const [isPopoverVisible, setIsPopoverVisible] = useState<boolean>(false);
+  const [isColorPopoverVisible, setIsColorPopoverVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (tool !== Tools.Draw) {
@@ -52,7 +53,6 @@ const ToolsTab = () => {
 
   const handleShapeSelect = (newShape: ShapeMode) => {
     setShape(newShape);
-    setIsPopoverVisible(false);
   };
 
   const renderShapeButtons = () => (
@@ -71,6 +71,23 @@ const ToolsTab = () => {
           <span className="text-xs text-slate-600">{s.label}</span>
         </button>
       ))}
+      {/* Polygon corners slider shown only if Polygon is selected */}
+      {shape === ShapeMode.Polygon && (
+        <div className="mt-2">
+          <p className="text-xs font-medium text-neutral-700 mb-2">Number of Corners</p>
+          <div className="flex items-center space-x-2">
+            <input
+              type="range"
+              min="3"
+              max="16"
+              value={polygonCornerNumber}
+              onChange={(e) => setPolygonCornerNumber(Number(e.target.value))}
+              className="w-24"
+            />
+            <span className="text-sm text-neutral-600">{polygonCornerNumber}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -78,6 +95,17 @@ const ToolsTab = () => {
     <div className="flex flex-col space-y-2">
       <p className="text-sm font-medium text-neutral-700">Select Shape</p>
       {renderShapeButtons()}
+    </div>
+  );
+
+  const colorPickerContent = (
+    <div className="p-2">
+      <input
+        type="color"
+        value={currentColor}
+        className="w-32 h-8 cursor-pointer"
+        onChange={(e) => setCurrentColor(e.target.value)}
+      />
     </div>
   );
 
@@ -111,7 +139,18 @@ const ToolsTab = () => {
       label: "Color",
       icon: <FaFillDrip className="text-2xl text-neutral-600" />,
       type: Tools.Color,
-      onClick: () => setTool(Tools.Color),
+      isPopover: true,
+      popoverContent: colorPickerContent,
+      onClick: () => {
+        setTool(Tools.Color);
+        setIsColorPopoverVisible(true);
+      },
+      extraContent: (
+        <div 
+          className="w-full h-1 mt-1 rounded-sm" 
+          style={{ backgroundColor: currentColor }}
+        />
+      ),
     },
     {
       label: "Zoom",
@@ -141,32 +180,52 @@ const ToolsTab = () => {
           const btnElement = (
             <button
               key={button.type}
-              className={`flex items-center space-x-1 px-1.5 py-1 rounded-sm transition ${
+              className={`flex flex-col items-center space-x-1 px-1.5 py-1 rounded-sm transition ${
                 tool === button.type
                   ? "bg-neutral-200 border border-neutral-400"
                   : "bg-neutral-100 border border-neutral-100 hover:bg-neutral-300"
               }`}
               onClick={button.onClick}
             >
-              {button.icon}
-              <p className="text-sm text-neutral-600">{button.label}</p>
+              <div className="flex items-center">
+                {button.icon}
+                <p className="text-sm text-neutral-600 ml-1">{button.label}</p>
+              </div>
+              {button.extraContent}
             </button>
           );
 
-          return button.isPopover ? (
-            <Popover
-              key={button.type}
-              content={popoverContent}
-              trigger="click"
-              placement="rightTop"
-              open={isPopoverVisible}
-              onOpenChange={(open) => setIsPopoverVisible(open)}
-            >
-              {btnElement}
-            </Popover>
-          ) : (
-            btnElement
-          );
+          if (button.type === Tools.Draw) {
+            return (
+              <Popover
+                key={button.type}
+                content={popoverContent}
+                trigger="click"
+                placement="rightTop"
+                open={isPopoverVisible}
+                onOpenChange={(open) => setIsPopoverVisible(open)}
+              >
+                {btnElement}
+              </Popover>
+            );
+          }
+
+          if (button.type === Tools.Color) {
+            return (
+              <Popover
+                key={button.type}
+                content={button.popoverContent}
+                trigger="click"
+                placement="bottom"
+                open={isColorPopoverVisible}
+                onOpenChange={(open) => setIsColorPopoverVisible(open)}
+              >
+                {btnElement}
+              </Popover>
+            );
+          }
+
+          return btnElement;
         })}
       </div>
     </div>

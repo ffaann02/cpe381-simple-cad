@@ -29,9 +29,13 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
   const [selectedShape, setSelectedShape] = useState<{
     layerId: string | null;
     index: number | null;
-    type: "line" | "circle" | "ellipse" | "curve" | null;
+    type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
     offset: Point;
   } | null>(null);
+
+  // Track previous isMoving state to detect movement completion
+  const prevIsMovingRef = useRef(isMoving);
+  const [movementComplete, setMovementComplete] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef?.current;
@@ -62,6 +66,21 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
     return () => canvas.removeEventListener("wheel", handleWheel);
   }, [tool, setZoomLevel, canvasRef]);
 
+  useEffect(() => {
+    // If we were moving and now we're not, movement is complete
+    if (prevIsMovingRef.current && !isMoving) {
+      setMovementComplete(true);
+    }
+    prevIsMovingRef.current = isMoving;
+  }, [isMoving]);
+
+  // Reset movement complete flag after handling it
+  useEffect(() => {
+    if (movementComplete) {
+      setMovementComplete(false);
+    }
+  }, [movementComplete]);
+
   const redraw = () => {
     // Trigger the re-render of CanvasDrawing by updating a state, even a dummy one if needed.
     // For simplicity, we can rely on the states that CanvasDrawing already depends on.
@@ -91,11 +110,14 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
         setIsMoving={setIsMoving}
         selectedShape={selectedShape}
         setSelectedShape={setSelectedShape}
+        currentProject=""
       />
       <CanvasDrawing
         canvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
         mousePos={mousePos}
         importTimestamp={importTimestamp}
+        selectedShape={selectedShape}
+        onMovementComplete={movementComplete ? () => setMovementComplete(false) : undefined}
       />
     </div>
   );

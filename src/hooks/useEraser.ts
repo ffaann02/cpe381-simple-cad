@@ -1,6 +1,6 @@
 // hooks/useEraser.ts
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Point } from "@/interface/shape";
+import { Point, Polygon } from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 
@@ -22,7 +22,7 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
   const [erasingModalVisible, setErasingModalVisible] = useState<boolean>(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, layers, setLayers, setSelectedLayerId, setLog } = useTab();
+  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, polygons, setPolygons, layers, setLayers, setSelectedLayerId, setLog } = useTab();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,7 +43,7 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
 
   const handleEraserAction = useCallback(
     (x: number, y: number) => {
-      const foundShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+      const foundShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
 
       if (foundShape.layerId) {
         if (!erasingShape || erasingShape.layerId !== foundShape.layerId) {
@@ -60,6 +60,9 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
               break;
             case "curve":
               shapePosition = curves[foundShape.index!]?.p0 || { x: x, y: y };
+              break;
+            case "polygon":
+              shapePosition = polygons[foundShape.index!]?.points[0] || { x: x, y: y };
               break;
           }
 
@@ -78,7 +81,7 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
         setErasingShape(null);
       }
     },
-    [erasingShape, lines, circles, ellipses, curves, layers]
+    [erasingShape, lines, circles, ellipses, curves, polygons, layers]
   );
 
   const deleteShape = useCallback(
@@ -128,13 +131,24 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
             },
           ]);
           break;
+        case "polygon":
+          setPolygons((prevPolygons) => prevPolygons.filter((_, index) => index !== shapeToDelete.index));
+          setLog((prev) => [
+            ...prev,
+            {
+              type: "info",
+              message: `Polygon ${shapeToDelete.index} deleted`,
+              timestamp: Date.now(),
+            },
+          ]);
+          break;
       }
       setLayers(layers.filter((layer) => layer.id !== shapeToDelete.layerId));
       setSelectedLayerId(null);
       setErasingModalVisible(false);
       setErasingShape(null);
     },
-    [layers, setLines, setCircles, setEllipses, setCurves, setLayers, setSelectedLayerId, setLog]
+    [layers, setLines, setCircles, setEllipses, setCurves, setPolygons, setLayers, setSelectedLayerId, setLog]
   );
 
   useEffect(() => {
@@ -162,14 +176,23 @@ export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
       }
     };
 
+    const handleClick = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor(e.clientX - rect.left);
+      const y = Math.floor(e.clientY - rect.top);
+      handleEraserAction(x, y);
+    };
+
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mouseup", handleMouseUp);
     canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("click", handleClick);
 
     return () => {
       canvas.removeEventListener("mousedown", handleMouseDown);
       canvas.removeEventListener("mouseup", handleMouseUp);
       canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("click", handleClick);
     };
   }, [canvasRef, isErasing, handleEraserAction]);
 

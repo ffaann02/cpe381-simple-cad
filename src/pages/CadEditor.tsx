@@ -122,16 +122,16 @@ const CadEditor = () => {
     <>
       {projects.length <= 0 || !currentProject ? (
         <>
-          <div className="w-full mt-6 mb-2 max-w-5xl mx-auto text-neutral-600">
+          <div className="w-full mt-6 mb-2 max-w-5xl mx-auto text-neutral-500 hover:text-neutral-600">
             <Link to="/" className="underline mb-4">
               <FaChevronLeft className="inline mr-1" />
               Back to Home
             </Link>
           </div>
-          <div className="flex flex-col items-center justify-center max-w-5xl mx-auto h-[90vh] border rounded-xl mb-4 shadow-md border-neutral-100">
+          <div className="flex flex-col items-center justify-center max-w-5xl mx-auto h-[85vh] border rounded-xl mb-4 shadow-md border-neutral-100">
             <img
-              src="https://png.pngtree.com/png-vector/20220902/ourmid/pngtree-text-effect-for-logo-word-png-image_236809.png"
-              className="bg-red-200 h-82 mb-16"
+              src="/logo_typo.svg"
+              className="h-82 mb-24"
             />
             <div className="flex space-x-4 mt-4">
               <button
@@ -183,7 +183,7 @@ const CadEditor = () => {
           </div>
           <div className="relative grid grid-cols-12 gap-x-2 px-2 pb-2 h-[calc(100vh-12rem)]">
             <ToolsTab />
-            <div className="relative bg-neutral-100 border rounded-md col-span-10 flex items-center justify-center">
+            <div className="relative max-h-screen border rounded-md col-span-10 flex items-center justify-center overflow-hidden">
               <div className="absolute grid grid-rows-2 top-2 right-2 z-10 gap-2">
                 <button
                   className="bg-neutral-200 cursor-pointer p-1 rounded-md hover:bg-neutral-300"
@@ -214,90 +214,93 @@ const CadEditor = () => {
                   )}
                 </button>
               </div>
-              <div
-                id="canvas"
-                style={{
-                  width: `${canvasSize.width}px`,
-                  height: `${canvasSize.height}px`,
-                  backgroundColor: canvasSize.backgroundColor,
-                  border: "1px solid #ccc",
-                  position: "relative",
-                }}
-              >
-                {showGrid && (
-                  <svg
-                    width={canvasSize.width}
-                    height={canvasSize.height}
-                    style={{
-                      position: "absolute",
-                      zIndex: 20,
-                      top: 0,
-                      left: 0,
-                      pointerEvents: "none",
-                      opacity: gridOpacity,
-                    }}
-                  >
-                    {/* Vertical Lines */}
-                    {[...Array(Math.floor(canvasSize.width / 20))].map(
-                      (_, i) => (
-                        <line
-                          key={`v-${i}`}
-                          x1={i * 20}
-                          y1={0}
-                          x2={i * 20}
-                          y2={canvasSize.height}
-                          stroke="red"
-                          strokeWidth="0.5"
-                        />
-                      )
-                    )}
-                    {/* Horizontal Lines */}
-                    {[...Array(Math.floor(canvasSize.height / 20))].map(
-                      (_, i) => (
-                        <line
-                          key={`h-${i}`}
-                          x1={0}
-                          y1={i * 20}
-                          x2={canvasSize.width}
-                          y2={i * 20}
-                          stroke="red"
-                          strokeWidth="0.5"
-                        />
-                      )
-                    )}
-                    {/* Scale Text */}
-                    {[...Array(Math.floor(canvasSize.width / 100))].map(
-                      (_, i) => (
-                        <text
-                          key={`x-tick-${i}`}
-                          x={i * 100 + 2}
-                          y={10}
-                          fontSize="10"
-                          fill="red"
-                        >
-                          {i * 100}
-                        </text>
-                      )
-                    )}
-                    {[...Array(Math.floor(canvasSize.height / 100))].map(
-                      (_, i) => (
-                        <text
-                          key={`y-tick-${i}`}
-                          x={2}
-                          y={i * 100 + 10}
-                          fontSize="10"
-                          fill="red"
-                        >
-                          {i * 100}
-                        </text>
-                      )
-                    )}
-                  </svg>
-                )}
-                <Canvas />
+              <div className="relative w-full h-full flex items-center justify-center">
+                <div
+                  id="main-canvas"
+                  className="relative"
+                  style={{
+                    width: `${canvasSize.width}px`,
+                    height: `${canvasSize.height}px`,
+                    backgroundColor: canvasSize.backgroundColor,
+                    border: "1px solid #ccc",
+                    transformOrigin: "center center",
+                  }}
+                >
+                  {showGrid && (
+                    <svg
+                      width={canvasSize.width}
+                      height={canvasSize.height}
+                      style={{
+                        position: "absolute",
+                        zIndex: 20,
+                        top: 0,
+                        left: 0,
+                        pointerEvents: "none",
+                        opacity: gridOpacity,
+                      }}
+                    >
+                      {/* Vertical Lines */}
+                      {[...Array(Math.floor(canvasSize.width / 20))].map(
+                        (_, i) => (
+                          <line
+                            key={`v-${i}`}
+                            x1={i * 20}
+                            y1={0}
+                            x2={i * 20}
+                            y2={canvasSize.height}
+                            stroke="red"
+                            strokeWidth="0.5"
+                          />
+                        )
+                      )}
+                      {/* Horizontal Lines */}
+                      {[...Array(Math.floor(canvasSize.height / 20))].map(
+                        (_, i) => (
+                          <line
+                            key={`h-${i}`}
+                            x1={0}
+                            y1={i * 20}
+                            x2={canvasSize.width}
+                            y2={i * 20}
+                            stroke="red"
+                            strokeWidth="0.5"
+                          />
+                        )
+                      )}
+                      {/* Scale Text */}
+                      {[...Array(Math.floor(canvasSize.width / 100))].map(
+                        (_, i) => (
+                          <text
+                            key={`x-tick-${i}`}
+                            x={i * 100 + 2}
+                            y={10}
+                            fontSize="10"
+                            fill="red"
+                          >
+                            {i * 100}
+                          </text>
+                        )
+                      )}
+                      {[...Array(Math.floor(canvasSize.height / 100))].map(
+                        (_, i) => (
+                          <text
+                            key={`y-tick-${i}`}
+                            x={2}
+                            y={i * 100 + 10}
+                            fontSize="10"
+                            fill="red"
+                          >
+                            {i * 100}
+                          </text>
+                        )
+                      )}
+                    </svg>
+                  )}
+                  <Canvas />
+                </div>
               </div>
             </div>
-            <div className="col-span-2 h-fit space-y-2">
+            <div className="col-span-2 h-[calc(100vh-12rem)] overflow-y-auto space-y-2">
               <PropertiesTab />
               <RightTab />
             </div>

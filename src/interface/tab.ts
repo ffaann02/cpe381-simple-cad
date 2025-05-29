@@ -19,4 +19,6 @@ export interface Layer{
   type?: ShapeMode;
   is_selected: boolean;
   is_visible: boolean;
+  borderColor?: string;
+  backgroundColor?: string;
 }

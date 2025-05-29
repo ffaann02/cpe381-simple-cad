@@ -1,22 +1,35 @@
-import { Circle, Curve, Ellipse, Line, Point } from "@/interface/shape";
+import { Circle, Curve, Ellipse, Line, Point, Polygon } from "@/interface/shape";
 
 export const getShapeCenter = (
-    shape: Line | Circle | Ellipse | Curve | undefined,
+    shape: Line | Circle | Ellipse | Curve | Polygon | undefined,
     type: string
   ): Point => {
     if (!shape) return { x: 0, y: 0 };
     switch (type) {
       case "line":
+        const lineShape = shape as Line;
         return {
-          x: (shape.start.x + shape.end.x) / 2,
-          y: (shape.start.y + shape.end.y) / 2,
+          x: (lineShape.start.x + lineShape.end.x) / 2,
+          y: (lineShape.start.y + lineShape.end.y) / 2,
         };
       case "circle":
-        return shape.center;
+        const circleShape = shape as Circle;
+        return circleShape.center;
       case "ellipse":
-        return shape.center;
+        const ellipseShape = shape as Ellipse;
+        return ellipseShape.center;
       case "curve":
-        return shape.p0; // Using p0 as an approximation of the center.  For more precise, calculate the bounding box.
+        const curveShape = shape as Curve;
+        return curveShape.p0;
+      case "polygon":
+        const polygonShape = shape as Polygon;
+        if (polygonShape.points.length === 0) return { x: 0, y: 0 };
+        const sumX = polygonShape.points.reduce((sum, point) => sum + point.x, 0);
+        const sumY = polygonShape.points.reduce((sum, point) => sum + point.y, 0);
+        return {
+          x: sumX / polygonShape.points.length,
+          y: sumY / polygonShape.points.length,
+        };
       default:
         return { x: 0, y: 0 };
     }

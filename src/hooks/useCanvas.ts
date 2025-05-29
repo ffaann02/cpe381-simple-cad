@@ -17,17 +17,18 @@ interface UseCanvasEventsProps {
   selectedShape: {
     layerId: string | null;
     index: number | null;
-    type: "line" | "circle" | "ellipse" | "curve" | null;
+    type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
     offset: Point;
   } | null;
   setSelectedShape: React.Dispatch<
     React.SetStateAction<{
       layerId: string | null;
       index: number | null;
-      type: "line" | "circle" | "ellipse" | "curve" | null;
+      type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
       offset: Point;
     } | null>
   >;
+  currentProject: string | null;
 }
 
 export const useCanvasEvents = ({
@@ -37,10 +38,11 @@ export const useCanvasEvents = ({
   setIsMoving,
   selectedShape,
   setSelectedShape,
+  currentProject,
 }: UseCanvasEventsProps) => {
   const { tool, shape, points, setPoints, setTool } = useTab();
 
-  const { handleDrawClick, willingToDrawPolygon, setWillingToDrawPolygon } = useDrawing({ points, setPoints, setMousePos });
+  const { handleDrawClick } = useDrawing({ points, setPoints, setMousePos });
   const { handleSelectClick, handleMoveClick, handleMoveMouseMove, highlightShape, cancelHighlightShape } = useSelectionAndMovement({
     isMoving,
     setIsMoving,
@@ -48,6 +50,7 @@ export const useCanvasEvents = ({
     setSelectedShape,
     setMousePos,
     canvasRef,
+    currentProject: currentProject || "",
   });
   const { isErasing, erasingShape, erasingModalVisible, setErasingModalVisible, deleteShape, popoverRef, handleEraserAction } = useEraser({
     canvasRef,
@@ -176,8 +179,6 @@ export const useCanvasEvents = ({
     setFlipModalVisible,
     modalPosition,
     shapeToFlip,
-    flipShape,
-    willingToDrawPolygon,
-    setWillingToDrawPolygon,
+    flipShape
   };
 };

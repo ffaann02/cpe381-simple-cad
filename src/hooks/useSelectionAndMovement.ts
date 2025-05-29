@@ -10,19 +10,20 @@ interface UseSelectionAndMovementProps {
   selectedShape: {
     layerId: string | null;
     index: number | null;
-    type: "line" | "circle" | "ellipse" | "curve" | null;
+    type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
     offset: Point;
   } | null;
   setSelectedShape: React.Dispatch<
     React.SetStateAction<{
       layerId: string | null;
       index: number | null;
-      type: "line" | "circle" | "ellipse" | "curve" | null;
+      type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
       offset: Point;
     } | null>
   >;
   setMousePos: React.Dispatch<React.SetStateAction<Point | null>>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
+  currentProject: string;
 }
 
 export const useSelectionAndMovement = ({
@@ -32,14 +33,15 @@ export const useSelectionAndMovement = ({
   setSelectedShape,
   setMousePos,
   canvasRef,
+  currentProject,
 }: UseSelectionAndMovementProps) => {
-  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, layers, setLayers, setSelectedLayerId, setLog } = useTab();
+  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, polygons, setPolygons, layers, setLayers, setSelectedLayerId, setLog } = useTab();
 
   const highlightShape = useCallback(
     (clickedShape: {
       layerId: string | null;
       index: number | null;
-      type: "line" | "circle" | "ellipse" | "curve" | null;
+      type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null;
     }) => {
       const updatedLayers = layers.map((layer) => ({
         ...layer,
@@ -62,24 +64,47 @@ export const useSelectionAndMovement = ({
 
   const handleSelectClick = useCallback(
     (x: number, y: number) => {
-      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
       if (clickedShape.layerId) {
         highlightShape(clickedShape);
+        setSelectedShape({
+          ...clickedShape,
+          offset: { x: 0, y: 0 }
+        });
       } else {
         cancelHighlightShape();
+        setSelectedShape(null);
       }
     },
-    [lines, circles, ellipses, curves, layers, highlightShape, cancelHighlightShape]
+    [lines, circles, ellipses, curves, polygons, layers, highlightShape, cancelHighlightShape, setSelectedShape]
   );
 
   const handleMoveClick = useCallback(
     (x: number, y: number) => {
-      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
       if (clickedShape.layerId) {
         if (isMoving) {
           cancelHighlightShape();
           setSelectedLayerId(null);
           setIsMoving(false);
+          setTimeout(() => {
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const thumbnail = canvas.toDataURL('image/png');
+              const stateToSave = {
+                lines,
+                circles,
+                curves,
+                ellipses,
+                polygons,
+                layers,
+                canvasSize: { width: canvas.width, height: canvas.height, backgroundColor: "#ffffff" },
+                lastSaved: new Date().toISOString(),
+                thumbnail,
+              };
+              localStorage.setItem(`cad_drawing_state_${currentProject}`, JSON.stringify(stateToSave));
+            }
+          }, 0);
         } else {
           setIsMoving(true);
           let shapePosition: Point = { x: 0, y: 0 };
@@ -96,6 +121,9 @@ export const useSelectionAndMovement = ({
             case "curve":
               shapePosition = curves[clickedShape.index!].p0;
               break;
+            case "polygon":
+              shapePosition = polygons[clickedShape.index!].points[0];
+              break;
           }
           highlightShape(clickedShape);
           setSelectedShape({
@@ -108,6 +136,7 @@ export const useSelectionAndMovement = ({
         }
       } else {
         cancelHighlightShape();
+        setSelectedShape(null);
       }
     },
     [
@@ -116,12 +145,15 @@ export const useSelectionAndMovement = ({
       circles,
       ellipses,
       curves,
+      polygons,
       layers,
       setIsMoving,
       highlightShape,
       setSelectedShape,
       setSelectedLayerId,
       cancelHighlightShape,
+      canvasRef,
+      currentProject,
     ]
   );
 
@@ -208,11 +240,34 @@ export const useSelectionAndMovement = ({
               },
             ]);
             break;
+          case "polygon":
+            const updatedPolygons = polygons.map((polygon, index) => {
+              if (index === selectedShape.index) {
+                const dx = newX - polygon.points[0].x;
+                const dy = newY - polygon.points[0].y;
+                const newPoints = polygon.points.map(point => ({
+                  x: point.x + dx,
+                  y: point.y + dy,
+                }));
+                return { ...polygon, points: newPoints };
+              }
+              return polygon;
+            });
+            setPolygons(updatedPolygons);
+            setLog((prev) => [
+              ...prev,
+              {
+                type: "info",
+                message: `Polygon ${selectedShape.index} moved to (${newX}, ${newY})`,
+                timestamp: Date.now(),
+              },
+            ]);
+            break;
         }
       } else {
         const canvas = canvasRef.current;
         if (canvas) {
-          const hoverInfo = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+          const hoverInfo = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
           if (hoverInfo.layerId) {
             canvas.style.cursor = "move";
           } else {
@@ -221,7 +276,7 @@ export const useSelectionAndMovement = ({
         }
       }
     },
-    [isMoving, selectedShape, lines, circles, ellipses, curves, layers, setLines, setCircles, setEllipses, setCurves, setLog, canvasRef]
+    [isMoving, selectedShape, lines, circles, ellipses, curves, polygons, layers, setLines, setCircles, setEllipses, setCurves, setPolygons, setLog, canvasRef]
   );
 
   return { handleSelectClick, handleMoveClick, handleMoveMouseMove, highlightShape, cancelHighlightShape };

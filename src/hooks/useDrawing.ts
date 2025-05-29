@@ -7,8 +7,6 @@ import { v4 as uuidv4 } from "uuid";
 import { useTab } from "@/context/AppContext";
 import { Tools } from "@/interface/tool";
 
-const drawColor = GlobalColor.DefaultDrawColor;
-
 interface UseDrawingProps {
   points: Point[];
   setPoints: React.Dispatch<React.SetStateAction<Point[]>>;
@@ -35,14 +33,13 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
     tool,
     setTool,
     saveState,
-    canvasSize
+    canvasSize,
+    currentColor
   } = useTab();
-  
-  const [willingToDrawPolygon, setWillingToDrawPolygon] = useState<boolean>(false);
 
   const handleDrawClick = useCallback(
     (x: number, y: number, shapeMode: ShapeMode) => {
-      const newPoints = [...points, { x, y, color: drawColor }];
+      const newPoints = [...points, { x, y, color: currentColor }];
       const newLayerId = uuidv4();
       let newLayer: Layer | null = null;
 
@@ -51,7 +48,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           start: newPoints[0],
           end: newPoints[1],
           layerId: newLayerId,
-          color: drawColor,
+          color: currentColor,
         };
         setLines([...lines, newLine]);
         setLog((prev) => [
@@ -80,7 +77,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           center: newPoints[0],
           radius: Math.sqrt(dx * dx + dy * dy),
           layerId: newLayerId,
-          borderColor: drawColor,
+          borderColor: currentColor,
         };
         setCircles([...circles, newCircle]);
         setLog((prev) => [
@@ -114,7 +111,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
             p2,
             p3,
             layerId: newLayerId,
-            color: drawColor,
+            color: currentColor,
           };
           setCurves([...curves, newCurve]);
           setLog((prev) => [
@@ -145,7 +142,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           rx: dx,
           ry: dy,
           layerId: newLayerId,
-          borderColor: drawColor,
+          borderColor: currentColor,
         };
         setEllipses([...ellipses, newEllipse]);
         setLog((prev) => [
@@ -169,9 +166,6 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
         setTimeout(saveState, 0);
       } else if (shapeMode === ShapeMode.Polygon) {
         setPoints(newPoints);
-        if (newPoints.length === 1) {
-          setWillingToDrawPolygon(true);
-        }
         if (newPoints.length === 2) {
           const center = newPoints[0];
           const radius = Math.sqrt(
@@ -189,7 +183,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           const newPolygon: Polygon = {
             points: polygonPoints,
             layerId: newLayerId,
-            borderColor: "black",
+            borderColor: currentColor,
             backgroundColor: "transparent",
           };
           setPolygons([...polygons, newPolygon]);
@@ -211,7 +205,6 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           setLayers([...layers, newLayer!]);
           setSelectedLayerId(newLayerId);
           setPoints([]);
-          setWillingToDrawPolygon(false);
           setTimeout(saveState, 0);
         }
       }
@@ -243,8 +236,9 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
       setLog,
       setMousePos,
       saveState,
+      currentColor,
     ]
   );
 
-  return { handleDrawClick, willingToDrawPolygon, setWillingToDrawPolygon };
+  return { handleDrawClick };
 };

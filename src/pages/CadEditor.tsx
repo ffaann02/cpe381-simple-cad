@@ -12,10 +12,11 @@ import { TbMagnet, TbMagnetOff } from "react-icons/tb";
 import ModalSwitcher from "@/components/layout/ModalSwitcher";
 import { Drawer, Upload } from "antd";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IoDocumentOutline } from "react-icons/io5";
 import { FiBox } from "react-icons/fi";
 import { UploadIcon } from "lucide-react";
+import { FaChevronLeft } from "react-icons/fa";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
@@ -42,7 +43,8 @@ const CadEditor = () => {
     projects,
     currentProject,
     handleImportFile,
-    setCurrentProject
+    setCurrentProject,
+    setProjects,
   } = useTab();
 
   const handleTabChange = (value: string) => {
@@ -79,6 +81,21 @@ const CadEditor = () => {
       // Remove .cad or .txt extension before setting as current project
       const projectName = file.name.replace(/\.(cad|txt)$/i, "");
       setCurrentProject(projectName);
+      setProjects((prev) => {
+        const existingProject = prev.find((p) => p.name === projectName);
+        if (existingProject) {
+          return prev; // Project already exists, no need to add again
+        }
+        return [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            name: projectName,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ];
+      });
       handleImportFile(file);
       console.log("File ready for import:", file);
       return false;
@@ -93,7 +110,11 @@ const CadEditor = () => {
   const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);
   if (!currentProject && projects.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center max-w-5xl mx-auto mt-16">
+      <div className="flex flex-col items-center justify-center max-w-5xl mx-auto mt-12">
+        <Link to="/" className="underline mb-4">
+          <FaChevronLeft className="inline mr-1" />
+          Back to Home
+        </Link>
         <img
           src="https://png.pngtree.com/png-vector/20220902/ourmid/pngtree-text-effect-for-logo-word-png-image_236809.png"
           className="bg-red-200 h-72"

@@ -315,7 +315,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         setEllipses(parsedState.ellipses || []);
         setPolygons(parsedState.polygons || []);
         setLayers(parsedState.layers || []);
-        setCanvasSize(parsedState.canvasSize || { width: 200, height: 600, backgroundColor: "#ffffff" });
+        setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
         // Set selectedLayerId to the first layer of the loaded project, or null if no layers
         setSelectedLayerId(parsedState.layers?.[0]?.id || null); // Make sure setSelectedLayerId is also from useTab
       } else {

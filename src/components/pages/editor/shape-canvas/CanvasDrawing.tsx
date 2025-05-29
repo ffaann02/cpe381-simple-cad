@@ -14,8 +14,10 @@ import {
 } from "@/utils/drawing";
 import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
+import { GlobalColor } from "@/interface/color";
 
-const previewLineColor = "#D4C9BE";
+const previewLineColor = GlobalColor.DraftDrawColor;
+const LOCAL_STORAGE_KEY = "cad_drawing_state";
 
 interface CanvasDrawingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;

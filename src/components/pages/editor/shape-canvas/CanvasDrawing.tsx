@@ -430,9 +430,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         getLocalStorageKey(currentProject),
         JSON.stringify(stateToSave)
       );
-      console.log(
-        `Canvas state and thumbnail saved for project: ${currentProject}`
-      );
     } catch (error) {
       console.error(
         `Failed to save canvas state for project ${currentProject}:`,
@@ -466,10 +463,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         getLocalStorageKey(currentProject)
       );
       const parsedState = savedState ? JSON.parse(savedState) : null;
-      console.log(
-        `Loaded canvas state for project ${currentProject}:`,
-        parsedState
-      );
 
       if (parsedState) {
         setLines(parsedState.lines || []);

@@ -1,4 +1,3 @@
-import { ThicknessLevel } from "./shape";
 
 export enum Tabs {
   File = "file",
@@ -23,5 +22,5 @@ export interface Layer {
   is_visible: boolean;
   borderColor?: string;
   backgroundColor?: string;
-  thickness?: number; // Thickness level from 1 to 10
+  thickness: number; // Thickness level from 1 to 10
 }

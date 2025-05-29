@@ -309,10 +309,9 @@ export const drawPolygon = (
 
 export const getShapeStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
   const isSelected = layer?.is_selected;
-  const stroke = layer?.borderColor || "black";
+  const stroke = isSelected ? SELECTION_COLOR : (layer?.borderColor || "black");
   const fill = layer?.backgroundColor || "";
-  // Use the layer's thickness if available, otherwise default to 1
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : (layer?.thickness || 1);
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -320,7 +319,7 @@ export const getCircleStyle = (layer: Layer | undefined): { stroke: string; fill
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -328,7 +327,7 @@ export const getEllipseStyle = (layer: Layer | undefined): { stroke: string; fil
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -336,7 +335,7 @@ export const getPolygonStyle = (layer: Layer | undefined): { stroke: string; fil
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 

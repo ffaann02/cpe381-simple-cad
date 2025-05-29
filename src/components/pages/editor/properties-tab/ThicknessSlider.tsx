@@ -14,7 +14,7 @@ const ThicknessSlider: React.FC<ThicknessSliderProps> = ({ layerId }) => {
   const handleThicknessChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newThickness = parseInt(e.target.value);
     if (layer) {
-      updateLayer(layerId, { ...layer, thickness: newThickness });
+      updateLayer(layerId, { thickness: newThickness });
     }
   };
 
@@ -28,6 +28,7 @@ const ThicknessSlider: React.FC<ThicknessSliderProps> = ({ layerId }) => {
           max="10"
           value={thickness}
           onChange={handleThicknessChange}
+          onInput={handleThicknessChange}
           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
         />
         <span className="text-sm text-gray-600 w-8">{thickness}</span>

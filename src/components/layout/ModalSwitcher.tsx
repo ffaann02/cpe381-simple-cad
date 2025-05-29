@@ -33,35 +33,41 @@ const generateCadText = (
   polygons: Polygon[],
   canvasWidth: number = 800,
   canvasHeight: number = 600,
-  canvasBackgroundColor: string = "#ffffff"
+  canvasBackgroundColor: string = "#ffffff",
+  layers: Layer[] = []
 ): string => {
   // First line with canvas width, height, and background color
   let cadText = `CANVAS,${canvasWidth},${canvasHeight},${canvasBackgroundColor}\n`;
 
-  // Add lines with their colors
+  // Add lines with their colors and thickness
   lines.forEach((line) => {
-    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${line.end.y},${line.color || "black"}\n`;
+    const layer = layers.find(l => l.id === line.layerId);
+    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${line.end.y},${line.color || "black"},${layer?.thickness || 1}\n`;
   });
 
-  // Add circles with their border and background colors
+  // Add circles with their border and background colors and thickness
   circles.forEach((circle) => {
-    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${circle.borderColor || "black"},${circle.backgroundColor || ""}\n`;
+    const layer = layers.find(l => l.id === circle.layerId);
+    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${circle.borderColor || "black"},${circle.backgroundColor || ""},${layer?.thickness || 1}\n`;
   });
 
-  // Add ellipses with their border and background colors
+  // Add ellipses with their border and background colors and thickness
   ellipses.forEach((ellipse) => {
-    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${ellipse.ry},${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
+    const layer = layers.find(l => l.id === ellipse.layerId);
+    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${ellipse.ry},${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""},${layer?.thickness || 1}\n`;
   });
 
-  // Add curves with their colors
+  // Add curves with their colors and thickness
   curves.forEach((curve) => {
-    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
+    const layer = layers.find(l => l.id === curve.layerId);
+    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"},${layer?.thickness || 1}\n`;
   });
 
-  // Add polygons with their points, border and background colors
+  // Add polygons with their points, border and background colors and thickness
   polygons.forEach((polygon) => {
+    const layer = layers.find(l => l.id === polygon.layerId);
     const points = polygon.points.map(p => `${p.x},${p.y}`).join(',');
-    cadText += `POLYGON,${points},${polygon.borderColor || "black"},${polygon.backgroundColor || ""}\n`;
+    cadText += `POLYGON,${points},${polygon.borderColor || "black"},${polygon.backgroundColor || ""},${layer?.thickness || 1}\n`;
   });
 
   return cadText;
@@ -201,7 +207,8 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         polygons,
         canvasSize.width,
         canvasSize.height,
-        canvasSize.backgroundColor
+        canvasSize.backgroundColor,
+        layers
       );
       const blob = new Blob([cadText], { type: "text/plain" });
       const url = URL.createObjectURL(blob);

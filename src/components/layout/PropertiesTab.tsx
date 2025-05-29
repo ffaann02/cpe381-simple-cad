@@ -27,7 +27,7 @@ const PropertiesTab: React.FC = () => {
   } = useTab();
 
   const [showRotationForm, setShowRotationForm] = useState(false);
-  const [rotationAngle, setRotationAngle] = useState<number>(90);
+  const [rotationAngle, setRotationAngle] = useState<string | number>("90");
   const [rotationCenter, setRotationCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isCenterManuallySet, setIsCenterManuallySet] = useState(false);
   const [flipDirection, setFlipDirection] = useState<"horizontal" | "vertical">("horizontal");
@@ -148,6 +148,7 @@ const PropertiesTab: React.FC = () => {
       // Get the shape and its center
       let shape;
       const center = rotationCenter;
+      const angle = typeof rotationAngle === 'string' ? parseFloat(rotationAngle) || 0 : rotationAngle;
 
       switch (shapeType) {
         case "line":
@@ -157,8 +158,8 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...l,
-                    start: rotatePoint(l.start, center, (rotationAngle * Math.PI) / 180),
-                    end: rotatePoint(l.end, center, (rotationAngle * Math.PI) / 180),
+                    start: rotatePoint(l.start, center, (angle * Math.PI) / 180),
+                    end: rotatePoint(l.end, center, (angle * Math.PI) / 180),
                   }
                 : l
             )
@@ -174,7 +175,7 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...e,
-                    center: rotatePoint(e.center, center, (rotationAngle * Math.PI) / 180),
+                    center: rotatePoint(e.center, center, (angle * Math.PI) / 180),
                   }
                 : e
             )
@@ -187,10 +188,10 @@ const PropertiesTab: React.FC = () => {
               i === shapeIndex
                 ? {
                     ...c,
-                    p0: rotatePoint(c.p0, center, (rotationAngle * Math.PI) / 180),
-                    p1: rotatePoint(c.p1, center, (rotationAngle * Math.PI) / 180),
-                    p2: rotatePoint(c.p2, center, (rotationAngle * Math.PI) / 180),
-                    p3: rotatePoint(c.p3, center, (rotationAngle * Math.PI) / 180),
+                    p0: rotatePoint(c.p0, center, (angle * Math.PI) / 180),
+                    p1: rotatePoint(c.p1, center, (angle * Math.PI) / 180),
+                    p2: rotatePoint(c.p2, center, (angle * Math.PI) / 180),
+                    p3: rotatePoint(c.p3, center, (angle * Math.PI) / 180),
                   }
                 : c
             )
@@ -202,7 +203,7 @@ const PropertiesTab: React.FC = () => {
         ...prev,
         {
           type: "info",
-          message: `${shapeType} ${shapeIndex} rotated by ${rotationAngle} degrees around center (${center.x}, ${center.y})`,
+          message: `${shapeType} ${shapeIndex} rotated by ${angle} degrees around center (${center.x}, ${center.y})`,
           timestamp: Date.now(),
         },
       ]);
@@ -728,9 +729,14 @@ const PropertiesTab: React.FC = () => {
                     <label className="text-sm text-gray-700">
                       Angle (degrees):
                       <input
-                        type="number"
+                        type="text"
                         value={rotationAngle}
-                        onChange={(e) => setRotationAngle(parseFloat(e.target.value))}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === '' || value === '-' || /^-?\d*$/.test(value)) {
+                            setRotationAngle(value);
+                          }
+                        }}
                         className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                       />
                     </label>

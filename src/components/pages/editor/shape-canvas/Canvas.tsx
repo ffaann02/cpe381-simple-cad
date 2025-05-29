@@ -16,7 +16,14 @@ import { Tools } from "@/interface/tool";
 interface CanvasProps {}
 
 const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
-  const { canvasSize, canvasRef, importTimestamp, tool } = useTab();
+  const {
+    canvasSize,
+    canvasRef,
+    importTimestamp,
+    tool,
+    zoomLevel,
+    setZoomLevel,
+  } = useTab();
   const [mousePos, setMousePos] = useState<Point | null>(null);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [selectedShape, setSelectedShape] = useState<{
@@ -35,6 +42,26 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
     }
   }, []);
 
+  // Add wheel event for zoom
+  useEffect(() => {
+    const canvas = canvasRef?.current;
+    if (!canvas) return;
+    const handleWheel = (e: WheelEvent) => {
+      console.log("test");
+      if (tool === Tools.Zoom && e.shiftKey) {
+        console.log("hello");
+        e.preventDefault();
+        const newZoom = Math.max(
+          0.1,
+          Math.min(10, zoomLevel + (e.deltaY < 0 ? 0.1 : -0.1))
+        );
+        setZoomLevel(newZoom);
+      }
+    };
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", handleWheel);
+  }, [tool, setZoomLevel, canvasRef]);
+
   const redraw = () => {
     // Trigger the re-render of CanvasDrawing by updating a state, even a dummy one if needed.
     // For simplicity, we can rely on the states that CanvasDrawing already depends on.
@@ -46,7 +73,10 @@ const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
   }));
 
   return (
-    <div className={`relative w-full h-full ${tool === Tools.Eraser && "cursor-eraser"}`}
+    <div
+      className={`relative w-full h-full ${
+        tool === Tools.Eraser && "cursor-eraser"
+      }`}
     >
       <canvas
         ref={canvasRef}

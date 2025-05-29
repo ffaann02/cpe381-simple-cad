@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Popover } from "antd";
-import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
+import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo, FaSearchPlus } from "react-icons/fa";
 import { LuMousePointer2 } from "react-icons/lu";
-import { PiFlipHorizontalFill } from "react-icons/pi";
-import { MdOutlineOpenWith, MdRotate90DegreesCcw } from "react-icons/md";
+import { MdOutlineOpenWith } from "react-icons/md";
 import { Tools } from "@/interface/tool";
 import { useTab } from "@/context/AppContext";
 import { ShapeMode } from "@/interface/shape";
@@ -37,7 +36,7 @@ const shapeButtons = [
 ];
 
 const ToolsTab = () => {
-  const { tool, setTool, shape, setShape } = useTab();
+  const { tool, setTool, shape, setShape, handleUndo, handleRedo } = useTab();
   const [isPopoverVisible, setIsPopoverVisible] = useState<boolean>(false);
 
   useEffect(() => {
@@ -103,18 +102,6 @@ const ToolsTab = () => {
       onClick: () => setTool(Tools.Move),
     },
     {
-      label: "Rotate",
-      icon: <MdRotate90DegreesCcw className="text-2xl text-neutral-600" />,
-      type: Tools.Rotate,
-      onClick: () => setTool(Tools.Rotate),
-    },
-    {
-      label: "Flip",
-      icon: <PiFlipHorizontalFill className="text-2xl text-neutral-600" />,
-      type: Tools.Flip,
-      onClick: () => setTool(Tools.Flip),
-    },
-    {
       label: "Eraser",
       icon: <FaEraser className="text-2xl text-neutral-600" />,
       type: Tools.Eraser,
@@ -127,16 +114,22 @@ const ToolsTab = () => {
       onClick: () => setTool(Tools.Color),
     },
     {
+      label: "Zoom",
+      icon: <FaSearchPlus className="text-2xl text-neutral-600" />,
+      type: Tools.Zoom,
+      onClick: () => setTool(Tools.Zoom),
+    },
+    {
       label: "Undo",
       icon: <FaUndo className="text-2xl text-neutral-600" />,
       type: Tools.Undo,
-      onClick: () => setTool(Tools.Undo),
+      onClick: handleUndo,
     },
     {
       label: "Redo",
       icon: <FaRedo className="text-2xl text-neutral-600" />,
       type: Tools.Redo,
-      onClick: () => setTool(Tools.Redo),
+      onClick: handleRedo,
     },
   ];
 

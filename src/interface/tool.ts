@@ -8,4 +8,5 @@ export enum Tools{
     Eraser = "eraser",
     Undo = "undo",
     Redo = "redo",
+    Zoom = "zoom",
 }

@@ -27,6 +27,7 @@ const PropertiesTab: React.FC = () => {
   } = useTab();
 
   const [showRotationForm, setShowRotationForm] = useState(false);
+  const [showFlipForm, setShowFlipForm] = useState(false);
   const [rotationAngle, setRotationAngle] = useState<string | number>("90");
   const [rotationCenter, setRotationCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isCenterManuallySet, setIsCenterManuallySet] = useState(false);
@@ -773,22 +774,35 @@ const PropertiesTab: React.FC = () => {
 
             {/* Flip Controls */}
             <div className="space-y-2">
-              <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => handleFlip("horizontal")}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
+                  onClick={() => setShowFlipForm(!showFlipForm)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
                 >
                   <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-                  <span className="text-sm text-neutral-600">Flip Horizontal</span>
-                </button>
-                <button
-                  onClick={() => handleFlip("vertical")}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
-                >
-                  <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
-                  <span className="text-sm text-neutral-600">Flip Vertical</span>
+                  <span className="text-sm text-neutral-600">Flip</span>
                 </button>
               </div>
+              {showFlipForm && (
+                <div className="space-y-2 pl-2">
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleFlip("horizontal")}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
+                    >
+                      <PiFlipHorizontalFill className="text-xl text-neutral-600" />
+                      <span className="text-sm text-neutral-600">Flip Horizontal</span>
+                    </button>
+                    <button
+                      onClick={() => handleFlip("vertical")}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
+                    >
+                      <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
+                      <span className="text-sm text-neutral-600">Flip Vertical</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

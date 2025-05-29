@@ -29,6 +29,12 @@ const PropertiesTab: React.FC = () => {
       l.layerId === selectedLayerId ? { ...l, [field]: value } : l
     );
     setLines(updatedLines);
+    
+    // Update layer color
+    const updatedLayers = layers.map((l) =>
+      l.id === selectedLayerId ? { ...l, borderColor: value } : l
+    );
+    setLayers(updatedLayers);
   };
 
   const handleLinePointChange = (
@@ -51,6 +57,16 @@ const PropertiesTab: React.FC = () => {
       c.layerId === selectedLayerId ? { ...c, [field]: value } : c
     );
     setCircles(updatedCircles);
+    
+    // Update layer color
+    const updatedLayers = layers.map((l) =>
+      l.id === selectedLayerId ? { 
+        ...l, 
+        ...(field === 'borderColor' ? { borderColor: value } : {}),
+        ...(field === 'backgroundColor' ? { backgroundColor: value } : {})
+      } : l
+    );
+    setLayers(updatedLayers);
   };
 
   const handleCircleCenterChange = (axis: "x" | "y", value: number) => {
@@ -69,6 +85,12 @@ const PropertiesTab: React.FC = () => {
       c.layerId === selectedLayerId ? { ...c, [field]: value } : c
     );
     setCurves(updatedCurves);
+    
+    // Update layer color
+    const updatedLayers = layers.map((l) =>
+      l.id === selectedLayerId ? { ...l, borderColor: value } : l
+    );
+    setLayers(updatedLayers);
   };
 
   const handleCurvePointChange = (
@@ -91,6 +113,16 @@ const PropertiesTab: React.FC = () => {
       e.layerId === selectedLayerId ? { ...e, [field]: value } : e
     );
     setEllipses(updatedEllipses);
+    
+    // Update layer color
+    const updatedLayers = layers.map((l) =>
+      l.id === selectedLayerId ? { 
+        ...l, 
+        ...(field === 'borderColor' ? { borderColor: value } : {}),
+        ...(field === 'backgroundColor' ? { backgroundColor: value } : {})
+      } : l
+    );
+    setLayers(updatedLayers);
   };
 
   const handleEllipseCenterChange = (axis: "x" | "y", value: number) => {

@@ -167,7 +167,17 @@ const PropertiesTab: React.FC = () => {
           );
           break;
         case "circle":
-          // Circles don't change visually when rotated
+          shape = circles[shapeIndex];
+          setCircles(prevCircles =>
+            prevCircles.map((c, i) =>
+              i === shapeIndex
+                ? {
+                    ...c,
+                    center: rotatePoint(c.center, center, (angle * Math.PI) / 180),
+                  }
+                : c
+            )
+          );
           break;
         case "ellipse":
           shape = ellipses[shapeIndex];

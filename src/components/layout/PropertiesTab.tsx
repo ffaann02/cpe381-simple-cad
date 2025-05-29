@@ -7,6 +7,8 @@ import { Tools } from "@/interface/tool";
 import { Layer } from "@/interface/tab";
 import { rotatePoint, flipPoint } from "@/utils/transform";
 import { getShapeCenter } from "@/utils/position";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
 
 const PropertiesTab: React.FC = () => {
   const {
@@ -720,107 +722,101 @@ const PropertiesTab: React.FC = () => {
       {(line || circle || curve || ellipse) && (
         <div className="mt-4 border-t pt-4">
           <h3 className="font-semibold mb-2">Transform</h3>
-          <div className="space-y-4">
-            {/* Rotation Controls */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowRotationForm(!showRotationForm)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
-                >
-                  <MdRotate90DegreesCcw className="text-xl text-neutral-600" />
-                  <span className="text-sm text-neutral-600">Rotate</span>
-                </button>
-                {showRotationForm && (
-                  <button
-                    onClick={handleRotate}
-                    className="px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
-                  >
-                    Apply
-                  </button>
-                )}
-              </div>
-              {showRotationForm && (
-                <div className="space-y-2 pl-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="text-sm text-gray-700">
-                      Angle (degrees):
-                      <input
-                        type="text"
-                        value={rotationAngle}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === '' || value === '-' || /^-?\d*$/.test(value)) {
-                            setRotationAngle(value);
-                          }
-                        }}
-                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </label>
+          <Tabs
+            defaultActiveKey="rotate"
+            items={[
+              {
+                key: "rotate",
+                label: (
+                  <div className="flex items-center gap-2">
+                    <MdRotate90DegreesCcw className="text-lg" />
+                    <span>Rotate</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <label className="text-sm text-gray-700">
-                      Center X:
-                      <input
-                        type="number"
-                        value={rotationCenter.x}
-                        onChange={(e) => {
-                          setRotationCenter(prev => ({ ...prev, x: parseFloat(e.target.value) }));
-                          setIsCenterManuallySet(true);
-                        }}
-                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </label>
-                    <label className="text-sm text-gray-700">
-                      Center Y:
-                      <input
-                        type="number"
-                        value={rotationCenter.y}
-                        onChange={(e) => {
-                          setRotationCenter(prev => ({ ...prev, y: parseFloat(e.target.value) }));
-                          setIsCenterManuallySet(true);
-                        }}
-                        className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      />
-                    </label>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Flip Controls */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowFlipForm(!showFlipForm)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200"
-                >
-                  <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-                  <span className="text-sm text-neutral-600">Flip</span>
-                </button>
-              </div>
-              {showFlipForm && (
-                <div className="space-y-2 pl-2">
-                  <div className="flex flex-col gap-2">
+                ),
+                children: (
+                  <div className="space-y-4 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-sm text-gray-700">
+                        Angle (degrees):
+                        <input
+                          type="text"
+                          value={rotationAngle}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || value === '-' || /^-?\d*$/.test(value)) {
+                              setRotationAngle(value);
+                            }
+                          }}
+                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                      </label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="text-sm text-gray-700">
+                        Center X:
+                        <input
+                          type="number"
+                          value={rotationCenter.x}
+                          onChange={(e) => {
+                            setRotationCenter(prev => ({ ...prev, x: parseFloat(e.target.value) }));
+                            setIsCenterManuallySet(true);
+                          }}
+                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                      </label>
+                      <label className="text-sm text-gray-700">
+                        Center Y:
+                        <input
+                          type="number"
+                          value={rotationCenter.y}
+                          onChange={(e) => {
+                            setRotationCenter(prev => ({ ...prev, y: parseFloat(e.target.value) }));
+                            setIsCenterManuallySet(true);
+                          }}
+                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        />
+                      </label>
+                    </div>
                     <button
-                      onClick={() => handleFlip("horizontal")}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
+                      onClick={handleRotate}
+                      className="w-full px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
                     >
-                      <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-                      <span className="text-sm text-neutral-600">Flip Horizontal</span>
-                    </button>
-                    <button
-                      onClick={() => handleFlip("vertical")}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
-                    >
-                      <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
-                      <span className="text-sm text-neutral-600">Flip Vertical</span>
+                      Apply Rotation
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-          </div>
+                ),
+              },
+              {
+                key: "flip",
+                label: (
+                  <div className="flex items-center gap-2">
+                    <PiFlipHorizontalFill className="text-lg" />
+                    <span>Flip</span>
+                  </div>
+                ),
+                children: (
+                  <div className="space-y-4 pt-2">
+                    <div className="flex flex-center gap-2">
+                      <button
+                        onClick={() => handleFlip("horizontal")}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-full"
+                      >
+                        <PiFlipHorizontalFill className="text-xl text-neutral-600" />
+                        <span className="text-sm text-neutral-600">Horizontal</span>
+                      </button>
+                      <button
+                        onClick={() => handleFlip("vertical")}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-full"
+                      >
+                        <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
+                        <span className="text-sm text-neutral-600">Vertical</span>
+                      </button>
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ export type Line = {
     borderRadius?: string;
     color?: string; 
     layerId: string; 
+    lineWidth?: number;
 };
 
 export type Circle = { 
@@ -27,6 +28,7 @@ export type Circle = {
     borderRadius?: string; 
     borderColor?: string;
     layerId: string; 
+    lineWidth?: number;
 };
 
 export type Curve = { 
@@ -37,6 +39,7 @@ export type Curve = {
     borderRadius?: string; 
     color?: string;
     layerId: string; 
+    lineWidth?: number;
 };
 
 export type Ellipse = { 
@@ -47,6 +50,7 @@ export type Ellipse = {
     backgroundColor?: string;
     borderColor?: string;
     layerId: string; 
+    lineWidth?: number;
 };
 
 export type Polygon = {
@@ -55,5 +59,6 @@ export type Polygon = {
     borderColor?: string;
     backgroundColor?: string;
     layerId: string;
+    lineWidth?: number;
   };
   

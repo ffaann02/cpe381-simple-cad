@@ -52,6 +52,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
     modalPosition,
     shapeToFlip,
     flipShape,
+    handleMouseDown,
+    handleMouseUp,
   } = useCanvasEvents({ ...props, currentProject: props.currentProject });
 
   const { points, polygonCornerNumber, setPolygonCornerNumber, tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY, currentProject } = useTab();
@@ -92,6 +94,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
       >
         {flipModalVisible && modalPosition && (
           <FlipShapeModal

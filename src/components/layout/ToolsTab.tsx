@@ -11,7 +11,7 @@ import {
   FaEyeSlash,
 } from "react-icons/fa";
 import { LuMousePointer2 } from "react-icons/lu";
-import { MdOutlineOpenWith } from "react-icons/md";
+import { MdOutlineOpenWith, MdOutlineAspectRatio } from "react-icons/md";
 import { Tools } from "@/interface/tool";
 import { useTab } from "@/context/AppContext";
 import { ShapeMode } from "@/interface/shape";
@@ -157,6 +157,13 @@ const ToolsTab = () => {
       type: Tools.Move,
       onClick: () => setTool(Tools.Move),
       shortcut: "R",
+    },
+    {
+      label: "Scale",
+      icon: <MdOutlineAspectRatio className="text-2xl text-neutral-600" />,
+      type: Tools.Scale,
+      onClick: () => setTool(Tools.Scale),
+      shortcut: "L",
     },
     {
       label: "Eraser",

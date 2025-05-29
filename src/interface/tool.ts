@@ -9,4 +9,5 @@ export enum Tools{
     Undo = "undo",
     Redo = "redo",
     Zoom = "zoom",
+    Scale = "scale",
 }

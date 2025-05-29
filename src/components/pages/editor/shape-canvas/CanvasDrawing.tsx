@@ -313,14 +313,20 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       const transformedMinY = minY * zoomLevel + zoomOffsetY;
       const transformedMaxX = maxX * zoomLevel + zoomOffsetX;
       const transformedMaxY = maxY * zoomLevel + zoomOffsetY;
+
+      // Draw the bounding box rectangle and handles only for the Scale tool
       
       drawBoundingBox(
         transformedMinX,
         transformedMinY,
         transformedMaxX - transformedMinX,
         transformedMaxY - transformedMinY,
-        context
+        context,
+        undefined, // color (use default)
+        undefined, // lineWidth (use default)
+        tool === Tools.Scale // Pass true only if tool is Scale
       );
+      
     }
   };
 

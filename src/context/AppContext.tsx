@@ -105,7 +105,20 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [tab, setTab] = useState<string>(Tabs.File);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentProject, setCurrentProject] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<string | null>(() => {
+    // Initialize from localStorage if available
+    const savedProject = localStorage.getItem('currentProject');
+    return savedProject || null;
+  });
+
+  // Update localStorage whenever currentProject changes
+  useEffect(() => {
+    if (currentProject) {
+      localStorage.setItem('currentProject', currentProject);
+    } else {
+      localStorage.removeItem('currentProject');
+    }
+  }, [currentProject]);
 
   const [snapEnabled, setSnapEnabled] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);

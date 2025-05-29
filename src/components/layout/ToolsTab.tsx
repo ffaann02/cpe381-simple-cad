@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Popover } from "antd";
-import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo, FaSearchPlus } from "react-icons/fa";
+import {
+  FaPen,
+  FaFillDrip,
+  FaEraser,
+  FaUndo,
+  FaRedo,
+  FaSearchPlus,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
 import { LuMousePointer2 } from "react-icons/lu";
 import { MdOutlineOpenWith } from "react-icons/md";
 import { Tools } from "@/interface/tool";
@@ -36,9 +45,22 @@ const shapeButtons = [
 ];
 
 const ToolsTab = () => {
-  const { tool, setTool, shape, setShape, handleUndo, handleRedo, currentColor, setCurrentColor, polygonCornerNumber, setPolygonCornerNumber } = useTab();
+  const {
+    tool,
+    setTool,
+    shape,
+    setShape,
+    handleUndo,
+    handleRedo,
+    currentColor,
+    setCurrentColor,
+    polygonCornerNumber,
+    setPolygonCornerNumber,
+  } = useTab();
   const [isPopoverVisible, setIsPopoverVisible] = useState<boolean>(false);
-  const [isColorPopoverVisible, setIsColorPopoverVisible] = useState<boolean>(false);
+  const [isColorPopoverVisible, setIsColorPopoverVisible] =
+    useState<boolean>(false);
+  const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
 
   useEffect(() => {
     if (tool !== Tools.Draw) {
@@ -74,7 +96,9 @@ const ToolsTab = () => {
       {/* Polygon corners slider shown only if Polygon is selected */}
       {shape === ShapeMode.Polygon && (
         <div className="mt-2">
-          <p className="text-xs font-medium text-neutral-700 mb-2">Number of Corners</p>
+          <p className="text-xs font-medium text-neutral-700 mb-2">
+            Number of Corners
+          </p>
           <div className="flex items-center space-x-2">
             <input
               type="range"
@@ -84,7 +108,9 @@ const ToolsTab = () => {
               onChange={(e) => setPolygonCornerNumber(Number(e.target.value))}
               className="w-24"
             />
-            <span className="text-sm text-neutral-600">{polygonCornerNumber}</span>
+            <span className="text-sm text-neutral-600">
+              {polygonCornerNumber}
+            </span>
           </div>
         </div>
       )}
@@ -116,24 +142,28 @@ const ToolsTab = () => {
       type: Tools.Draw,
       isPopover: true,
       onClick: handleDrawClick,
+      shortcut: "D",
     },
     {
       label: "Select",
       icon: <LuMousePointer2 className="text-2xl text-neutral-600" />,
       type: Tools.Select,
       onClick: () => setTool(Tools.Select),
+      shortcut: "S",
     },
     {
       label: "Move",
       icon: <MdOutlineOpenWith className="text-2xl text-neutral-600" />,
       type: Tools.Move,
       onClick: () => setTool(Tools.Move),
+      shortcut: "R",
     },
     {
       label: "Eraser",
       icon: <FaEraser className="text-2xl text-neutral-600" />,
       type: Tools.Eraser,
       onClick: () => setTool(Tools.Eraser),
+      shortcut: "E",
     },
     {
       label: "Color",
@@ -146,52 +176,69 @@ const ToolsTab = () => {
         setIsColorPopoverVisible(true);
       },
       extraContent: (
-        <div 
-          className="w-full h-1 mt-1 rounded-sm" 
+        <div
+          className="w-full h-1 mt-1 rounded-sm mx-auto mb-0.5"
           style={{ backgroundColor: currentColor }}
         />
       ),
+      shortcut: "C",
     },
     {
       label: "Zoom",
       icon: <FaSearchPlus className="text-2xl text-neutral-600" />,
       type: Tools.Zoom,
       onClick: () => setTool(Tools.Zoom),
+      shortcut: "Shift + Scroll",
     },
     {
       label: "Undo",
       icon: <FaUndo className="text-2xl text-neutral-600" />,
       type: Tools.Undo,
       onClick: handleUndo,
+      shortcut: "Ctrl+Z",
     },
     {
       label: "Redo",
       icon: <FaRedo className="text-2xl text-neutral-600" />,
       type: Tools.Redo,
       onClick: handleRedo,
+      shortcut: "Ctrl+Y",
     },
   ];
 
   return (
     <div className="absolute left-4 top-2 bg-white border rounded-sm pt-1 px-2 z-10">
-      <p className="text-center border-b font-semibold pb-0.5">Tools</p>
+      <div className="flex items-center justify-between border-b pb-0.5">
+        <p className="font-semibold">Tools</p>
+        <button
+          onClick={() => setShowShortcuts(!showShortcuts)}
+          className="text-neutral-600 hover:text-neutral-800 cursor-pointer"
+        >
+          {!showShortcuts ? <FaEyeSlash /> : <FaEye />}
+        </button>
+      </div>
       <div className="flex flex-col space-y-2 py-2">
         {toolButtons.map((button) => {
           const btnElement = (
             <button
               key={button.type}
-              className={`flex flex-col items-center space-x-1 px-1.5 py-1 rounded-sm transition ${
+              className={`flex flex-col items-center space-x-1 px-1.5 py-1 rounded-sm transition relative ${
                 tool === button.type
                   ? "bg-neutral-200 border border-neutral-400"
                   : "bg-neutral-100 border border-neutral-100 hover:bg-neutral-300"
               }`}
               onClick={button.onClick}
             >
-              <div className="flex items-center">
+              <div className="flex items-center my-1">
                 {button.icon}
                 <p className="text-sm text-neutral-600 ml-1">{button.label}</p>
               </div>
               {button.extraContent}
+              {button.shortcut && showShortcuts && (
+                <div className="text-neutral-600 text-xs w-full border-t pt-1 border-neutral-400">
+                  Key: {button.shortcut}
+                </div>
+              )}
             </button>
           );
 

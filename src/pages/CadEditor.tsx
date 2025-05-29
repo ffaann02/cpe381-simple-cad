@@ -17,6 +17,7 @@ import { IoDocumentOutline } from "react-icons/io5";
 import { FiBox } from "react-icons/fi";
 import { UploadIcon } from "lucide-react";
 import { FaChevronLeft } from "react-icons/fa";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
@@ -49,6 +50,29 @@ const CadEditor = () => {
     setModalType,
     setOpenHomeModal,
   } = useTab();
+
+  // Add keyboard shortcuts
+  useKeyboardShortcuts();
+
+  useEffect(() => {
+    // Check if there's a currentProject in localStorage
+    const savedProject = localStorage.getItem('currentProject');
+    if (savedProject) {
+      // If the project exists in localStorage but not in projects array, add it
+      if (!projects.some(p => p.name === savedProject)) {
+        setProjects(prev => [
+          ...prev,
+          {
+            id: `project-${Date.now()}`,
+            name: savedProject,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        ]);
+      }
+      setCurrentProject(savedProject);
+    }
+  }, []);
 
   const handleTabChange = (value: string) => {
     setTab(value);

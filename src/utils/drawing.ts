@@ -309,9 +309,9 @@ export const drawPolygon = (
 
 export const getShapeStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
   const isSelected = layer?.is_selected;
-  const stroke = layer?.borderColor || "black";
+  const stroke = isSelected ? SELECTION_COLOR : (layer?.borderColor || "black");
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -319,7 +319,7 @@ export const getCircleStyle = (layer: Layer | undefined): { stroke: string; fill
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -327,7 +327,7 @@ export const getEllipseStyle = (layer: Layer | undefined): { stroke: string; fil
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -335,7 +335,7 @@ export const getPolygonStyle = (layer: Layer | undefined): { stroke: string; fil
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  const lineWidth = layer?.thickness || 1;
   return { stroke, fill, lineWidth };
 };
 
@@ -346,7 +346,8 @@ export function drawBoundingBox(
   height: number,
   ctx: CanvasRenderingContext2D,
   color: string = "blue",
-  lineWidth: number = 1
+  lineWidth: number = 1,
+  drawHandles: boolean = true
 ) {
   ctx.save();
 
@@ -356,32 +357,105 @@ export function drawBoundingBox(
   ctx.setLineDash([4, 2]);
   ctx.strokeRect(x, y, width, height);
 
-  // Draw 9 white square handles with blue borders
-  const handleSize = 8;
-  const half = handleSize / 2;
+  // Draw 9 white square handles with blue borders, only if drawHandles is true
+  if (drawHandles) {
+      const handleSize = 8;
+      const half = handleSize / 2;
 
-  const points = [
-    [x, y], // top-left
-    [x + width / 2, y], // top-center
-    [x + width, y], // top-right
-    [x, y + height / 2], // middle-left
-    [x + width / 2, y + height / 2], // center
-    [x + width, y + height / 2], // middle-right
-    [x, y + height], // bottom-left
-    [x + width / 2, y + height], // bottom-center
-    [x + width, y + height], // bottom-right
-  ];
+      const points = [
+        [x, y], // top-left
+        [x + width / 2, y], // top-center
+        [x + width, y], // top-right
+        [x, y + height / 2], // middle-left
+        [x + width / 2, y + height / 2], // center
+        [x + width, y + height / 2], // middle-right
+        [x, y + height], // bottom-left
+        [x + width / 2, y + height], // bottom-center
+        [x + width, y + height], // bottom-right
+      ];
 
-  ctx.setLineDash([]); // Solid lines for handles
-  points.forEach(([px, py]) => {
-    ctx.fillStyle = "white";
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.fillRect(px - half, py - half, handleSize, handleSize);
-    ctx.strokeRect(px - half, py - half, handleSize, handleSize);
-  });
+      ctx.setLineDash([]); // Solid lines for handles
+      points.forEach(([px, py]) => {
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.fillRect(px - half, py - half, handleSize, handleSize);
+        ctx.strokeRect(px - half, py - half, handleSize, handleSize);
+      });
+  }
+  else{
+      // Draw a solid circle for the center handle when handles are not drawn
+      const centerX = x + width / 2;
+      const centerY = y + height / 2;
+      const radius = 4; // Half the size of the square handle
+      // Use the selection color for the solid circle
+      drawCircle(centerX, centerY, radius, ctx, color, "white", 1);
+
+  }
 
   ctx.restore();
+}
+
+export function getBezierBoundingBox(
+  p0: Point,
+  p1: Point,
+  p2: Point,
+  p3: Point
+): { minX: number; minY: number; maxX: number; maxY: number } {
+  const bezierExtrema = (p0: number, p1: number, p2: number, p3: number) => {
+    const a = -p0 + 3 * p1 - 3 * p2 + p3;
+    const b = 2 * (p0 - 2 * p1 + p2);
+    const c = -p0 + p1;
+
+    const tValues: number[] = [];
+    if (Math.abs(a) > 1e-6) {
+      const discriminant = b * b - 4 * a * c;
+      if (discriminant >= 0) {
+        const sqrtDiscriminant = Math.sqrt(discriminant);
+        const t1 = (-b + sqrtDiscriminant) / (2 * a);
+        const t2 = (-b - sqrtDiscriminant) / (2 * a);
+        if (t1 >= 0 && t1 <= 1) tValues.push(t1);
+        if (t2 >= 0 && t2 <= 1) tValues.push(t2);
+      }
+    } else if (Math.abs(b) > 1e-6) {
+      const t = -c / b;
+      if (t >= 0 && t <= 1) tValues.push(t);
+    }
+
+    return tValues;
+  };
+
+  const evaluateBezier = (
+    t: number,
+    p0: number,
+    p1: number,
+    p2: number,
+    p3: number
+  ) => {
+    const mt = 1 - t;
+    return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3;
+  };
+
+  const xExtrema = bezierExtrema(p0.x, p1.x, p2.x, p3.x);
+  const yExtrema = bezierExtrema(p0.y, p1.y, p2.y, p3.y);
+
+  const xValues = [
+    p0.x,
+    p3.x,
+    ...xExtrema.map((t) => evaluateBezier(t, p0.x, p1.x, p2.x, p3.x)),
+  ];
+  const yValues = [
+    p0.y,
+    p3.y,
+    ...yExtrema.map((t) => evaluateBezier(t, p0.y, p1.y, p2.y, p3.y)),
+  ];
+
+  const minX = Math.min(...xValues);
+  const minY = Math.min(...yValues);
+  const maxX = Math.max(...xValues);
+  const maxY = Math.max(...yValues);
+
+  return { minX, minY, maxX, maxY };
 }
 
   

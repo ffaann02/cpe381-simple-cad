@@ -1,3 +1,4 @@
+
 export enum Tabs {
   File = "file",
   Shape = "shape",
@@ -9,10 +10,10 @@ export enum ShapeMode {
   Circle = "circle",
   Ellipse = "ellipse",
   Curve = "curve",
+  Polygon = "polygon"
 }
 
-
-export interface Layer{
+export interface Layer {
   id: string;
   icon?: string;
   name: string;
@@ -21,4 +22,5 @@ export interface Layer{
   is_visible: boolean;
   borderColor?: string;
   backgroundColor?: string;
+  thickness: number; // Thickness level from 1 to 10
 }

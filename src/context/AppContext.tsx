@@ -52,6 +52,7 @@ interface TabContextType {
   setSnapEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   layers: Layer[];
   setLayers: (layers: Layer[]) => void;
+  updateLayer: (layerId: string, updatedLayer: Partial<Layer>) => void;
   selectedLayerId: string | null;
   setSelectedLayerId: (layerId: string | null) => void;
   canvasSize: Canvas;
@@ -325,7 +326,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
           .map((p) => p.trim());
         const command = parts[0]?.toUpperCase();
 
-        const addLayer = (layerId: string, name: string) => {
+        const addLayer = (layerId: string, name: string, thickness: number = 1) => {
           if (
             !newLayers.some((layer) => layer.id === layerId)
           ) {
@@ -334,6 +335,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
               name,
               is_selected: false,
               is_visible: true,
+              thickness
             });
           }
         };
@@ -349,7 +351,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
             }
             break;
           case "LINE":
-            if (parts.length === 6) {
+            if (parts.length >= 6) {
               const newLine = {
                 start: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
                 end: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
@@ -357,7 +359,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
                 layerId: `layer-${layerIdCounter}`,
               };
               linesFromFile.push(newLine);
-              addLayer(newLine.layerId, `Layer ${layerIdCounter}`);
+              addLayer(newLine.layerId, `Layer ${layerIdCounter}`, parts.length >= 7 ? parseFloat(parts[6]) : 1);
               layerIdCounter++;
             }
             break;
@@ -371,7 +373,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
                 backgroundColor: parts.length >= 6 ? parts[5] : undefined,
               };
               circlesFromFile.push(newCircle);
-              addLayer(newCircle.layerId, `Layer ${layerIdCounter}`);
+              addLayer(newCircle.layerId, `Layer ${layerIdCounter}`, parts.length >= 7 ? parseFloat(parts[6]) : 1);
               layerIdCounter++;
             }
             break;
@@ -386,12 +388,12 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
                 backgroundColor: parts.length >= 7 ? parts[6] : undefined,
               };
               ellipsesFromFile.push(newEllipse);
-              addLayer(newEllipse.layerId, `Layer ${layerIdCounter}`);
+              addLayer(newEllipse.layerId, `Layer ${layerIdCounter}`, parts.length >= 8 ? parseFloat(parts[7]) : 1);
               layerIdCounter++;
             }
             break;
           case "CURVE":
-            if (parts.length === 10) {
+            if (parts.length >= 10) {
               const newCurve = {
                 p0: { x: parseFloat(parts[1]), y: parseFloat(parts[2]) },
                 p1: { x: parseFloat(parts[3]), y: parseFloat(parts[4]) },
@@ -401,14 +403,14 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
                 layerId: `layer-${layerIdCounter}`,
               };
               curvesFromFile.push(newCurve);
-              addLayer(newCurve.layerId, `Layer ${layerIdCounter}`);
+              addLayer(newCurve.layerId, `Layer ${layerIdCounter}`, parts.length >= 11 ? parseFloat(parts[10]) : 1);
               layerIdCounter++;
             }
             break;
           case "POLYGON":
             if (parts.length >= 4) {
               const points: Point[] = [];
-              for (let i = 1; i < parts.length - 2; i += 2) {
+              for (let i = 1; i < parts.length - 3; i += 2) {
                 if (parts[i] && parts[i + 1]) {
                   points.push({
                     x: parseFloat(parts[i]),
@@ -420,18 +422,18 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
               if (points.length >= 3) {
                 const newPolygon: Polygon = {
                   points,
-                  borderColor: parts[parts.length - 2] || "black",
-                  backgroundColor: parts[parts.length - 1] || "",
+                  borderColor: parts[parts.length - 3] || "black",
+                  backgroundColor: parts[parts.length - 2] || "",
                   layerId: `layer-${layerIdCounter}`,
                 };
                 polygonsFromFile.push(newPolygon);
-                addLayer(newPolygon.layerId, `Layer ${layerIdCounter}`);
+                addLayer(newPolygon.layerId, `Layer ${layerIdCounter}`, parts.length >= parts.length ? parseFloat(parts[parts.length - 1]) : 1);
                 layerIdCounter++;
               }
             }
             break;
           default:
-            console.warn(`Unknown CAD command: ${command}`);
+            // console.warn(`Unknown CAD command: ${command}`);
         }
       });
 
@@ -491,6 +493,18 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setShowGrid(false);
   };
 
+  const updateLayer = (layerId: string, updatedLayer: Partial<Layer>) => {
+    setLayers(prevLayers => 
+      prevLayers.map(layer => 
+        layer.id === layerId ? { ...layer, ...updatedLayer } : layer
+      )
+    );
+    // Force a redraw by updating the import timestamp
+    if (setImportTimestamp) {
+      setImportTimestamp(Date.now());
+    }
+  };
+
   const value = {
     modalType,
     setModalType,
@@ -506,6 +520,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setSnapEnabled,
     layers,
     setLayers,
+    updateLayer,
     selectedLayerId,
     setSelectedLayerId,
     canvasSize,

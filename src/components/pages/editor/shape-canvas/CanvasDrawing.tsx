@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react"; // Added useCallback
+import React, { useEffect, useState, useCallback } from "react";
 import { useTab } from "@/context/AppContext";
 import {
   drawMarker,
@@ -12,11 +12,12 @@ import {
   drawBoundingBox,
   drawPolygon,
 } from "@/utils/drawing";
-import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape"; // Import individual shape types for clearer type inference
+import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
+import { GlobalColor } from "@/interface/color";
 
-const previewLineColor = "#D4C9BE";
-const LOCAL_STORAGE_KEY = "cad_drawing_state";
+const previewLineColor = GlobalColor.DraftDrawColor;
+const LOCAL_STORAGE_KEY = "cad_drawing_state"; // This is now a base key, specific project key will be appended
 
 interface CanvasDrawingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -33,26 +34,35 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     points,
     setPoints,
     lines,
-    setLines, // Make sure setLines is available
+    setLines,
     circles,
-    setCircles, // Make sure setCircles is available
+    setCircles,
     curves,
-    setCurves, // Make sure setCurves is available
+    setCurves,
     ellipses,
-    setEllipses, // Make sure setEllipses is available
+    setEllipses,
     polygons,
     setPolygons,
     layers,
-    setLayers, // Make sure setLayers is available
+    setLayers,
     shape,
     tool,
     selectedLayerId,
     snapEnabled,
     showGrid,
     polygonCornerNumber,
-    canvasSize, // Make sure canvasSize is available
-    setCanvasSize, // Make sure setCanvasSize is available
+    canvasSize,
+    setCanvasSize,
+    currentProject,
+    resetCanvasState,
+    setSelectedLayerId,
+    zoomLevel,
+    zoomOffsetX,
+    zoomOffsetY,
   } = useTab();
+
+  // Helper to generate the localStorage key based on the current project
+  const getLocalStorageKey = (projectKey: string) => `cad_drawing_state_${projectKey}`;
 
   const getSnappedPos = (pos: Point): Point => {
     const gridSize = 20;
@@ -124,7 +134,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   const drawPolygons = (context: CanvasRenderingContext2D) => {
-    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => { // Removed borderRadius as it's not used in drawPolygon
+    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => {
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible && polygonPoints.length > 1) {
         drawPolygon(polygonPoints, context, borderColor, backgroundColor, 1);
@@ -189,14 +199,14 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         const radius = Math.sqrt(
           Math.pow(effectiveMousePos.x - center.x, 2) + Math.pow(effectiveMousePos.y - center.y, 2)
         );
-        const numSides = polygonCornerNumber; // Use the number of corners from the state
+        const numSides = polygonCornerNumber;
         const previewPoints = generatePolygonPoints(center, radius, numSides);
         if (previewPoints.length > 0) {
           const canvas = canvasRef.current;
           if (canvas) {
             const ctx = canvas.getContext('2d');
             if (ctx) {
-              drawPolygon(previewPoints, ctx, previewLineColor, "transparent"); // Use the same drawColor
+              drawPolygon(previewPoints, ctx, previewLineColor, "transparent");
             }
           }
         }
@@ -208,7 +218,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     if (tool === Tools.Move && selectedLayerId && context) {
       const layer = layers.find((l) => l.id === selectedLayerId);
       if (layer?.is_visible) {
-        // Find the selected object across all shape arrays
         const selectedObject =
           lines.find((line) => line.layerId === selectedLayerId) ||
           circles.find((circle) => circle.layerId === selectedLayerId) ||
@@ -222,7 +231,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           let maxX: number | undefined;
           let maxY: number | undefined;
 
-          // Type guards to determine the shape type
           if ((selectedObject as Line).start && (selectedObject as Line).end) {
             const line = selectedObject as Line;
             minX = Math.min(line.start.x, line.end.x);
@@ -267,9 +275,20 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     }
   };
 
-  // Function to save the canvas state to localStorage
+  // Function to save the canvas state to localStorage, now dependent on currentProject
   const saveCanvasState = useCallback(() => {
+    if (!currentProject) {
+      console.warn("No current project selected. Not saving canvas state.");
+      return;
+    }
+
     try {
+      let thumbnail: string | null = null;
+      if (canvasRef.current) {
+        // Get the canvas content as a Base64 encoded PNG image
+        thumbnail = canvasRef.current.toDataURL('image/png');
+      }
+
       const stateToSave = {
         lines,
         circles,
@@ -278,22 +297,42 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         polygons,
         layers,
         canvasSize,
+        lastSaved: new Date().toISOString(),
+        thumbnail, // Add the thumbnail to the saved state
       };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-      // console.log("Canvas state saved to localStorage."); // Optional: for debugging
+      localStorage.setItem(getLocalStorageKey(currentProject), JSON.stringify(stateToSave));
+      console.log(`Canvas state and thumbnail saved for project: ${currentProject}`);
     } catch (error) {
-      console.error("Failed to save canvas state to localStorage:", error);
+      console.error(`Failed to save canvas state for project ${currentProject}:`, error);
+      // If saving fails, consider clearing the specific project's data to prevent future issues
+      // localStorage.removeItem(getLocalStorageKey(currentProject));
     }
-  }, [lines, circles, curves, ellipses, polygons, layers, canvasSize]);
+  }, [
+    currentProject,
+    canvasRef, // Add canvasRef to dependencies since we access canvasRef.current
+    lines,
+    circles,
+    curves,
+    ellipses,
+    polygons,
+    layers,
+    canvasSize,
+  ]);
 
-  // Effect to load canvas state from localStorage on initial mount
+  // Effect to load canvas state from localStorage when currentProject changes
   useEffect(() => {
+    if (!currentProject) {
+      // If no project is selected, clear the canvas and reset states
+      resetCanvasState();
+      return;
+    }
+
     try {
-      const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const savedState = localStorage.getItem(getLocalStorageKey(currentProject));
       const parsedState = savedState ? JSON.parse(savedState) : null;
-      console.log("Loaded canvas state:", parsedState); // Optional: for debugging
-      console.log(parsedState.lines)
-      if (savedState) {
+      console.log(`Loaded canvas state for project ${currentProject}:`, parsedState);
+
+      if (parsedState) {
         setLines(parsedState.lines || []);
         setCircles(parsedState.circles || []);
         setCurves(parsedState.curves || []);
@@ -301,17 +340,27 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         setPolygons(parsedState.polygons || []);
         setLayers(parsedState.layers || []);
         setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
+        setSelectedLayerId(parsedState.layers?.[0]?.id || null);
+        // If you had a place to use the thumbnail, you would set it here:
+        // setThumbnailData(parsedState.thumbnail || null);
+      } else {
+        console.log(`No saved state found for project: ${currentProject}. Resetting canvas.`);
+        resetCanvasState();
       }
     } catch (error) {
-      console.error("Failed to load canvas state from localStorage:", error);
-      // Clear localStorage if data is corrupted
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      console.error(`Failed to load canvas state for project ${currentProject}:`, error);
+      localStorage.removeItem(getLocalStorageKey(currentProject));
+      resetCanvasState();
     }
-  }, []); // Empty dependency array means this runs only once on mount
+  }, [currentProject, setLines, setCircles, setCurves, setEllipses, setPolygons, setLayers, setCanvasSize, resetCanvasState, setSelectedLayerId]);
 
+
+  // Effect to save canvas state whenever drawing data or currentProject changes
   useEffect(() => {
     // Debounce the save operation if performance is an issue,
     // but for now, we'll save on every relevant change.
+    // A small delay might be beneficial here to avoid saving on every single mouse move
+    // if drawing is continuous. For now, we'll keep it direct.
     saveCanvasState();
   }, [
     lines,
@@ -321,13 +370,21 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     polygons,
     layers,
     canvasSize,
-    saveCanvasState, // Include saveCanvasState to ensure it runs when needed if it changes (though it's memoized)
+    currentProject,
+    saveCanvasState,
   ]);
 
 
+  // Main drawing effect
   useEffect(() => {
     if (!ctx) return;
+    if (canvas) {
+      canvas.style.backgroundColor = canvasSize.backgroundColor;
+    }
     clearCanvas(ctx);
+    ctx.save();
+    ctx.translate(zoomOffsetX, zoomOffsetY);
+    ctx.scale(zoomLevel, zoomLevel);
     drawMarkers(ctx);
     drawLines(ctx);
     drawCircles(ctx);
@@ -336,6 +393,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     drawPolygons(ctx);
     drawPreview(ctx);
     drawBoundingBoxForSelected(ctx);
+    ctx.restore();
   }, [
     points,
     effectiveMousePos,
@@ -350,35 +408,39 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     selectedLayerId,
     importTimestamp,
     polygonCornerNumber,
-    ctx // Add ctx to dependencies to ensure re-render if context somehow changes
+    canvasSize,
+    ctx,
+    zoomLevel,
+    zoomOffsetX,
+    zoomOffsetY,
   ]);
 
-  // Function to handle drawing the polygon after the second click
+  // Polygon completion effect (unchanged)
   useEffect(() => {
     if (ctx && shape === ShapeMode.Polygon && points.length === 2 && effectiveMousePos) {
       const center = points[0];
-      const finalMousePos = points[1]; // The second clicked point determines the radius
+      const finalMousePos = points[1];
       const radius = Math.sqrt(
         Math.pow(finalMousePos.x - center.x, 2) + Math.pow(finalMousePos.y - center.y, 2)
       );
-      // Ensure selectedLayerId is valid or provide a default
       const currentLayerId = selectedLayerId && layers.some(l => l.id === selectedLayerId) ? selectedLayerId : layers[0]?.id || "default-layer-id";
 
       const polygonPoints = generatePolygonPoints(center, radius, polygonCornerNumber);
       const newPolygon: Polygon = {
         points: polygonPoints,
         layerId: currentLayerId,
-        borderColor: "purple", // Default border color for new polygons
-        backgroundColor: "rgba(128, 0, 128, 0.3)", // Default background color
+        borderColor: "purple",
+        backgroundColor: "rgba(128, 0, 128, 0.3)",
       };
       setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
-      setPoints([]); // Reset points after drawing the polygon
+      setPoints([]);
     }
-  }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, polygonCornerNumber, layers]); // Added layers to dependencies for currentLayerId logic
+  }, [ctx, shape, points, effectiveMousePos, selectedLayerId, setPolygons, setPoints, polygonCornerNumber, layers]);
 
   return null;
 };
 
+// ... (getBezierBoundingBox function remains unchanged) ...
 function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { minX: number; minY: number; maxX: number; maxY: number } {
   const bezierExtrema = (p0: number, p1: number, p2: number, p3: number) => {
     const a = -p0 + 3 * p1 - 3 * p2 + p3;
@@ -421,5 +483,6 @@ function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { min
 
   return { minX, minY, maxX, maxY };
 }
+
 
 export default CanvasDrawing;

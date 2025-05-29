@@ -1,5 +1,5 @@
 import Properties from "@/components/pages/docs/Properties";
-import Shotcut from "@/components/pages/docs/Shotcut";
+import Shotcut from "@/components/pages/docs/Shortcut";
 import Tools from "@/components/pages/docs/Tools";
 import { useState, useRef, useEffect } from "react";
 import { FaShapes } from "react-icons/fa";

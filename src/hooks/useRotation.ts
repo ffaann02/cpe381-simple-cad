@@ -70,15 +70,16 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
         setLayers(updatedLayers);
         setSelectedLayerId(clickedShape.layerId);
 
-        if (clickedShape.layerId && clickedShape.index !== null && clickedShape.type) {
-          setRotatingShape({
-            layerId: clickedShape.layerId,
-            index: clickedShape.index,
-            type: clickedShape.type,
-            center: shapeCenter,
-          });
-          setRotatePopoverOpen(true);
-        }
+        // Remove automatic popup of rotation form
+        // if (clickedShape.layerId && clickedShape.index !== null && clickedShape.type) {
+        //   setRotatingShape({
+        //     layerId: clickedShape.layerId,
+        //     index: clickedShape.index,
+        //     type: clickedShape.type,
+        //     center: shapeCenter,
+        //   });
+        //   setRotatePopoverOpen(true);
+        // }
       } else {
         const updatedLayers = layers.map((layer) => ({
           ...layer,

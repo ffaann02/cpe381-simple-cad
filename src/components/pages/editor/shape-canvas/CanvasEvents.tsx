@@ -6,6 +6,7 @@ import EraseShapeModal from "@/components/ui/modal/canvas/EraseShapeModal";
 import FlipShapeModal from "@/components/ui/modal/canvas/FlipShapeModal";
 import { useCanvasEvents } from "@/hooks/useCanvas";
 import { useTab } from "@/context/AppContext";
+import { Tools } from "@/interface/tool";
 
 interface CanvasEventsProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -54,7 +55,25 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
     setWillingToDrawPolygon,
   } = useCanvasEvents(props);
 
-  const { points, polygonCornerNumber, setPolygonCornerNumber } = useTab();
+  const { points, polygonCornerNumber, setPolygonCornerNumber, tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY } = useTab();
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (tool === Tools.Zoom && e.shiftKey) {
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const oldZoom = zoomLevel;
+      const newZoom = Math.max(1.0, Math.min(10, zoomLevel + (e.deltaY < 0 ? 0.1 : -0.1)));
+      if (newZoom !== oldZoom) {
+        // Adjust offset so the point under the mouse stays fixed
+        const scale = newZoom / oldZoom;
+        setZoomOffsetX(mouseX - scale * (mouseX - zoomOffsetX));
+        setZoomOffsetY(mouseY - scale * (mouseY - zoomOffsetY));
+        setZoomLevel(newZoom);
+      }
+    }
+  };
 
   return (
     <>
@@ -62,6 +81,7 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
         className="absolute top-0 left-0 w-full h-full"
         onClick={handleClick}
         onMouseMove={handleMouseMove}
+        onWheel={handleWheel}
       >
         {flipModalVisible && modalPosition && (
           <FlipShapeModal

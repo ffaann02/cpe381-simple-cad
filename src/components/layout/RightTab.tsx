@@ -46,7 +46,7 @@ const RightTab = () => {
         <AccordionTrigger className="px-4 py-2 hover:no-underline">
           Layers
         </AccordionTrigger>
-        <AccordionContent className="px-4 max-h-[40vh] overflow-y-auto">
+        <AccordionContent className="px-4 max-h-[150px] overflow-y-auto">
           {layers.length === 0 ? (
             <div className="text-sm text-gray-500 text-center py-4">
               No layers created

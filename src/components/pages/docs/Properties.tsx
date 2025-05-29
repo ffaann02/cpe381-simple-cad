@@ -20,8 +20,7 @@ const Properties = () => {
               Control the position of shapes by editing their points and coordinates.
             </p>
             <div className="flex items-center gap-2">
-              <img src="\public\doc\properties\Position_1.png" alt="Position before" className="w-60 h-60 border" />
-              <img src="\public\doc\properties\Position_2.png" alt="Position after" className="w-60 h-60 border" />
+              <img src="\public\doc\properties\position.png" alt="Position before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Point Position</h4>
@@ -30,6 +29,7 @@ const Properties = () => {
                 <li>Circle: Edit center point (X, Y)</li>
                 <li>Curve: Edit control points (P1, P2, P3, P4)</li>
                 <li>Ellipse: Edit center point (X, Y)</li>
+                <li>Polygon: Edit corner points (P1, P2, P3, ...) based on number of corners</li>
               </ul>
               <h4 className="font-medium mt-4 mb-2">Edit Points</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
@@ -48,8 +48,7 @@ const Properties = () => {
               Control the size of circles by adjusting their radius.
             </p>
             <div className="flex items-center gap-2">
-              <img src="\public\doc\properties\Radius_1.png" alt="Radius before" className="w-60 h-60 border" />
-              <img src="\public\doc\properties\Radius_2.png" alt="Radius after" className="w-60 h-60 border" />
+            <img src="\public\doc\properties\radius.png" alt="Position before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Radius Controls</h4>
@@ -76,23 +75,21 @@ const Properties = () => {
               Customize the appearance of shapes by editing border and background colors.
             </p>
             <div className="flex items-center gap-2">
-              <img src="\public\doc\properties\Color_1.png" alt="Color before" className="w-60 h-60 border" />
-              <img src="\public\doc\properties\Color_2.png" alt="Color after" className="w-60 h-60 border" />
+              <img src="\public\doc\properties\border-color.png" alt="Color before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Border Color</h4>
               <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
                 <li>Click color picker to select border color</li>
                 <li>Default: Black (#000000)</li>
-                <li>Set border width (1-10 pixels)</li>
-                <li>Choose border style (solid, dashed)</li>
               </ul>
+              <div className="flex items-center gap-2 mt-4">
+              <img src="\public\doc\properties\bg-color.png" alt="Color before" className="border" />
+            </div>
               <h4 className="font-medium mt-4 mb-2">Background Color</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
                 <li>Click color picker to select fill color</li>
                 <li>Default: Transparent</li>
-                <li>Set opacity (0-100%)</li>
-                <li>Apply gradient fill if needed</li>
               </ol>
             </div>
           </div>
@@ -104,25 +101,23 @@ const Properties = () => {
               Modify shapes with rotation and flip operations.
             </p>
             <div className="flex items-center gap-2">
-              <img src="\public\doc\properties\Transform_1.png" alt="Transform before" className="w-60 h-60 border" />
+              <img src="\public\doc\properties\rotate.png" alt="Transform before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Rotation</h4>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
+              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2 ">
                 <li>Edit angle: -360° to 360°</li>
                 <li>Set rotation point (X, Y)</li>
                 <li>Default angle: 90°</li>
                 <li>Click Apply to rotate</li>
               </ul>
-              <div className="flex items-center gap-2">
-                <img src="\public\doc\properties\Transform_1.png" alt="Transform before" className="w-60 h-60 border" />
+              <div className="flex items-center gap-2 mt-4">
+                <img src="\public\doc\properties\flip.png" alt="Transform before" className="border" />
               </div>
               <h4 className="font-medium mt-4 mb-2">Flip</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
                 <li>Horizontal Flip: Mirror left to right</li>
                 <li>Vertical Flip: Mirror top to bottom</li>
-                <li>Click Apply to flip</li>
-                <li>Reset to original if needed</li>
               </ol>
             </div>
           </div>
@@ -134,23 +129,21 @@ const Properties = () => {
               Manage layers and their properties.
             </p>
             <div className="flex items-center gap-2">
-              <img src="\public\doc\properties\Layer_1.png" alt="Layer before" className="w-60 h-60 border" />
-              <img src="\public\doc\properties\Layer_2.png" alt="Layer after" className="w-60 h-60 border" />
+              <img src="\public\doc\properties\select.png" alt="Layer before" className="border" />
             </div>
             <div className="mt-4">
               <h4 className="font-medium mb-2">Layer Selection</h4>
               <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
                 <li>Select layer from list to edit</li>
                 <li>View layer properties</li>
-                <li>Edit layer name</li>
-                <li>Change layer order</li>
               </ul>
+              <div className="flex items-center gap-2 mt-4">
+              <img src="\public\doc\properties\visual.png" alt="Layer before" className="border" />
+            </div>
               <h4 className="font-medium mt-4 mb-2">Layer Visibility</h4>
               <ol className="list-decimal list-inside text-sm text-gray-700 space-y-2">
                 <li>Toggle layer visibility</li>
                 <li>Show/hide specific layers</li>
-                <li>Lock layer to prevent changes</li>
-                <li>Group related layers</li>
               </ol>
             </div>
           </div>

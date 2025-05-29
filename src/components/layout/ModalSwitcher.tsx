@@ -7,7 +7,7 @@ import {
   Upload as UploadIcon,
 } from "lucide-react"; // Renamed Upload to UploadIcon to avoid conflict with Ant Design Upload
 import { useTab } from "@/context/AppContext";
-import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
+import { Circle, Curve, Ellipse, Line, Polygon } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
 import { Input, InputNumber, Modal, Button, message, Tabs, Upload } from "antd"; // Import Upload
 
@@ -30,33 +30,38 @@ const generateCadText = (
   circles: Circle[],
   ellipses: Ellipse[],
   curves: Curve[],
+  polygons: Polygon[],
   canvasWidth: number = 800,
-  canvasHeight: number = 600
+  canvasHeight: number = 600,
+  canvasBackgroundColor: string = "#ffffff"
 ): string => {
-  let cadText = `CANVAS,${canvasWidth},${canvasHeight}\n`; // First line with canvas width and height
+  // First line with canvas width, height, and background color
+  let cadText = `CANVAS,${canvasWidth},${canvasHeight},${canvasBackgroundColor}\n`;
 
+  // Add lines with their colors
   lines.forEach((line) => {
-    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${
-      line.end.y
-    },${line.color || "black"}\n`;
+    cadText += `LINE,${line.start.x},${line.start.y},${line.end.x},${line.end.y},${line.color || "black"}\n`;
   });
 
+  // Add circles with their border and background colors
   circles.forEach((circle) => {
-    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${
-      circle.borderColor || "black"
-    },${circle.backgroundColor || ""}\n`;
+    cadText += `CIRCLE,${circle.center.x},${circle.center.y},${circle.radius},${circle.borderColor || "black"},${circle.backgroundColor || ""}\n`;
   });
 
+  // Add ellipses with their border and background colors
   ellipses.forEach((ellipse) => {
-    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${
-      ellipse.ry
-    },${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
+    cadText += `ELLIPSE,${ellipse.center.x},${ellipse.center.y},${ellipse.rx},${ellipse.ry},${ellipse.borderColor || "black"},${ellipse.backgroundColor || ""}\n`;
   });
 
+  // Add curves with their colors
   curves.forEach((curve) => {
-    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${
-      curve.p2.x
-    },${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
+    cadText += `CURVE,${curve.p0.x},${curve.p0.y},${curve.p1.x},${curve.p1.y},${curve.p2.x},${curve.p2.y},${curve.p3.x},${curve.p3.y},${curve.color || "black"}\n`;
+  });
+
+  // Add polygons with their points, border and background colors
+  polygons.forEach((polygon) => {
+    const points = polygon.points.map(p => `${p.x},${p.y}`).join(',');
+    cadText += `POLYGON,${points},${polygon.borderColor || "black"},${polygon.backgroundColor || ""}\n`;
   });
 
   return cadText;
@@ -67,10 +72,12 @@ interface ExportModalProps {
   circles: Circle[];
   ellipses: Ellipse[];
   curves: Curve[];
+  polygons: Polygon[];
   setLines: React.Dispatch<React.SetStateAction<Line[]>>;
   setCircles: React.Dispatch<React.SetStateAction<Circle[]>>;
   setEllipses: React.Dispatch<React.SetStateAction<Ellipse[]>>;
   setCurves: React.Dispatch<React.SetStateAction<Curve[]>>;
+  setPolygons: React.Dispatch<React.SetStateAction<Polygon[]>>;
   tabs?: ("new" | "import" | "export")[]; // Make tabs optional
 }
 
@@ -79,10 +86,12 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   circles,
   ellipses,
   curves,
+  polygons,
   setLines,
   setCircles,
   setEllipses,
   setCurves,
+  setPolygons,
   tabs = ["new", "import", "export"], // Default to all tabs if not provided
 }) => {
   const {
@@ -101,6 +110,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setProjects,
     setCurrentProject,
     handleImportFile,
+    currentProject,
   } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
@@ -171,6 +181,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setCircles([]);
     setEllipses([]);
     setCurves([]);
+    setPolygons([]);
     setLayers([]);
     if (canvasRef?.current) {
       const ctx = canvasRef.current.getContext("2d");
@@ -187,24 +198,65 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
         circles,
         ellipses,
         curves,
+        polygons,
         canvasSize.width,
-        canvasSize.height
+        canvasSize.height,
+        canvasSize.backgroundColor
       );
       const blob = new Blob([cadText], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "drawing.cad"; // Changed to .cad extension
+      a.download = `${currentProject || "drawing"}.cad`; // Use current project name if available
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       message.success("CAD file exported successfully!");
     } else {
-      message.info(
-        `Exporting as ${format.toUpperCase()} is not yet fully implemented. CAD data logged to console.`
-      );
-      console.log(generateCadText(lines, circles, ellipses, curves));
+      // Get the canvas element
+      const canvas = document.querySelector('#main-canvas canvas') as HTMLCanvasElement;
+      if (!canvas) {
+        message.error("Could not find canvas element");
+        return;
+      }
+
+      // Create a temporary canvas to draw the final image
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) {
+        message.error("Could not create canvas context");
+        return;
+      }
+
+      // Set the temporary canvas size to match the main canvas
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+
+      // Fill with canvas background color
+      tempCtx.fillStyle = canvasSize.backgroundColor || '#ffffff';
+      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+      // Draw the main canvas content
+      tempCtx.drawImage(canvas, 0, 0);
+
+      // Convert to blob and download
+      tempCanvas.toBlob((blob) => {
+        if (!blob) {
+          message.error("Failed to create image");
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${currentProject || "drawing"}.${format}`; // Use current project name if available
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        message.success(`${format.toUpperCase()} file exported successfully!`);
+      }, `image/${format}`, 1.0);
     }
     setOpenHomeModal(false);
   };

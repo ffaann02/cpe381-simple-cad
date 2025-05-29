@@ -9,7 +9,7 @@ import { Layer } from "@/interface/tab";
 import { RxDotsHorizontal, RxDotsVertical } from "react-icons/rx";
 
 const fallbackThumbnail =
-  "https://cad-kenkyujo.com/en/wp-content/uploads/2023/02/AutoCAD-e1675502269600.jpg";
+  "https://static.thenounproject.com/png/140281-200.png";
 
 function timeAgo(dateString: string) {
   const now = dayjs();
@@ -302,12 +302,12 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-8 pt-24">
+    <div className="min-h-screen bg-neutral-50 p-8 pt-16">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-neutral-600">Recent</h1>
           <div className="flex items-center gap-4">
-            <button className="flex text-sm text-neutral-600 bg-neutral-200 rounded px-3 py-1 gap-2 items-center">
+            <button className="flex text-sm text-neutral-600 rounded px-3 py-1 gap-2 items-center">
               Sort by
               <Select
                 className="bg-transparent text-neutral-600"
@@ -331,7 +331,7 @@ const Home = () => {
               placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="rounded-full px-4 py-1 bg-neutral-50 border-2 border-neutral-300 text-neutral-600"
+              className="rounded-md px-4 py-1 bg-neutral-50 border-2 border-neutral-300 text-neutral-600"
             />
           </div>
         </div>

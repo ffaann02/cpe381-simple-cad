@@ -12,14 +12,14 @@ function App() {
       <TabProvider>
         <div>
           <Navbar />
-          <main>
+          <main className="mb-6 pt-10">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/editor" element={<CadEditor />} />
               <Route path="/about" element={<About />} />
             </Routes>
           </main>
-          {/* <Footer /> */}
+          <Footer />
         </div>
       </TabProvider>
     </Router>

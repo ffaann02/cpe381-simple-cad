@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTab } from "@/context/AppContext";
-import { Select, message } from "antd"; // Import message for notifications
+import { Select, message, Modal, Input, Dropdown, MenuProps } from "antd"; // Import Modal, Input, Dropdown
 import dayjs from "dayjs";
 import { TbSortAscending, TbSortDescending } from "react-icons/tb";
-import { Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape"; // Import necessary shape types
-import { Layer } from "@/interface/tab"; // Import Layer type
+import { Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape";
+import { Layer } from "@/interface/tab";
+import { RxDotsHorizontal, RxDotsVertical } from "react-icons/rx";
 
 const fallbackThumbnail =
   "https://cad-kenkyujo.com/en/wp-content/uploads/2023/02/AutoCAD-e1675502269600.jpg";
@@ -43,16 +44,16 @@ const Home = () => {
     setModalType,
     setShowGrid,
     setOpenHomeModal,
-    setLines, // Destructure setters for shapes
+    setLines,
     setCircles,
     setEllipses,
     setCurves,
-    setPolygons, // Added setPolygons
-    setLayers, // Added setLayers
-    setCanvasSize, // Added setCanvasSize
-    setCurrentProject, // Added setCurrentProject
-    setSelectedLayerId, // Added setSelectedLayerId
-    resetCanvasState, // Added resetCanvasState
+    setPolygons,
+    setLayers,
+    setCanvasSize,
+    setCurrentProject,
+    setSelectedLayerId,
+    resetCanvasState,
     setProjects,
     setTab,
   } = useTab();
@@ -62,6 +63,12 @@ const Home = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const [cadProjects, setCadProjects] = useState<CADProject[]>([]);
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<CADProject | null>(
+    null
+  );
+  const [newProjectName, setNewProjectName] = useState("");
 
   // Helper to generate the localStorage key based on the project title
   const getLocalStorageKey = (projectTitle: string) =>
@@ -119,15 +126,12 @@ const Home = () => {
   const filteredProjects = getSortedProjects();
 
   const handleNewProject = () => {
-    // Reset canvas state to a new, empty project
     resetCanvasState();
-    // Set a temporary project name or open a modal for user to input
-    // For now, let's navigate to editor and allow user to save later
-    setCurrentProject(null); // Clear current project so a new one can be created/saved
-    setShowGrid(true); // Show grid for new project
-    setTab("file"); // Set the current tab to editor
+    setCurrentProject(null);
+    setShowGrid(true);
+    setTab("file");
     navigate("/editor");
-    setCurrentProject(""); // Reset current project
+    setCurrentProject("");
   };
 
   const handleProjectCardClick = (projectTitle: string) => {
@@ -139,7 +143,6 @@ const Home = () => {
       }
       const parsedState = JSON.parse(savedState);
 
-      // Update global state with loaded project data
       setLines(parsedState.lines || []);
       setCircles(parsedState.circles || []);
       setCurves(parsedState.curves || []);
@@ -153,8 +156,8 @@ const Home = () => {
           backgroundColor: "#ffffff",
         }
       );
-      setCurrentProject(projectTitle); // Set the current project
-      setSelectedLayerId(parsedState.layers?.[0]?.id || null); // Select the first layer or null
+      setCurrentProject(projectTitle);
+      setSelectedLayerId(parsedState.layers?.[0]?.id || null);
       setProjects((prev) => {
         if (prev.some((p) => p.name === projectTitle)) return prev;
         return [
@@ -170,7 +173,7 @@ const Home = () => {
       setCurrentProject(projectTitle);
       message.success(`Project "${projectTitle}" loaded successfully!`);
       setTab("file");
-      navigate("/editor"); // Navigate to the editor page
+      navigate("/editor");
     } catch (error) {
       console.error(`Failed to load project "${projectTitle}":`, error);
       message.error(
@@ -189,8 +192,117 @@ const Home = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
+  // --- New functions for Rename and Delete ---
+
+  const handleRenameProject = () => {
+    if (!selectedProject || !newProjectName.trim()) {
+      message.error("Invalid project or new name.");
+      return;
+    }
+
+    const oldTitle = selectedProject.title;
+    const newTitle = newProjectName.trim();
+
+    if (oldTitle === newTitle) {
+      message.info("New name is the same as the old name.");
+      setShowRenameModal(false);
+      return;
+    }
+
+    if (
+      cadProjects.some(
+        (p) => p.title.toLowerCase() === newTitle.toLowerCase()
+      )
+    ) {
+      message.error("A project with this name already exists.");
+      return;
+    }
+
+    try {
+      const oldKey = getLocalStorageKey(oldTitle);
+      const newKey = getLocalStorageKey(newTitle);
+      const savedState = localStorage.getItem(oldKey);
+
+      if (savedState) {
+        localStorage.setItem(newKey, savedState);
+        localStorage.removeItem(oldKey);
+
+        setCadProjects((prev) =>
+          prev.map((project) =>
+            project.title === oldTitle
+              ? { ...project, title: newTitle }
+              : project
+          )
+        );
+        message.success(`Project "${oldTitle}" renamed to "${newTitle}".`);
+      } else {
+        message.error(`Project "${oldTitle}" not found in storage.`);
+      }
+    } catch (error) {
+      console.error(`Error renaming project "${oldTitle}":`, error);
+      message.error(`Failed to rename project "${oldTitle}".`);
+    } finally {
+      setShowRenameModal(false);
+      setSelectedProject(null);
+      setNewProjectName("");
+    }
+  };
+
+  const handleDeleteProject = () => {
+    if (!selectedProject) {
+      message.error("No project selected for deletion.");
+      return;
+    }
+
+    const projectTitle = selectedProject.title;
+    const keyToDelete = getLocalStorageKey(projectTitle);
+
+    try {
+      localStorage.removeItem(keyToDelete);
+      setCadProjects((prev) =>
+        prev.filter((project) => project.title !== projectTitle)
+      );
+      message.success(`Project "${projectTitle}" deleted successfully.`);
+    } catch (error) {
+      console.error(`Error deleting project "${projectTitle}":`, error);
+      message.error(`Failed to delete project "${projectTitle}".`);
+    } finally {
+      setShowDeleteModal(false);
+      setSelectedProject(null);
+    }
+  };
+
+  const handleMenuClick =
+    (project: CADProject, type: "rename" | "delete") =>
+    (e: React.MouseEvent) => {
+      e.stopPropagation(); // Prevent card click from firing
+      setSelectedProject(project);
+      if (type === "rename") {
+        setNewProjectName(project.title); // Pre-fill current name
+        setShowRenameModal(true);
+      } else {
+        setShowDeleteModal(true);
+      }
+    };
+
+  const items = (project: CADProject): MenuProps["items"] => [
+    {
+      key: "1",
+      label: (
+        <span onClick={handleMenuClick(project, "rename")}>Rename</span>
+      ),
+    },
+    {
+      key: "2",
+      label: (
+        <span onClick={handleMenuClick(project, "delete")}>Delete</span>
+      ),
+      danger: true,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-50 p-8">
+    <div className="min-h-screen bg-neutral-50 p-8 pt-24">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-neutral-600">Recent</h1>
@@ -236,14 +348,14 @@ const Home = () => {
           {filteredProjects.map((cad, idx) => (
             <div
               key={idx}
-              className="bg-neutral-100 rounded-lg shadow flex flex-col hover:bg-neutral-200 transition cursor-pointer"
-              onClick={() => handleProjectCardClick(cad.title)} // Attach click handler here
+              className="bg-neutral-100 rounded-lg shadow flex flex-col hover:bg-neutral-200 transition cursor-pointer relative" // Added relative for dropdown positioning
+              onClick={() => handleProjectCardClick(cad.title)}
             >
               <div className="h-48 flex items-center justify-center mb-3 rounded-t-lg border-b border-b-neutral-300">
                 <img
                   src={cad.thumbnail}
                   alt={cad.title}
-                  className="object-cover h-full w-full" // Added w-full for better image scaling
+                  className="object-cover h-full w-full"
                 />
               </div>
               <div className="p-3">
@@ -254,10 +366,60 @@ const Home = () => {
                   {timeAgo(cad.date)}
                 </div>
               </div>
+              {/* Dropdown for rename/delete */}
+              <div
+                className="absolute top-2 right-2"
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking dropdown area
+              >
+                <Dropdown
+                  menu={{ items: items(cad) }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                  arrow
+                >
+                  <button className="p-1 hover:bg-neutral-300 rounded-md cursor-pointer">
+                    <RxDotsHorizontal className="text-neutral-500 text-xl" />
+                  </button>
+                </Dropdown>
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Rename Modal */}
+      <Modal
+        title="Rename Project"
+        open={showRenameModal}
+        onOk={handleRenameProject}
+        onCancel={() => setShowRenameModal(false)}
+        okText="Rename"
+        cancelText="Cancel"
+      >
+        <Input
+          value={newProjectName}
+          onChange={(e) => setNewProjectName(e.target.value)}
+          placeholder="Enter new project name"
+          onPressEnter={handleRenameProject}
+        />
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal
+        title="Delete Project"
+        open={showDeleteModal}
+        onOk={handleDeleteProject}
+        onCancel={() => setShowDeleteModal(false)}
+        okText="Delete"
+        cancelText="Cancel"
+        okButtonProps={{ danger: true }}
+      >
+        <p>
+          Are you sure you want to delete "
+          <span className="font-semibold">{selectedProject?.title}</span>"?
+          This action cannot be undone.
+        </p>
+      </Modal>
     </div>
   );
 };

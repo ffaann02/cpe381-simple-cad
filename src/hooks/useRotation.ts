@@ -1,6 +1,6 @@
 // hooks/useRotation.ts
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Point } from "@/interface/shape";
+import { Point, Polygon } from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 import { rotatePoint } from "@/utils/transform";
@@ -23,7 +23,7 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
   const [rotatingShape, setRotatingShape] = useState<RotatingShape | null>(null);
   const rotatePopoverRef = useRef<HTMLDivElement>(null);
 
-  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, layers, setLayers, setSelectedLayerId, setLog } = useTab();
+  const { lines, setLines, circles, setCircles, ellipses, setEllipses, curves, setCurves, polygons, setPolygons, layers, setLayers, setSelectedLayerId, setLog } = useTab();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,22 +45,22 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
 
   const handleRotateClick = useCallback(
     (x: number, y: number) => {
-      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, layers);
+      const clickedShape = findShapeAtPoint(x, y, lines, circles, ellipses, curves, polygons, layers);
       if (clickedShape.layerId) {
+        const shapeObject = (() => {
+          switch (clickedShape.type) {
+            case "line": return lines[clickedShape.index!];
+            case "circle": return circles[clickedShape.index!];
+            case "ellipse": return ellipses[clickedShape.index!];
+            case "curve": return curves[clickedShape.index!];
+            case "polygon": return polygons[clickedShape.index!];
+            default: return undefined;
+          }
+        })();
+
         let shapeCenter: Point = { x: 0, y: 0 };
-        switch (clickedShape.type) {
-          case "line":
-            shapeCenter = getShapeCenter(lines[clickedShape.index!], "line");
-            break;
-          case "circle":
-            shapeCenter = circles[clickedShape.index!].center;
-            break;
-          case "ellipse":
-            shapeCenter = ellipses[clickedShape.index!].center;
-            break;
-          case "curve":
-            shapeCenter = getShapeCenter(curves[clickedShape.index!], "curve");
-            break;
+        if(shapeObject) {
+             shapeCenter = getShapeCenter(shapeObject, clickedShape.type!);
         }
 
         const updatedLayers = layers.map((layer) => ({
@@ -70,16 +70,16 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
         setLayers(updatedLayers);
         setSelectedLayerId(clickedShape.layerId);
 
-        // Remove automatic popup of rotation form
-        // if (clickedShape.layerId && clickedShape.index !== null && clickedShape.type) {
-        //   setRotatingShape({
-        //     layerId: clickedShape.layerId,
-        //     index: clickedShape.index,
-        //     type: clickedShape.type,
-        //     center: shapeCenter,
-        //   });
-        //   setRotatePopoverOpen(true);
-        // }
+        if (clickedShape.layerId && clickedShape.index !== null && clickedShape.type) {
+          setRotatingShape({
+            layerId: clickedShape.layerId,
+            index: clickedShape.index,
+            type: clickedShape.type,
+            center: shapeCenter,
+          });
+          setRotatePopoverOpen(true);
+        }
+
       } else {
         const updatedLayers = layers.map((layer) => ({
           ...layer,
@@ -89,7 +89,7 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
         setSelectedLayerId(null);
       }
     },
-    [lines, circles, ellipses, curves, layers, setLayers, setSelectedLayerId]
+    [lines, circles, ellipses, curves, polygons, layers, setLayers, setSelectedLayerId]
   );
 
   const handleRotateShape = useCallback(() => {
@@ -178,6 +178,26 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
           },
         ]);
         break;
+      case "polygon":
+          setPolygons((prevPolygons) =>
+            prevPolygons.map((polygon, i) =>
+              i === index && polygon.layerId === layerId
+                ? {
+                    ...polygon,
+                    points: polygon.points.map(point => rotatePoint(point, center, angleRad))
+                  }
+                : polygon
+            )
+          );
+          setLog((prev) => [
+            ...prev,
+            {
+              type: "info",
+              message: `Polygon ${index} rotated by ${angle} degrees`,
+              timestamp: Date.now(),
+            },
+          ]);
+          break;
       default:
         break;
     }
@@ -185,7 +205,7 @@ export const useRotation = ({ canvasRef }: UseRotationProps) => {
     setRotatePopoverOpen(false);
     setRotatingShape(null);
     setRotationAngle("");
-  }, [rotationAngle, rotatingShape, setLines, setCircles, setEllipses, setCurves, setLog]);
+  }, [rotationAngle, rotatingShape, setLines, setCircles, setEllipses, setCurves, setPolygons, setLog]);
 
   return {
     rotatePopoverOpen,

@@ -1,5 +1,5 @@
 // utils/selection.ts (or components/Canvas/selection.ts)
-import { Point, Line, Circle, Curve, Ellipse } from "@/interface/shape";
+import { Point, Line, Circle, Curve, Ellipse, Polygon } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
 
 const SELECT_THRESHOLD = 5; // Distance threshold for selecting shapes in pixels
@@ -52,6 +52,7 @@ export const isPointInCircle = (
   const dx = x - cx;
   const dy = y - cy;
   const distance = Math.sqrt(dx * dx + dy * dy);
+  // For circles, check if the point is within a small threshold of the radius
   return Math.abs(distance - radius) < SELECT_THRESHOLD;
 };
 
@@ -111,6 +112,26 @@ export const isPointOnCurve = (
   return false;
 };
 
+// Function to check if a point is inside a polygon (using the Ray Casting algorithm)
+export const isPointInPolygon = (x: number, y: number, polygonPoints: Point[]): boolean => {
+    if (polygonPoints.length < 3) return false; // Not a polygon
+
+    let inside = false;
+    for (let i = 0, j = polygonPoints.length - 1; i < polygonPoints.length; j = i++) {
+        const xi = polygonPoints[i].x;
+        const yi = polygonPoints[i].y;
+        const xj = polygonPoints[j].x;
+        const yj = polygonPoints[j].y;
+
+        const intersect = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+
+        if (intersect) inside = !inside;
+    }
+
+    return inside;
+};
+
 export const findShapeAtPoint = (
   x: number,
   y: number,
@@ -118,13 +139,23 @@ export const findShapeAtPoint = (
   circles: Circle[],
   ellipses: Ellipse[],
   curves: Curve[],
+  polygons: Polygon[], // Add polygons to the parameters
   layers: Layer[]
 ): {
   layerId: string | null;
   index: number | null;
-  type: "line" | "circle" | "ellipse" | "curve" | null;
+  type: "line" | "circle" | "ellipse" | "curve" | "polygon" | null; // Add polygon type
 } => {
-  // Check lines first
+  // Check polygons first (assuming filled polygons are easier to select)
+   for (let i = polygons.length - 1; i >= 0; i--) {
+    const polygon = polygons[i];
+    const layer = layers.find((l) => l.id === polygon.layerId);
+    if (layer?.is_visible && isPointInPolygon(x, y, polygon.points)) {
+      return { layerId: polygon.layerId, index: i, type: "polygon" };
+    }
+  }
+
+  // Check lines
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i];
     const layer = layers.find((l) => l.id === line.layerId);

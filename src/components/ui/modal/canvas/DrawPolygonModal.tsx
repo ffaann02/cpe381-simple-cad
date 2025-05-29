@@ -3,6 +3,7 @@ interface DrawPolygonModalProps {
   polygonCornerNumber: number;
   setPolygonCornerNumber: (number: number) => void;
   setWillingToDrawPolygon: (willing: boolean) => void;
+  onConfirm: () => void;
 }
 
 const DrawPolygonModal = ({
@@ -10,6 +11,7 @@ const DrawPolygonModal = ({
   polygonCornerNumber,
   setPolygonCornerNumber,
   setWillingToDrawPolygon,
+  onConfirm,
 }: DrawPolygonModalProps) => {
   return (
     <div
@@ -34,7 +36,7 @@ const DrawPolygonModal = ({
       </div>
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm"
-        onClick={() => setWillingToDrawPolygon(false)}
+        onClick={onConfirm}
       >
         Confirm
       </button>

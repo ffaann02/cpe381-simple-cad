@@ -1,5 +1,5 @@
 // utils/drawing.ts (or components/Canvas/drawing.ts)
-import { Point, Line, Circle, Curve, Ellipse } from "@/interface/shape";
+import { Point, Line, Circle, Curve, Ellipse, Polygon } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
 
 const previewLineColor = "#D4C9BE";
@@ -60,16 +60,71 @@ export const drawCircle = (
   fillColor = "",
   width = 1
 ) => {
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+  // Round center coordinates and radius for midpoint algorithm
+  const x = Math.round(cx);
+  const y = Math.round(cy);
+  const r = Math.round(radius);
+
+  // Fill the circle if fill color is provided
   if (fillColor) {
     ctx.fillStyle = fillColor;
-    ctx.fill();
+    // Use midpoint algorithm for filling
+    let x1 = 0;
+    let y1 = r;
+    let d = 1 - r;
+    
+    while (x1 <= y1) {
+      // Fill horizontal lines for each octant
+      for (let i = -x1; i <= x1; i++) {
+        ctx.fillRect(x + i, y + y1, 1, 1);
+        ctx.fillRect(x + i, y - y1, 1, 1);
+      }
+      for (let i = -y1; i <= y1; i++) {
+        ctx.fillRect(x + i, y + x1, 1, 1);
+        ctx.fillRect(x + i, y - x1, 1, 1);
+      }
+      
+      if (d < 0) {
+        d += 2 * x1 + 3;
+      } else {
+        d += 2 * (x1 - y1) + 5;
+        y1--;
+      }
+      x1++;
+    }
   }
-  ctx.stroke();
-  ctx.lineWidth = 1; // Reset line width
+
+  // Draw the border using midpoint algorithm
+  ctx.fillStyle = strokeColor;
+  let x1 = 0;
+  let y1 = r;
+  let d = 1 - r;
+  
+  const plotPoints = (x1: number, y1: number) => {
+    for (let i = 0; i < width; i++) {
+      for (let j = 0; j < width; j++) {
+        ctx.fillRect(x + x1 + i, y + y1 + j, 1, 1);
+        ctx.fillRect(x - x1 + i, y + y1 + j, 1, 1);
+        ctx.fillRect(x + x1 + i, y - y1 + j, 1, 1);
+        ctx.fillRect(x - x1 + i, y - y1 + j, 1, 1);
+        ctx.fillRect(x + y1 + i, y + x1 + j, 1, 1);
+        ctx.fillRect(x - y1 + i, y + x1 + j, 1, 1);
+        ctx.fillRect(x + y1 + i, y - x1 + j, 1, 1);
+        ctx.fillRect(x - y1 + i, y - x1 + j, 1, 1);
+      }
+    }
+  };
+
+  while (x1 <= y1) {
+    plotPoints(x1, y1);
+    if (d < 0) {
+      d += 2 * x1 + 3;
+    } else {
+      d += 2 * (x1 - y1) + 5;
+      y1--;
+    }
+    x1++;
+  }
 };
 
 export const drawBezierCurve = (
@@ -158,46 +213,47 @@ export const drawEllipseMidpoint = (
 export const drawPolygon = (
   points: Point[],
   ctx: CanvasRenderingContext2D,
-  strokeColor = "black",
-  fillColor = "transparent",
-  width = 1
+  borderColor?: string,
+  backgroundColor?: string,
+  lineWidth: number = 1
 ) => {
   if (points.length < 2) return;
 
-  ctx.fillStyle = fillColor;
-
-  // Fill the polygon if a fill color is provided
-  if (fillColor !== "transparent") {
+  // Fill the polygon if background color is provided
+  if (backgroundColor) {
+    ctx.fillStyle = backgroundColor;
     ctx.beginPath();
-    ctx.moveTo(Math.round(points[0].x), Math.round(points[0].y));
+    ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
-      ctx.lineTo(Math.round(points[i].x), Math.round(points[i].y));
+      ctx.lineTo(points[i].x, points[i].y);
     }
     ctx.closePath();
     ctx.fill();
   }
 
-  // Draw the polygon edges using Bresenham's line algorithm
+  // Draw the border using Bresenham's line algorithm
   for (let i = 0; i < points.length; i++) {
     const start = points[i];
-    const end = points[(i + 1) % points.length]; // Connect the last point to the first
+    const end = points[(i + 1) % points.length]; // Connect back to first point
+    // Round coordinates for Bresenham algorithm
     drawBresenhamLine(
       Math.round(start.x),
       Math.round(start.y),
       Math.round(end.x),
       Math.round(end.y),
       ctx,
-      strokeColor,
-      width
+      borderColor || "black",
+      lineWidth
     );
   }
 };
 
-export const getShapeStyle = (layer: Layer | undefined): { stroke: string; lineWidth: number } => {
+export const getShapeStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
   const isSelected = layer?.is_selected;
-  const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
+  const stroke = layer?.borderColor || "black";
+  const fill = layer?.backgroundColor || "";
   const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
-  return { stroke, lineWidth };
+  return { stroke, fill, lineWidth };
 };
 
 export const getCircleStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
@@ -209,6 +265,14 @@ export const getCircleStyle = (layer: Layer | undefined): { stroke: string; fill
 };
 
 export const getEllipseStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
+  const isSelected = layer?.is_selected;
+  const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
+  const fill = layer?.backgroundColor || "";
+  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  return { stroke, fill, lineWidth };
+};
+
+export const getPolygonStyle = (layer: Layer | undefined): { stroke: string; fill: string; lineWidth: number } => {
   const isSelected = layer?.is_selected;
   const stroke = isSelected ? SELECTION_COLOR : layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
@@ -260,5 +324,19 @@ export function drawBoundingBox(
 
   ctx.restore();
 }
+
+const drawPolygons = (
+  context: CanvasRenderingContext2D,
+  polygons: Polygon[],
+  layers: Layer[]
+) => {
+  polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => {
+    const layer = layers.find((l) => l.id === layerId);
+    if (layer?.is_visible && polygonPoints.length > 1) {
+      const { stroke, fill, lineWidth } = getShapeStyle(layer);
+      drawPolygon(polygonPoints, context, stroke, fill, lineWidth);
+    }
+  });
+};
 
   

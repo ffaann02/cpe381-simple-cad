@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTab } from "@/context/AppContext";
-import { Circle, Curve, Ellipse, Line } from "@/interface/shape";
+import { Circle, Curve, Ellipse, Line, Polygon } from "@/interface/shape";
 import { MdRotate90DegreesCcw } from "react-icons/md";
 import { PiFlipHorizontalFill } from "react-icons/pi";
 import { Tools } from "@/interface/tool";
@@ -22,6 +22,8 @@ const PropertiesTab: React.FC = () => {
     setCurves,
     ellipses,
     setEllipses,
+    polygons,
+    setPolygons,
     selectedLayerId,
     setTool,
     tool,
@@ -31,15 +33,21 @@ const PropertiesTab: React.FC = () => {
   const [showRotationForm, setShowRotationForm] = useState(false);
   const [showFlipForm, setShowFlipForm] = useState(false);
   const [rotationAngle, setRotationAngle] = useState<string | number>("90");
-  const [rotationCenter, setRotationCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [rotationCenter, setRotationCenter] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
   const [isCenterManuallySet, setIsCenterManuallySet] = useState(false);
-  const [flipDirection, setFlipDirection] = useState<"horizontal" | "vertical">("horizontal");
+  const [flipDirection, setFlipDirection] = useState<"horizontal" | "vertical">(
+    "horizontal"
+  );
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
   const line = lines.find((l) => l.layerId === selectedLayerId);
   const circle = circles.find((c) => c.layerId === selectedLayerId);
   const curve = curves.find((c) => c.layerId === selectedLayerId);
   const ellipse = ellipses.find((e) => e.layerId === selectedLayerId);
+  const polygon = polygons.find((p) => p.layerId === selectedLayerId);
 
   const handleLineChange = (field: keyof Line, value: any) => {
     if (!selectedLayerId || !line) return;
@@ -47,7 +55,7 @@ const PropertiesTab: React.FC = () => {
       l.layerId === selectedLayerId ? { ...l, [field]: value } : l
     );
     setLines(updatedLines);
-    
+
     // Update layer color
     const updatedLayers = layers.map((l) =>
       l.id === selectedLayerId ? { ...l, borderColor: value } : l
@@ -75,14 +83,16 @@ const PropertiesTab: React.FC = () => {
       c.layerId === selectedLayerId ? { ...c, [field]: value } : c
     );
     setCircles(updatedCircles);
-    
+
     // Update layer color
     const updatedLayers = layers.map((l) =>
-      l.id === selectedLayerId ? { 
-        ...l, 
-        ...(field === 'borderColor' ? { borderColor: value } : {}),
-        ...(field === 'backgroundColor' ? { backgroundColor: value } : {})
-      } : l
+      l.id === selectedLayerId
+        ? {
+            ...l,
+            ...(field === "borderColor" ? { borderColor: value } : {}),
+            ...(field === "backgroundColor" ? { backgroundColor: value } : {}),
+          }
+        : l
     );
     setLayers(updatedLayers);
   };
@@ -103,7 +113,7 @@ const PropertiesTab: React.FC = () => {
       c.layerId === selectedLayerId ? { ...c, [field]: value } : c
     );
     setCurves(updatedCurves);
-    
+
     // Update layer color
     const updatedLayers = layers.map((l) =>
       l.id === selectedLayerId ? { ...l, borderColor: value } : l
@@ -131,14 +141,16 @@ const PropertiesTab: React.FC = () => {
       e.layerId === selectedLayerId ? { ...e, [field]: value } : e
     );
     setEllipses(updatedEllipses);
-    
+
     // Update layer color
     const updatedLayers = layers.map((l) =>
-      l.id === selectedLayerId ? { 
-        ...l, 
-        ...(field === 'borderColor' ? { borderColor: value } : {}),
-        ...(field === 'backgroundColor' ? { backgroundColor: value } : {})
-      } : l
+      l.id === selectedLayerId
+        ? {
+            ...l,
+            ...(field === "borderColor" ? { borderColor: value } : {}),
+            ...(field === "backgroundColor" ? { backgroundColor: value } : {}),
+          }
+        : l
     );
     setLayers(updatedLayers);
   };
@@ -153,16 +165,61 @@ const PropertiesTab: React.FC = () => {
     setEllipses(updatedEllipses);
   };
 
+  const handlePolygonChange = (field: keyof Polygon, value: any) => {
+    if (!selectedLayerId || !polygon) return;
+    const updatedPolygons = polygons.map((p) =>
+      p.layerId === selectedLayerId ? { ...p, [field]: value } : p
+    );
+    setPolygons(updatedPolygons);
+
+    // Update layer color
+    const updatedLayers = layers.map((l) =>
+      l.id === selectedLayerId
+        ? {
+            ...l,
+            ...(field === "borderColor" ? { borderColor: value } : {}),
+            ...(field === "backgroundColor" ? { backgroundColor: value } : {}),
+          }
+        : l
+    );
+    setLayers(updatedLayers);
+  };
+
+  const handlePolygonPointChange = (
+    index: number,
+    axis: "x" | "y",
+    value: number
+  ) => {
+    if (!selectedLayerId || !polygon) return;
+    const updatedPolygons = polygons.map((p) =>
+      p.layerId === selectedLayerId
+        ? {
+            ...p,
+            points: p.points.map((point, i) =>
+              i === index ? { ...point, [axis]: value } : point
+            ),
+          }
+        : p
+    );
+    setPolygons(updatedPolygons);
+  };
+
   const handleRotate = () => {
     if (!selectedLayerId) return;
 
     // Find the shape and its index
-    const lineIndex = lines.findIndex(l => l.layerId === selectedLayerId);
-    const circleIndex = circles.findIndex(c => c.layerId === selectedLayerId);
-    const curveIndex = curves.findIndex(c => c.layerId === selectedLayerId);
-    const ellipseIndex = ellipses.findIndex(e => e.layerId === selectedLayerId);
+    const lineIndex = lines.findIndex((l) => l.layerId === selectedLayerId);
+    const circleIndex = circles.findIndex((c) => c.layerId === selectedLayerId);
+    const curveIndex = curves.findIndex((c) => c.layerId === selectedLayerId);
+    const ellipseIndex = ellipses.findIndex(
+      (e) => e.layerId === selectedLayerId
+    );
+    const polygonIndex = polygons.findIndex(
+      (p) => p.layerId === selectedLayerId
+    );
 
-    let shapeType: "line" | "circle" | "ellipse" | "curve" | null = null;
+    let shapeType: "line" | "circle" | "ellipse" | "curve" | "polygon" | null =
+      null;
     let shapeIndex = -1;
 
     if (lineIndex !== -1) {
@@ -177,23 +234,30 @@ const PropertiesTab: React.FC = () => {
     } else if (ellipseIndex !== -1) {
       shapeType = "ellipse";
       shapeIndex = ellipseIndex;
+    } else if (polygonIndex !== -1) {
+      shapeType = "polygon";
+      shapeIndex = polygonIndex;
     }
 
     if (shapeType && shapeIndex !== -1) {
-      // Get the shape and its center
-      let shape;
       const center = rotationCenter;
-      const angle = typeof rotationAngle === 'string' ? parseFloat(rotationAngle) || 0 : rotationAngle;
+      const angle =
+        typeof rotationAngle === "string"
+          ? parseFloat(rotationAngle) || 0
+          : rotationAngle;
 
       switch (shapeType) {
         case "line":
-          shape = lines[shapeIndex];
-          setLines(prevLines =>
+          setLines((prevLines) =>
             prevLines.map((l, i) =>
               i === shapeIndex
                 ? {
                     ...l,
-                    start: rotatePoint(l.start, center, (angle * Math.PI) / 180),
+                    start: rotatePoint(
+                      l.start,
+                      center,
+                      (angle * Math.PI) / 180
+                    ),
                     end: rotatePoint(l.end, center, (angle * Math.PI) / 180),
                   }
                 : l
@@ -201,34 +265,39 @@ const PropertiesTab: React.FC = () => {
           );
           break;
         case "circle":
-          shape = circles[shapeIndex];
-          setCircles(prevCircles =>
+          setCircles((prevCircles) =>
             prevCircles.map((c, i) =>
               i === shapeIndex
                 ? {
                     ...c,
-                    center: rotatePoint(c.center, center, (angle * Math.PI) / 180),
+                    center: rotatePoint(
+                      c.center,
+                      center,
+                      (angle * Math.PI) / 180
+                    ),
                   }
                 : c
             )
           );
           break;
         case "ellipse":
-          shape = ellipses[shapeIndex];
-          setEllipses(prevEllipses =>
+          setEllipses((prevEllipses) =>
             prevEllipses.map((e, i) =>
               i === shapeIndex
                 ? {
                     ...e,
-                    center: rotatePoint(e.center, center, (angle * Math.PI) / 180),
+                    center: rotatePoint(
+                      e.center,
+                      center,
+                      (angle * Math.PI) / 180
+                    ),
                   }
                 : e
             )
           );
           break;
         case "curve":
-          shape = curves[shapeIndex];
-          setCurves(prevCurves =>
+          setCurves((prevCurves) =>
             prevCurves.map((c, i) =>
               i === shapeIndex
                 ? {
@@ -242,9 +311,23 @@ const PropertiesTab: React.FC = () => {
             )
           );
           break;
+        case "polygon":
+          setPolygons((prevPolygons) =>
+            prevPolygons.map((p, i) =>
+              i === shapeIndex
+                ? {
+                    ...p,
+                    points: p.points.map((point) =>
+                      rotatePoint(point, center, (angle * Math.PI) / 180)
+                    ),
+                  }
+                : p
+            )
+          );
+          break;
       }
 
-      setLog(prev => [
+      setLog((prev) => [
         ...prev,
         {
           type: "info",
@@ -259,12 +342,18 @@ const PropertiesTab: React.FC = () => {
     if (!selectedLayerId) return;
 
     // Find the shape and its index
-    const lineIndex = lines.findIndex(l => l.layerId === selectedLayerId);
-    const circleIndex = circles.findIndex(c => c.layerId === selectedLayerId);
-    const curveIndex = curves.findIndex(c => c.layerId === selectedLayerId);
-    const ellipseIndex = ellipses.findIndex(e => e.layerId === selectedLayerId);
+    const lineIndex = lines.findIndex((l) => l.layerId === selectedLayerId);
+    const circleIndex = circles.findIndex((c) => c.layerId === selectedLayerId);
+    const curveIndex = curves.findIndex((c) => c.layerId === selectedLayerId);
+    const ellipseIndex = ellipses.findIndex(
+      (e) => e.layerId === selectedLayerId
+    );
+    const polygonIndex = polygons.findIndex(
+      (p) => p.layerId === selectedLayerId
+    );
 
-    let shapeType: "line" | "circle" | "ellipse" | "curve" | null = null;
+    let shapeType: "line" | "circle" | "ellipse" | "curve" | "polygon" | null =
+      null;
     let shapeIndex = -1;
     let shapeCenter: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -284,12 +373,16 @@ const PropertiesTab: React.FC = () => {
       shapeType = "ellipse";
       shapeIndex = ellipseIndex;
       shapeCenter = ellipses[ellipseIndex].center;
+    } else if (polygonIndex !== -1) {
+      shapeType = "polygon";
+      shapeIndex = polygonIndex;
+      shapeCenter = getShapeCenter(polygons[polygonIndex], "polygon");
     }
 
     if (shapeType && shapeIndex !== -1) {
       switch (shapeType) {
         case "line":
-          setLines(prevLines =>
+          setLines((prevLines) =>
             prevLines.map((l, i) =>
               i === shapeIndex
                 ? {
@@ -302,7 +395,7 @@ const PropertiesTab: React.FC = () => {
           );
           break;
         case "circle":
-          setCircles(prevCircles =>
+          setCircles((prevCircles) =>
             prevCircles.map((c, i) =>
               i === shapeIndex
                 ? {
@@ -314,7 +407,7 @@ const PropertiesTab: React.FC = () => {
           );
           break;
         case "ellipse":
-          setEllipses(prevEllipses =>
+          setEllipses((prevEllipses) =>
             prevEllipses.map((e, i) =>
               i === shapeIndex
                 ? {
@@ -326,7 +419,7 @@ const PropertiesTab: React.FC = () => {
           );
           break;
         case "curve":
-          setCurves(prevCurves =>
+          setCurves((prevCurves) =>
             prevCurves.map((c, i) =>
               i === shapeIndex
                 ? {
@@ -340,9 +433,23 @@ const PropertiesTab: React.FC = () => {
             )
           );
           break;
+        case "polygon":
+          setPolygons((prevPolygons) =>
+            prevPolygons.map((p, i) =>
+              i === shapeIndex
+                ? {
+                    ...p,
+                    points: p.points.map((point) =>
+                      flipPoint(point, direction, shapeCenter)
+                    ),
+                  }
+                : p
+            )
+          );
+          break;
       }
 
-      setLog(prev => [
+      setLog((prev) => [
         ...prev,
         {
           type: "info",
@@ -357,10 +464,11 @@ const PropertiesTab: React.FC = () => {
   useEffect(() => {
     if (!selectedLayerId) return;
 
-    const line = lines.find(l => l.layerId === selectedLayerId);
-    const circle = circles.find(c => c.layerId === selectedLayerId);
-    const curve = curves.find(c => c.layerId === selectedLayerId);
-    const ellipse = ellipses.find(e => e.layerId === selectedLayerId);
+    const line = lines.find((l) => l.layerId === selectedLayerId);
+    const circle = circles.find((c) => c.layerId === selectedLayerId);
+    const curve = curves.find((c) => c.layerId === selectedLayerId);
+    const ellipse = ellipses.find((e) => e.layerId === selectedLayerId);
+    const polygon = polygons.find((p) => p.layerId === selectedLayerId);
 
     // Reset menus and rotation center when selected shape changes
     setShowRotationForm(false);
@@ -378,6 +486,8 @@ const PropertiesTab: React.FC = () => {
         setRotationCenter(getShapeCenter(curve, "curve"));
       } else if (ellipse) {
         setRotationCenter(ellipse.center);
+      } else if (polygon) {
+        setRotationCenter(getShapeCenter(polygon, "polygon"));
       }
     }
   }, [selectedLayerId]); // Only depend on selectedLayerId
@@ -387,26 +497,42 @@ const PropertiesTab: React.FC = () => {
     if (tool === Tools.Rotate || tool === Tools.Flip) {
       // If no shape is selected, select the first visible shape
       if (!selectedLayerId) {
-        const firstVisibleLayer = layers.find(layer => layer.is_visible);
+        const firstVisibleLayer = layers.find((layer) => layer.is_visible);
         if (firstVisibleLayer) {
           // Find the first shape in this layer
-          const line = lines.find(l => l.layerId === firstVisibleLayer.id);
-          const circle = circles.find(c => c.layerId === firstVisibleLayer.id);
-          const curve = curves.find(c => c.layerId === firstVisibleLayer.id);
-          const ellipse = ellipses.find(e => e.layerId === firstVisibleLayer.id);
+          const line = lines.find((l) => l.layerId === firstVisibleLayer.id);
+          const circle = circles.find(
+            (c) => c.layerId === firstVisibleLayer.id
+          );
+          const curve = curves.find((c) => c.layerId === firstVisibleLayer.id);
+          const ellipse = ellipses.find(
+            (e) => e.layerId === firstVisibleLayer.id
+          );
+          const polygon = polygons.find(
+            (p) => p.layerId === firstVisibleLayer.id
+          );
 
-          if (line || circle || curve || ellipse) {
+          if (line || circle || curve || ellipse || polygon) {
             // Set the selected layer ID to the first visible layer
             const updatedLayers = layers.map((layer: Layer) => ({
               ...layer,
-              is_selected: layer.id === firstVisibleLayer.id
+              is_selected: layer.id === firstVisibleLayer.id,
             }));
             setLayers(updatedLayers);
           }
         }
       }
     }
-  }, [tool, selectedLayerId, layers, lines, circles, curves, ellipses]);
+  }, [
+    tool,
+    selectedLayerId,
+    layers,
+    lines,
+    circles,
+    curves,
+    ellipses,
+    polygons,
+  ]);
 
   // // Add effect to automatically set transform tool when shape is selected
   // useEffect(() => {
@@ -422,9 +548,9 @@ const PropertiesTab: React.FC = () => {
       {line && (
         <>
           <h3 className="font-semibold mt-4 mb-2">Line</h3>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              Start:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              Start
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -449,9 +575,9 @@ const PropertiesTab: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              End:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              End
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -491,8 +617,8 @@ const PropertiesTab: React.FC = () => {
       {circle && (
         <>
           <h3 className="font-semibold mt-4 mb-2">Circle</h3>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
               Center:
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
@@ -523,7 +649,9 @@ const PropertiesTab: React.FC = () => {
             <input
               type="number"
               value={circle.radius}
-              onChange={(e) => handleCircleChange("radius", parseFloat(e.target.value))}
+              onChange={(e) =>
+                handleCircleChange("radius", parseFloat(e.target.value))
+              }
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -532,7 +660,9 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={circle.backgroundColor || ""}
-              onChange={(e) => handleCircleChange("backgroundColor", e.target.value)}
+              onChange={(e) =>
+                handleCircleChange("backgroundColor", e.target.value)
+              }
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -541,7 +671,9 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={circle.borderColor || "#000000"}
-              onChange={(e) => handleCircleChange("borderColor", e.target.value)}
+              onChange={(e) =>
+                handleCircleChange("borderColor", e.target.value)
+              }
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -551,9 +683,9 @@ const PropertiesTab: React.FC = () => {
       {curve && (
         <>
           <h3 className="font-semibold mt-4 mb-2">Curve</h3>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              P0:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              P0
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -578,9 +710,9 @@ const PropertiesTab: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              P1:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              P1
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -605,9 +737,9 @@ const PropertiesTab: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              P2:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              P2
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -632,9 +764,9 @@ const PropertiesTab: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              P3:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              P3
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -660,7 +792,7 @@ const PropertiesTab: React.FC = () => {
             </div>
           </div>
           <label className="block mb-2">
-            Color:
+            Color
             <input
               type="color"
               value={curve.color || "#000000"}
@@ -674,9 +806,9 @@ const PropertiesTab: React.FC = () => {
       {ellipse && (
         <>
           <h3 className="font-semibold mt-4 mb-2">Ellipse</h3>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
-              Center:
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+              Center
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
@@ -701,8 +833,8 @@ const PropertiesTab: React.FC = () => {
               />
             </div>
           </div>
-          <div className="grid grid-cols-5 mb-2 gap-x-2">
-            <label className="col-span-1 text-sm text-gray-700 my-auto">
+          <div className="ggrid grid-cols-6 mb-2 gap-x-2">
+            <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
               Radius:
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
@@ -710,7 +842,9 @@ const PropertiesTab: React.FC = () => {
               <input
                 type="number"
                 value={ellipse.rx}
-                onChange={(e) => handleEllipseChange("rx", parseFloat(e.target.value))}
+                onChange={(e) =>
+                  handleEllipseChange("rx", parseFloat(e.target.value))
+                }
                 className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </div>
@@ -719,7 +853,9 @@ const PropertiesTab: React.FC = () => {
               <input
                 type="number"
                 value={ellipse.ry}
-                onChange={(e) => handleEllipseChange("ry", parseFloat(e.target.value))}
+                onChange={(e) =>
+                  handleEllipseChange("ry", parseFloat(e.target.value))
+                }
                 className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </div>
@@ -729,7 +865,9 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={ellipse.backgroundColor || ""}
-              onChange={(e) => handleEllipseChange("backgroundColor", e.target.value)}
+              onChange={(e) =>
+                handleEllipseChange("backgroundColor", e.target.value)
+              }
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -738,20 +876,91 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={ellipse.borderColor || "#000000"}
-              onChange={(e) => handleEllipseChange("borderColor", e.target.value)}
+              onChange={(e) =>
+                handleEllipseChange("borderColor", e.target.value)
+              }
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
         </>
       )}
 
-      {!line && !circle && !curve && !ellipse && (
-        <div className="mt-4 text-sm text-gray-500">
-          No layer selected
-        </div>
+      {polygon && (
+        <>
+          <h3 className="font-semibold mt-4 mb-2">Polygon</h3>
+          <div className="space-y-4">
+            <div className="w-full h-[175px] overflow-y-auto pl-3 py-1.5 pr-1 border border-r-0 rounded-md">
+              {polygon.points.map((point, index) => (
+                <div key={index} className="grid grid-cols-6 mb-2 gap-x-2">
+                  <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
+                    Point {index + 1}
+                  </label>
+                  <div className="col-span-2 flex items-center gap-x-1">
+                    <label className="text-sm text-gray-700 font-semibold">
+                      X:
+                    </label>
+                    <input
+                      type="number"
+                      value={point.x}
+                      onChange={(e) =>
+                        handlePolygonPointChange(
+                          index,
+                          "x",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                  <div className="col-span-2 flex items-center gap-x-1">
+                    <label className="text-sm text-gray-700">Y:</label>
+                    <input
+                      type="number"
+                      value={point.y}
+                      onChange={(e) =>
+                        handlePolygonPointChange(
+                          index,
+                          "y",
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <label className="block mb-2">
+              Border Color:
+              <input
+                type="color"
+                value={polygon.borderColor || "#000000"}
+                onChange={(e) =>
+                  handlePolygonChange("borderColor", e.target.value)
+                }
+                className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </label>
+            <label className="block mb-2">
+              Background Color:
+              <input
+                type="color"
+                value={polygon.backgroundColor || ""}
+                onChange={(e) =>
+                  handlePolygonChange("backgroundColor", e.target.value)
+                }
+                className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              />
+            </label>
+          </div>
+        </>
       )}
 
-      {(line || circle || curve || ellipse) && (
+      {!line && !circle && !curve && !ellipse && !polygon && (
+        <div className="mt-4 text-sm text-gray-500">No layer selected</div>
+      )}
+
+      {(line || circle || curve || ellipse || polygon) && (
         <div className="mt-4 border-t pt-4">
           <h3 className="font-semibold mb-2">Transform</h3>
           <Tabs
@@ -767,54 +976,55 @@ const PropertiesTab: React.FC = () => {
                 ),
                 children: (
                   <div className="space-y-4 pt-2">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-2">
                       <label className="text-sm text-gray-700">
                         Angle (degrees):
                         <input
-                          type="text"
+                          type="number"
                           value={rotationAngle}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === '' || value === '-' || /^-?\d*$/.test(value)) {
-                              setRotationAngle(value);
-                            }
-                          }}
+                          onChange={(e) => setRotationAngle(e.target.value)}
                           className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                         />
                       </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-sm text-gray-700">
+                          Center X:
+                          <input
+                            type="number"
+                            value={rotationCenter.x}
+                            onChange={(e) => {
+                              setRotationCenter((prev) => ({
+                                ...prev,
+                                x: parseFloat(e.target.value),
+                              }));
+                              setIsCenterManuallySet(true);
+                            }}
+                            className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </label>
+                        <label className="text-sm text-gray-700">
+                          Center Y:
+                          <input
+                            type="number"
+                            value={rotationCenter.y}
+                            onChange={(e) => {
+                              setRotationCenter((prev) => ({
+                                ...prev,
+                                y: parseFloat(e.target.value),
+                              }));
+                              setIsCenterManuallySet(true);
+                            }}
+                            className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          />
+                        </label>
+                      </div>
+                      <button
+                        onClick={handleRotate}
+                        className="w-full px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
+                      >
+                        Apply Rotation
+                      </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <label className="text-sm text-gray-700">
-                        Center X:
-                        <input
-                          type="number"
-                          value={rotationCenter.x}
-                          onChange={(e) => {
-                            setRotationCenter(prev => ({ ...prev, x: parseFloat(e.target.value) }));
-                            setIsCenterManuallySet(true);
-                          }}
-                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </label>
-                      <label className="text-sm text-gray-700">
-                        Center Y:
-                        <input
-                          type="number"
-                          value={rotationCenter.y}
-                          onChange={(e) => {
-                            setRotationCenter(prev => ({ ...prev, y: parseFloat(e.target.value) }));
-                            setIsCenterManuallySet(true);
-                          }}
-                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </label>
-                    </div>
-                    <button
-                      onClick={handleRotate}
-                      className="w-full px-3 py-1.5 rounded-sm bg-blue-500 hover:bg-blue-600 text-white text-sm"
-                    >
-                      Apply Rotation
-                    </button>
                   </div>
                 ),
               },
@@ -831,17 +1041,21 @@ const PropertiesTab: React.FC = () => {
                     <div className="flex flex-center gap-2">
                       <button
                         onClick={() => handleFlip("horizontal")}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-full"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
                       >
                         <PiFlipHorizontalFill className="text-xl text-neutral-600" />
-                        <span className="text-sm text-neutral-600">Horizontal</span>
+                        <span className="text-sm text-neutral-600">
+                          Horizontal
+                        </span>
                       </button>
                       <button
                         onClick={() => handleFlip("vertical")}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-full"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 w-fit"
                       >
                         <PiFlipHorizontalFill className="text-xl text-neutral-600 rotate-90" />
-                        <span className="text-sm text-neutral-600">Vertical</span>
+                        <span className="text-sm text-neutral-600">
+                          Vertical
+                        </span>
                       </button>
                     </div>
                   </div>

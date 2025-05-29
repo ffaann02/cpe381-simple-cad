@@ -10,7 +10,8 @@ import { IoMdEye, IoMdEyeOff } from "react-icons/io";
 import { useState } from "react";
 import Divider from "../ui/divider";
 import PropertiesTab from "./PropertiesTab";
-import { Check } from "lucide-react"; // Import a check icon
+import { Check, Trash2 } from "lucide-react"; // Import Trash2 icon
+import { Popconfirm } from "antd"; // Import Popconfirm
 
 const RightTab = () => {
   const { layers, setLayers, selectedLayerId, setSelectedLayerId } = useTab();
@@ -33,7 +34,32 @@ const RightTab = () => {
   };
 
   const handleLayerClick = (layerId: string) => {
-    setSelectedLayerId(layerId);
+    // Toggle selection if clicking the same layer
+    if (selectedLayerId === layerId) {
+      setSelectedLayerId(null);
+      // Remove highlight from all layers
+      const updatedLayers = layers.map((layer) => ({
+        ...layer,
+        is_selected: false
+      }));
+      setLayers(updatedLayers);
+    } else {
+      setSelectedLayerId(layerId);
+      // Update layers to highlight the selected layer's shapes
+      const updatedLayers = layers.map((layer) => ({
+        ...layer,
+        is_selected: layer.id === layerId
+      }));
+      setLayers(updatedLayers);
+    }
+  };
+
+  const handleDeleteLayer = (layerId: string) => {
+    const newLayers = layers.filter(layer => layer.id !== layerId);
+    setLayers(newLayers);
+    if (selectedLayerId === layerId) {
+      setSelectedLayerId(null);
+    }
   };
 
   return (
@@ -63,7 +89,7 @@ const RightTab = () => {
                 >
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent layer selection when toggling visibility
+                      e.stopPropagation();
                       toggleVisibility(index);
                     }}
                     className="text-xl px-2 py-1 border-r cursor-pointer hover:bg-neutral-200"
@@ -72,8 +98,26 @@ const RightTab = () => {
                   </button>
                   <span className="w-full ml-2 flex-grow">{layer.name}</span>
                   {selectedLayerId === layer.id && (
-                    <div className="px-2">
+                    <div className="flex items-center px-2 gap-x-2">
                       <Check className="h-4 w-4 text-primary" />
+                      <Popconfirm
+                        title="Delete Layer"
+                        description="Are you sure you want to delete this layer?"
+                        onConfirm={(e) => {
+                          e?.stopPropagation();
+                          handleDeleteLayer(layer.id);
+                        }}
+                        onCancel={(e) => e?.stopPropagation()}
+                        okText="Yes"
+                        cancelText="No"
+                      >
+                        <button
+                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Popconfirm>
                     </div>
                   )}
                 </div>

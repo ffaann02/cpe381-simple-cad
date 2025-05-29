@@ -19,7 +19,7 @@ function App() {
               <Route path="/about" element={<About />} />
             </Routes>
           </main>
-          <Footer />
+          {/* <Footer /> */}
         </div>
       </TabProvider>
     </Router>

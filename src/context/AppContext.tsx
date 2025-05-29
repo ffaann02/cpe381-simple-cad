@@ -90,6 +90,8 @@ interface TabContextType {
   setZoomOffsetX: (x: number) => void;
   zoomOffsetY: number;
   setZoomOffsetY: (y: number) => void;
+  currentColor: string;
+  setCurrentColor: (color: string) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -103,7 +105,20 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [tab, setTab] = useState<string>(Tabs.File);
   const [tool, setTool] = useState<Tools>(Tools.Draw);
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentProject, setCurrentProject] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<string | null>(() => {
+    // Initialize from localStorage if available
+    const savedProject = localStorage.getItem('currentProject');
+    return savedProject || null;
+  });
+
+  // Update localStorage whenever currentProject changes
+  useEffect(() => {
+    if (currentProject) {
+      localStorage.setItem('currentProject', currentProject);
+    } else {
+      localStorage.removeItem('currentProject');
+    }
+  }, [currentProject]);
 
   const [snapEnabled, setSnapEnabled] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true);
@@ -131,6 +146,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [zoomOffsetX, setZoomOffsetX] = useState<number>(0);
   const [zoomOffsetY, setZoomOffsetY] = useState<number>(0);
+  const [currentColor, setCurrentColor] = useState<string>("#000000");
 
   const history = useRef<HistoryState[]>([]);
   const currentIndex = useRef<number>(-1);
@@ -498,6 +514,8 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setZoomOffsetX,
     zoomOffsetY,
     setZoomOffsetY,
+    currentColor,
+    setCurrentColor,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

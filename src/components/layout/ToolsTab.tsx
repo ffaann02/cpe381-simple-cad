@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Popover } from "antd";
 import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
 import { LuMousePointer2 } from "react-icons/lu";
-import { PiFlipHorizontalFill } from "react-icons/pi";
-import { MdOutlineOpenWith, MdRotate90DegreesCcw } from "react-icons/md";
+import { MdOutlineOpenWith } from "react-icons/md";
 import { Tools } from "@/interface/tool";
 import { useTab } from "@/context/AppContext";
 import { ShapeMode } from "@/interface/shape";
@@ -101,18 +100,6 @@ const ToolsTab = () => {
       icon: <MdOutlineOpenWith className="text-2xl text-neutral-600" />,
       type: Tools.Move,
       onClick: () => setTool(Tools.Move),
-    },
-    {
-      label: "Rotate",
-      icon: <MdRotate90DegreesCcw className="text-2xl text-neutral-600" />,
-      type: Tools.Rotate,
-      onClick: () => setTool(Tools.Rotate),
-    },
-    {
-      label: "Flip",
-      icon: <PiFlipHorizontalFill className="text-2xl text-neutral-600" />,
-      type: Tools.Flip,
-      onClick: () => setTool(Tools.Flip),
     },
     {
       label: "Eraser",

@@ -11,15 +11,6 @@ function App() {
   return (
     <Router>
       <TabProvider>
-<<<<<<< HEAD
-        <Navbar />
-        <div className="relative">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/editor" element={<CadEditor />} />
-            <Route path="/docs" element={<Docs/>}/>
-          </Routes>
-=======
         <div>
           <Navbar />
           <main>
@@ -27,10 +18,10 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/editor" element={<CadEditor />} />
               <Route path="/about" element={<About />} />
+              <Route path="/docs" element={<Docs />} />
             </Routes>
           </main>
           <Footer />
->>>>>>> e6b8a26f56a5e7f132927e32555be152149ac12a
         </div>
       </TabProvider>
     </Router>

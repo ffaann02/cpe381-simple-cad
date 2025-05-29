@@ -121,45 +121,49 @@ const CadEditor = () => {
   return (
     <>
       {projects.length <= 0 || !currentProject ? (
-        <div className="flex flex-col items-center justify-center max-w-5xl mx-auto mt-12">
-          <Link to="/" className="underline mb-4">
-            <FaChevronLeft className="inline mr-1" />
-            Back to Home
-          </Link>
-          <img
-            src="https://png.pngtree.com/png-vector/20220902/ourmid/pngtree-text-effect-for-logo-word-png-image_236809.png"
-            className="bg-red-200 h-72"
-          />
-          <div className="flex space-x-4 mt-4">
-            <button
-              className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer"
-              onClick={handleNewProject}
-            >
-              <IoDocumentOutline className="text-4xl text-neutral-500" />
-              <p className="text-xl my-auto">New Project</p>
-            </button>
-            <button className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer">
-              <FiBox className="text-4xl text-neutral-500" />
-              <p className="text-xl my-auto">Template</p>
-            </button>
+        <>
+          <div className="w-full mt-6 mb-2 max-w-5xl mx-auto text-neutral-600">
+            <Link to="/" className="underline mb-4">
+              <FaChevronLeft className="inline mr-1" />
+              Back to Home
+            </Link>
           </div>
-          <div className="mt-6 w-1/2">
-            <Upload.Dragger {...draggerProps}>
-              <p className="ant-upload-drag-icon">
-                <UploadIcon className="mx-auto text-neutral-400" />
-              </p>
-              <p className="ant-upload-text">
-                Click or drag file to this area to upload
-              </p>
-              <p className="ant-upload-hint">
-                Support for a single .cad or .txt file.
-              </p>
-            </Upload.Dragger>
+          <div className="flex flex-col items-center justify-center max-w-5xl mx-auto h-[90vh] border rounded-xl mb-4 shadow-md border-neutral-100">
+            <img
+              src="https://png.pngtree.com/png-vector/20220902/ourmid/pngtree-text-effect-for-logo-word-png-image_236809.png"
+              className="bg-red-200 h-82 mb-16"
+            />
+            <div className="flex space-x-4 mt-4">
+              <button
+                className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer"
+                onClick={handleNewProject}
+              >
+                <IoDocumentOutline className="text-4xl text-neutral-500" />
+                <p className="text-xl my-auto">New Project</p>
+              </button>
+              <button className="flex space-x-2 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 px-4 py-2 rounded-md border border-neutral-200 cursor-pointer">
+                <FiBox className="text-4xl text-neutral-500" />
+                <p className="text-xl my-auto">Template</p>
+              </button>
+            </div>
+            <div className="mt-6 w-1/2">
+              <Upload.Dragger {...draggerProps}>
+                <p className="ant-upload-drag-icon">
+                  <UploadIcon className="mx-auto text-neutral-400" />
+                </p>
+                <p className="ant-upload-text">
+                  Click or drag file to this area to upload
+                </p>
+                <p className="ant-upload-hint">
+                  Support for a single .cad or .txt file.
+                </p>
+              </Upload.Dragger>
+            </div>
+            <h1 className="text-2xl text-neutral-600 my-6">
+              Please create or select a project.
+            </h1>
           </div>
-          <h1 className="text-2xl text-neutral-600 my-6">
-            Please create or select a project.
-          </h1>
-        </div>
+        </>
       ) : (
         <div className="relative">
           <div className="w-full bg-neutral-100 px-2 py-1 border-b">

@@ -55,7 +55,6 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
   } = useCanvasEvents(props);
 
   const { points, polygonCornerNumber, setPolygonCornerNumber, tool } = useTab();
-  console.log(tool)
   return (
     <>
       <div

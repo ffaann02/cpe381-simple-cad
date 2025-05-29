@@ -1,4 +1,5 @@
 import { Tabs } from "antd";
+import { useNavigate } from "react-router-dom";
 
 interface TopMenuTabsProps {
   value: string;
@@ -11,6 +12,8 @@ const TopMenuTabs = ({
   handleTabChange,
   setOpenCodeEditor,
 }: TopMenuTabsProps) => {
+
+  const router = useNavigate();
   return (
     <div className="-mb-5">
       <Tabs
@@ -18,6 +21,12 @@ const TopMenuTabs = ({
         size="small"
         activeKey={value}
         onChange={(key) => {
+          if (key === "home") {
+            setOpenCodeEditor(false);
+            handleTabChange("home");
+            router("/");
+            return;
+          }
           if (key === "docs") {
             window.open("/docs", "_blank");
             return;
@@ -25,6 +34,10 @@ const TopMenuTabs = ({
           handleTabChange(key);
         }}
         items={[
+          {
+            label: "Home",
+            key: "home",
+          },
           {
             label: "File",
             key: "file",

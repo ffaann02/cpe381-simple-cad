@@ -11,14 +11,30 @@ const FileTab = () => {
     projects,
     currentProject,
     setCurrentProject,
-    setProjects, // Make sure you have this in your context
+    setProjects,
   } = useTab();
 
   const [closingProject, setClosingProject] = useState<string | null>(null);
 
+  const handleProjectRemoval = (projectName: string) => {
+    const newProjects = projects.filter((p) => p.name !== projectName);
+    setProjects(newProjects);
+
+    if (currentProject === projectName) {
+      const index = projects.findIndex((p) => p.name === projectName);
+      if (newProjects.length > 0) {
+        const newIndex = index > 0 ? index - 1 : 0;
+        setCurrentProject(newProjects[newIndex].name);
+      } else {
+        setCurrentProject("");
+      }
+    }
+  };
+
   const handleClose = (projectName: string) => {
     const key = `cad_drawing_state_${projectName}`;
     const data = localStorage.getItem(key);
+
     if (data) {
       try {
         const parsed = JSON.parse(data);
@@ -35,20 +51,19 @@ const FileTab = () => {
           parsed.polygons.length === 0 &&
           Array.isArray(parsed.layers) &&
           parsed.layers.length === 0;
-        // Only canvasSize is present and all arrays are empty
+
         if (isEmpty) {
-          localStorage.removeItem(key);
-          setProjects(projects.filter((p) => p.name !== projectName));
+          // localStorage.removeItem(key);
+          handleProjectRemoval(projectName);
         } else {
           setClosingProject(projectName);
         }
       } catch (e) {
-        // If parsing fails, just remove
-        localStorage.removeItem(key);
-        setProjects(projects.filter((p) => p.name !== projectName));
+        // localStorage.removeItem(key);
+        handleProjectRemoval(projectName);
       }
     } else {
-      setProjects(projects.filter((p) => p.name !== projectName));
+      handleProjectRemoval(projectName);
     }
   };
 
@@ -56,12 +71,11 @@ const FileTab = () => {
     if (closingProject) {
       const key = `cad_drawing_state_${closingProject}`;
       localStorage.removeItem(key);
-      setProjects(projects.filter((p) => p.name !== closingProject));
+      handleProjectRemoval(closingProject);
       setClosingProject(null);
     }
   };
 
-  console.log("Projects:", projects);
   return (
     <div className="flex gap-x-1">
       {projects.length > 0 &&
@@ -91,6 +105,7 @@ const FileTab = () => {
             </button>
           );
         })}
+
       <button
         className="flex rounded-sm border border-neutral-300 bg-neutral-100 px-0.5 py-0.5 space-x-2 cursor-pointer"
         onClick={() => {
@@ -101,6 +116,7 @@ const FileTab = () => {
       >
         <MdAdd className="text-xl text-neutral-600 m-auto" />
       </button>
+
       <Modal
         open={!!closingProject}
         onOk={confirmClose}

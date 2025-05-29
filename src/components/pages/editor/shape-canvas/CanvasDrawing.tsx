@@ -17,7 +17,7 @@ import { Tools } from "@/interface/tool";
 import { GlobalColor } from "@/interface/color";
 
 const previewLineColor = GlobalColor.DraftDrawColor;
-const LOCAL_STORAGE_KEY = "cad_drawing_state";
+const LOCAL_STORAGE_KEY = "cad_drawing_state"; // This is now a base key, specific project key will be appended
 
 interface CanvasDrawingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -53,9 +53,9 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     polygonCornerNumber,
     canvasSize,
     setCanvasSize,
-    currentProject, // Now directly using currentProject
-    resetCanvasState, // Add resetCanvasState to destructuring
-    setSelectedLayerId
+    currentProject,
+    resetCanvasState,
+    setSelectedLayerId,
   } = useTab();
 
   // Helper to generate the localStorage key based on the current project
@@ -276,10 +276,16 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   const saveCanvasState = useCallback(() => {
     if (!currentProject) {
       console.warn("No current project selected. Not saving canvas state.");
-      return; // Don't save if no project is active
+      return;
     }
 
     try {
+      let thumbnail: string | null = null;
+      if (canvasRef.current) {
+        // Get the canvas content as a Base64 encoded PNG image
+        thumbnail = canvasRef.current.toDataURL('image/png');
+      }
+
       const stateToSave = {
         lines,
         circles,
@@ -288,13 +294,27 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         polygons,
         layers,
         canvasSize,
+        lastSaved: new Date().toISOString(),
+        thumbnail, // Add the thumbnail to the saved state
       };
       localStorage.setItem(getLocalStorageKey(currentProject), JSON.stringify(stateToSave));
-      console.log(`Canvas state saved for project: ${currentProject}`);
+      console.log(`Canvas state and thumbnail saved for project: ${currentProject}`);
     } catch (error) {
       console.error(`Failed to save canvas state for project ${currentProject}:`, error);
+      // If saving fails, consider clearing the specific project's data to prevent future issues
+      // localStorage.removeItem(getLocalStorageKey(currentProject));
     }
-  }, [lines, circles, curves, ellipses, polygons, layers, canvasSize, currentProject]);
+  }, [
+    currentProject,
+    canvasRef, // Add canvasRef to dependencies since we access canvasRef.current
+    lines,
+    circles,
+    curves,
+    ellipses,
+    polygons,
+    layers,
+    canvasSize,
+  ]);
 
   // Effect to load canvas state from localStorage when currentProject changes
   useEffect(() => {
@@ -310,7 +330,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       console.log(`Loaded canvas state for project ${currentProject}:`, parsedState);
 
       if (parsedState) {
-        // UNCOMMENTED: Actually set the states with the loaded data
         setLines(parsedState.lines || []);
         setCircles(parsedState.circles || []);
         setCurves(parsedState.curves || []);
@@ -318,27 +337,27 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         setPolygons(parsedState.polygons || []);
         setLayers(parsedState.layers || []);
         setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
-        // Set selectedLayerId to the first layer of the loaded project, or null if no layers
-        setSelectedLayerId(parsedState.layers?.[0]?.id || null); // Make sure setSelectedLayerId is also from useTab
+        setSelectedLayerId(parsedState.layers?.[0]?.id || null);
+        // If you had a place to use the thumbnail, you would set it here:
+        // setThumbnailData(parsedState.thumbnail || null);
       } else {
-        // If no saved state for this project, reset to default empty state
         console.log(`No saved state found for project: ${currentProject}. Resetting canvas.`);
         resetCanvasState();
       }
     } catch (error) {
       console.error(`Failed to load canvas state for project ${currentProject}:`, error);
-      // Clear localStorage for this specific project if data is corrupted
       localStorage.removeItem(getLocalStorageKey(currentProject));
-      resetCanvasState(); // Also reset canvas state in memory
+      resetCanvasState();
     }
-    // Added resetCanvasState to dependencies as it's called conditionally
-  }, [currentProject, setLines, setCircles, setCurves, setEllipses, setPolygons, setLayers, setCanvasSize, resetCanvasState]);
+  }, [currentProject, setLines, setCircles, setCurves, setEllipses, setPolygons, setLayers, setCanvasSize, resetCanvasState, setSelectedLayerId]);
 
 
   // Effect to save canvas state whenever drawing data or currentProject changes
   useEffect(() => {
     // Debounce the save operation if performance is an issue,
     // but for now, we'll save on every relevant change.
+    // A small delay might be beneficial here to avoid saving on every single mouse move
+    // if drawing is continuous. For now, we'll keep it direct.
     saveCanvasState();
   }, [
     lines,
@@ -348,8 +367,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     polygons,
     layers,
     canvasSize,
-    currentProject, // Ensure save happens when project key changes
-    saveCanvasState, // Include saveCanvasState to ensure it runs when needed if it changes (though it's memoized)
+    currentProject,
+    saveCanvasState,
   ]);
 
 
@@ -384,8 +403,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     selectedLayerId,
     importTimestamp,
     polygonCornerNumber,
-    canvasSize, // Add canvasSize to dependencies for background color change
-    ctx
+    canvasSize,
+    ctx,
   ]);
 
   // Polygon completion effect (unchanged)

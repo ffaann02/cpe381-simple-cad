@@ -406,12 +406,12 @@ const PropertiesTab: React.FC = () => {
     }
   }, [tool, selectedLayerId, layers, lines, circles, curves, ellipses]);
 
-  // Add effect to automatically set transform tool when shape is selected
-  useEffect(() => {
-    if (selectedLayerId && (line || circle || curve || ellipse)) {
-      setTool(Tools.Rotate);
-    }
-  }, [selectedLayerId, line, circle, curve, ellipse, setTool]);
+  // // Add effect to automatically set transform tool when shape is selected
+  // useEffect(() => {
+  //   if (selectedLayerId && (line || circle || curve || ellipse)) {
+  //     setTool(Tools.Rotate);
+  //   }
+  // }, [selectedLayerId, line, circle, curve, ellipse]);
 
   return (
     <div className="pt-2 p-4 border rounded-md">

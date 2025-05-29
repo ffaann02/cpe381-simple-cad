@@ -54,8 +54,8 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
     setWillingToDrawPolygon,
   } = useCanvasEvents(props);
 
-  const { points, polygonCornerNumber, setPolygonCornerNumber } = useTab();
-
+  const { points, polygonCornerNumber, setPolygonCornerNumber, tool } = useTab();
+  console.log(tool)
   return (
     <>
       <div

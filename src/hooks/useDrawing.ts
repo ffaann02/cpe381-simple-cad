@@ -5,7 +5,7 @@ import { GlobalColor } from "@/interface/color";
 import { v4 as uuidv4 } from "uuid";
 import { useTab } from "@/context/AppContext";
 
-const drawColor = GlobalColor.DraftDrawColor;
+const drawColor = GlobalColor.DefaultDrawColor;
 
 interface UseDrawingProps {
   points: Point[];

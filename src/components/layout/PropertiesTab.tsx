@@ -318,6 +318,12 @@ const PropertiesTab: React.FC = () => {
     const curve = curves.find(c => c.layerId === selectedLayerId);
     const ellipse = ellipses.find(e => e.layerId === selectedLayerId);
 
+    // Reset menus and rotation center when selected shape changes
+    setShowRotationForm(false);
+    setShowFlipForm(false);
+    setIsCenterManuallySet(false);
+    setRotationAngle("90"); // Reset rotation angle to default
+
     // Only set the rotation center if it hasn't been manually set
     if (!isCenterManuallySet) {
       if (line) {
@@ -330,7 +336,7 @@ const PropertiesTab: React.FC = () => {
         setRotationCenter(ellipse.center);
       }
     }
-  }, [selectedLayerId, lines, circles, curves, ellipses, isCenterManuallySet]);
+  }, [selectedLayerId]); // Only depend on selectedLayerId
 
   // Add effect to handle transform tool selection
   useEffect(() => {

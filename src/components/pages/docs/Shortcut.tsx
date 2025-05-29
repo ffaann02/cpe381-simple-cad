@@ -1,4 +1,4 @@
-const Shotcut = () => {
+const Shortcut = () => {
 
     return (
         <div className="flex min-h-screen">
@@ -7,4 +7,4 @@ const Shotcut = () => {
     );
 };
 
-export default Shotcut;
+export default Shortcut;

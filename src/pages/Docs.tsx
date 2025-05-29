@@ -1,6 +1,6 @@
 
 import Properties from "@/components/pages/docs/Properties";
-import Shotcut from "@/components/pages/docs/Shotcut";
+import Shotcut from "@/components/pages/docs/Shortcut";
 import Tools from "@/components/pages/docs/Tools";
 import { useState } from "react";
 
@@ -42,11 +42,11 @@ const Docs = () => {
                 </nav>
             </aside>
             {/* Main Content */}
-            <main>
+            <main className="flex-1 bg-neutral-50 p-4 overflow-y-auto">
                 {tab === '' ? (
                     <>
                         <h2 className="text-2xl font-bold mb-4">hello</h2>
-                        <p className="text-9xl">หีหีหี</p>
+                        <p className="text-9xl">asas</p>
                     </>
                 ) : (
                     renderTab()

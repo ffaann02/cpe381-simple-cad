@@ -311,7 +311,8 @@ export const getShapeStyle = (layer: Layer | undefined): { stroke: string; fill:
   const isSelected = layer?.is_selected;
   const stroke = layer?.borderColor || "black";
   const fill = layer?.backgroundColor || "";
-  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : 1;
+  // Use the layer's thickness if available, otherwise default to 1
+  const lineWidth = isSelected ? SELECTION_WIDTH_MULTIPLIER : (layer?.thickness || 1);
   return { stroke, fill, lineWidth };
 };
 

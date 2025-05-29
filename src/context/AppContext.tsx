@@ -52,6 +52,7 @@ interface TabContextType {
   setSnapEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   layers: Layer[];
   setLayers: (layers: Layer[]) => void;
+  updateLayer: (layerId: string, updatedLayer: Partial<Layer>) => void;
   selectedLayerId: string | null;
   setSelectedLayerId: (layerId: string | null) => void;
   canvasSize: Canvas;
@@ -491,6 +492,14 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setShowGrid(false);
   };
 
+  const updateLayer = (layerId: string, updatedLayer: Partial<Layer>) => {
+    setLayers(prevLayers => 
+      prevLayers.map(layer => 
+        layer.id === layerId ? { ...layer, ...updatedLayer } : layer
+      )
+    );
+  };
+
   const value = {
     modalType,
     setModalType,
@@ -506,6 +515,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     setSnapEnabled,
     layers,
     setLayers,
+    updateLayer,
     selectedLayerId,
     setSelectedLayerId,
     canvasSize,

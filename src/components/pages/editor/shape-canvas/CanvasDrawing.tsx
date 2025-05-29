@@ -10,7 +10,15 @@ import {
   drawBoundingBox,
   drawPolygon,
 } from "@/utils/drawing";
-import { Point, ShapeMode, Polygon, Line, Circle, Ellipse, Curve } from "@/interface/shape";
+import {
+  Point,
+  ShapeMode,
+  Polygon,
+  Line,
+  Circle,
+  Ellipse,
+  Curve,
+} from "@/interface/shape";
 import { Tools } from "@/interface/tool";
 import { GlobalColor } from "@/interface/color";
 
@@ -66,11 +74,12 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     zoomLevel,
     zoomOffsetX,
     zoomOffsetY,
-    currentColor
+    currentColor,
   } = useTab();
 
   // Helper to generate the localStorage key based on the current project
-  const getLocalStorageKey = (projectKey: string) => `cad_drawing_state_${projectKey}`;
+  const getLocalStorageKey = (projectKey: string) =>
+    `cad_drawing_state_${projectKey}`;
 
   const getSnappedPos = (pos: Point): Point => {
     const gridSize = 20;
@@ -80,9 +89,8 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     };
   };
 
-  const effectiveMousePos = (snapEnabled && showGrid && mousePos)
-    ? getSnappedPos(mousePos)
-    : mousePos;
+  const effectiveMousePos =
+    snapEnabled && showGrid && mousePos ? getSnappedPos(mousePos) : mousePos;
 
   const canvas = canvasRef.current;
   const ctx = canvas?.getContext("2d");
@@ -98,27 +106,48 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   const drawLines = (context: CanvasRenderingContext2D) => {
-    lines.forEach(({ start, end, layerId, color }) => { // 'color' is the shape's specific color
+    lines.forEach(({ start, end, layerId, color }) => {
+      // 'color' is the shape's specific color
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
-        drawBresenhamLine(start.x, start.y, end.x, end.y, context, color, lineWidth); // Use shape's color
+        drawBresenhamLine(
+          start.x,
+          start.y,
+          end.x,
+          end.y,
+          context,
+          color,
+          lineWidth
+        ); // Use shape's color
       }
     });
   };
 
   const drawCircles = (context: CanvasRenderingContext2D) => {
-    circles.forEach(({ center, radius, layerId, borderColor, backgroundColor }) => { // Use shape's specific colors
-      const layer = layers.find((l) => l.id === layerId);
-      if (layer?.is_visible) {
-        const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
-        drawCircle(center.x, center.y, radius, context, borderColor, backgroundColor, lineWidth); // Use shape's specific colors
+    circles.forEach(
+      ({ center, radius, layerId, borderColor, backgroundColor }) => {
+        // Use shape's specific colors
+        const layer = layers.find((l) => l.id === layerId);
+        if (layer?.is_visible) {
+          const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
+          drawCircle(
+            center.x,
+            center.y,
+            radius,
+            context,
+            borderColor,
+            backgroundColor,
+            lineWidth
+          ); // Use shape's specific colors
+        }
       }
-    });
+    );
   };
 
   const drawCurves = (context: CanvasRenderingContext2D) => {
-    curves.forEach(({ p0, p1, p2, p3, layerId, color }) => { // 'color' is the shape's specific color
+    curves.forEach(({ p0, p1, p2, p3, layerId, color }) => {
+      // 'color' is the shape's specific color
       const layer = layers.find((l) => l.id === layerId);
       if (layer?.is_visible) {
         const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
@@ -128,26 +157,50 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   };
 
   const drawEllipses = (context: CanvasRenderingContext2D) => {
-    ellipses.forEach(({ center, rx, ry, layerId, borderColor, backgroundColor }) => {
-      const layer = layers.find((l) => l.id === layerId);
-      if (layer?.is_visible) {
-        const { lineWidth } = getShapeStyle(layer);
-        drawEllipseMidpoint(center.x, center.y, rx, ry, context, borderColor, lineWidth, backgroundColor);
+    ellipses.forEach(
+      ({ center, rx, ry, layerId, borderColor, backgroundColor }) => {
+        const layer = layers.find((l) => l.id === layerId);
+        if (layer?.is_visible) {
+          const { lineWidth } = getShapeStyle(layer);
+          drawEllipseMidpoint(
+            center.x,
+            center.y,
+            rx,
+            ry,
+            context,
+            borderColor,
+            lineWidth,
+            backgroundColor
+          );
+        }
       }
-    });
+    );
   };
 
   const drawPolygons = (context: CanvasRenderingContext2D) => {
-    polygons.forEach(({ points: polygonPoints, layerId, borderColor, backgroundColor }) => { // Use shape's specific colors
-      const layer = layers.find((l) => l.id === layerId);
-      if (layer?.is_visible && polygonPoints.length > 1) {
-        const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
-        drawPolygon(polygonPoints, context, borderColor, backgroundColor, lineWidth); // Use shape's specific colors
+    polygons.forEach(
+      ({ points: polygonPoints, layerId, borderColor, backgroundColor }) => {
+        // Use shape's specific colors
+        const layer = layers.find((l) => l.id === layerId);
+        if (layer?.is_visible && polygonPoints.length > 1) {
+          const { lineWidth } = getShapeStyle(layer); // Get lineWidth from layer
+          drawPolygon(
+            polygonPoints,
+            context,
+            borderColor,
+            backgroundColor,
+            lineWidth
+          ); // Use shape's specific colors
+        }
       }
-    });
+    );
   };
 
-  const generatePolygonPoints = (center: Point, radius: number, numCorners: number): Point[] => {
+  const generatePolygonPoints = (
+    center: Point,
+    radius: number,
+    numCorners: number
+  ): Point[] => {
     const points: Point[] = [];
     for (let i = 0; i < numCorners; i++) {
       const angle = (2 * Math.PI * i) / numCorners;
@@ -199,17 +252,22 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
           context,
           currentColor
         );
-      } else if (shape === ShapeMode.Polygon && points.length === 1 && effectiveMousePos) {
+      } else if (
+        shape === ShapeMode.Polygon &&
+        points.length === 1 &&
+        effectiveMousePos
+      ) {
         const center = points[0];
         const radius = Math.sqrt(
-          Math.pow(effectiveMousePos.x - center.x, 2) + Math.pow(effectiveMousePos.y - center.y, 2)
+          Math.pow(effectiveMousePos.x - center.x, 2) +
+            Math.pow(effectiveMousePos.y - center.y, 2)
         );
         const numSides = polygonCornerNumber;
         const previewPoints = generatePolygonPoints(center, radius, numSides);
         if (previewPoints.length > 0) {
           const canvas = canvasRef.current;
           if (canvas) {
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext("2d");
             if (ctx) {
               drawPolygon(previewPoints, ctx, currentColor, "transparent");
             }
@@ -221,7 +279,12 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
   const drawBoundingBoxForSelected = (context: CanvasRenderingContext2D) => {
     // Ensure selectedShape is valid and has all necessary properties
-    if (!selectedShape || selectedShape.layerId === null || selectedShape.index === null || selectedShape.type === null) {
+    if (
+      !selectedShape ||
+      selectedShape.layerId === null ||
+      selectedShape.index === null ||
+      selectedShape.type === null
+    ) {
       return;
     }
 
@@ -284,8 +347,12 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       maxY = ellipse.center.y + ellipse.ry;
     } else if (selectedShape.type === "curve") {
       const curve = targetObject as Curve;
-      const { minX: curveMinX, minY: curveMinY, maxX: curveMaxX, maxY: curveMaxY } =
-        getBezierBoundingBox(curve.p0, curve.p1, curve.p2, curve.p3);
+      const {
+        minX: curveMinX,
+        minY: curveMinY,
+        maxX: curveMaxX,
+        maxY: curveMaxY,
+      } = getBezierBoundingBox(curve.p0, curve.p1, curve.p2, curve.p3);
       minX = curveMinX;
       minY = curveMinY;
       maxX = curveMaxX;
@@ -307,7 +374,12 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     }
 
     // Only draw if all bounding box coordinates are defined
-    if (minX !== undefined && minY !== undefined && maxX !== undefined && maxY !== undefined) {
+    if (
+      minX !== undefined &&
+      minY !== undefined &&
+      maxX !== undefined &&
+      maxY !== undefined
+    ) {
       // Apply zoom transformation to the bounding box coordinates
       const transformedMinX = minX * zoomLevel + zoomOffsetX;
       const transformedMinY = minY * zoomLevel + zoomOffsetY;
@@ -315,7 +387,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       const transformedMaxY = maxY * zoomLevel + zoomOffsetY;
 
       // Draw the bounding box rectangle and handles only for the Scale tool
-      
+
       drawBoundingBox(
         transformedMinX,
         transformedMinY,
@@ -326,13 +398,11 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         undefined, // lineWidth (use default)
         tool === Tools.Scale // Pass true only if tool is Scale
       );
-      
     }
   };
 
   // Function to save the canvas state to localStorage, now dependent on currentProject
-  const saveCanvasState = useCallback(
-    () => {
+  const saveCanvasState = useCallback(() => {
     if (!currentProject) {
       console.warn("No current project selected. Not saving canvas state.");
       return;
@@ -342,7 +412,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
       let thumbnail: string | null = null;
       if (canvasRef.current) {
         // Always generate thumbnail when saving state
-        thumbnail = canvasRef.current.toDataURL('image/png');
+        thumbnail = canvasRef.current.toDataURL("image/png");
       }
 
       const stateToSave = {
@@ -356,10 +426,18 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         lastSaved: new Date().toISOString(),
         thumbnail, // Add the thumbnail to the saved state
       };
-      localStorage.setItem(getLocalStorageKey(currentProject), JSON.stringify(stateToSave));
-      console.log(`Canvas state and thumbnail saved for project: ${currentProject}`);
+      localStorage.setItem(
+        getLocalStorageKey(currentProject),
+        JSON.stringify(stateToSave)
+      );
+      console.log(
+        `Canvas state and thumbnail saved for project: ${currentProject}`
+      );
     } catch (error) {
-      console.error(`Failed to save canvas state for project ${currentProject}:`, error);
+      console.error(
+        `Failed to save canvas state for project ${currentProject}:`,
+        error
+      );
       // If saving fails, consider clearing the specific project's data to prevent future issues
       // localStorage.removeItem(getLocalStorageKey(currentProject));
     }
@@ -384,9 +462,14 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     }
 
     try {
-      const savedState = localStorage.getItem(getLocalStorageKey(currentProject));
+      const savedState = localStorage.getItem(
+        getLocalStorageKey(currentProject)
+      );
       const parsedState = savedState ? JSON.parse(savedState) : null;
-      console.log(`Loaded canvas state for project ${currentProject}:`, parsedState);
+      console.log(
+        `Loaded canvas state for project ${currentProject}:`,
+        parsedState
+      );
 
       if (parsedState) {
         setLines(parsedState.lines || []);
@@ -395,20 +478,42 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
         setEllipses(parsedState.ellipses || []);
         setPolygons(parsedState.polygons || []);
         setLayers(parsedState.layers || []);
-        setCanvasSize(parsedState.canvasSize || { width: 800, height: 600, backgroundColor: "#ffffff" });
+        setCanvasSize(
+          parsedState.canvasSize || {
+            width: 800,
+            height: 600,
+            backgroundColor: "#ffffff",
+          }
+        );
         setSelectedLayerId(parsedState.layers?.[0]?.id || null);
         // If you had a place to use the thumbnail, you would set it here:
         // setThumbnailData(parsedState.thumbnail || null);
       } else {
-        console.log(`No saved state found for project: ${currentProject}. Resetting canvas.`);
+        console.log(
+          `No saved state found for project: ${currentProject}. Resetting canvas.`
+        );
         resetCanvasState();
       }
     } catch (error) {
-      console.error(`Failed to load canvas state for project ${currentProject}:`, error);
+      console.error(
+        `Failed to load canvas state for project ${currentProject}:`,
+        error
+      );
       localStorage.removeItem(getLocalStorageKey(currentProject));
       resetCanvasState();
     }
-  }, [currentProject, setLines, setCircles, setCurves, setEllipses, setPolygons, setLayers, setCanvasSize, resetCanvasState, setSelectedLayerId]);
+  }, [
+    currentProject,
+    setLines,
+    setCircles,
+    setCurves,
+    setEllipses,
+    setPolygons,
+    setLayers,
+    setCanvasSize,
+    resetCanvasState,
+    setSelectedLayerId,
+  ]);
 
   // Effect to save canvas state whenever drawing data or currentProject changes
   useEffect(() => {
@@ -447,7 +552,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     ctx.save();
     ctx.translate(zoomOffsetX, zoomOffsetY);
     ctx.scale(zoomLevel, zoomLevel);
-    
+
     // Draw all shapes first
     drawMarkers(ctx);
     drawLines(ctx);
@@ -456,11 +561,11 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     drawEllipses(ctx);
     drawPolygons(ctx);
     drawPreview(ctx);
-    
+
     // Draw bounding box last, after all shapes
     // The condition for drawing the bounding box is now inside the function itself
     drawBoundingBoxForSelected(ctx);
-    
+
     ctx.restore();
   }, [
     points,
@@ -486,23 +591,45 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 
   // Remove the polygon completion effect since we're handling it in ToolsTab now
   useEffect(() => {
-    if (ctx && shape === ShapeMode.Polygon && points.length === 1 && effectiveMousePos) {
+    if (
+      ctx &&
+      shape === ShapeMode.Polygon &&
+      points.length === 1 &&
+      effectiveMousePos
+    ) {
       const center = points[0];
       const radius = Math.sqrt(
-        Math.pow(effectiveMousePos.x - center.x, 2) + Math.pow(effectiveMousePos.y - center.y, 2)
+        Math.pow(effectiveMousePos.x - center.x, 2) +
+          Math.pow(effectiveMousePos.y - center.y, 2)
       );
-      const previewPoints = generatePolygonPoints(center, radius, polygonCornerNumber);
+      const previewPoints = generatePolygonPoints(
+        center,
+        radius,
+        polygonCornerNumber
+      );
       if (previewPoints.length > 0) {
         drawPolygon(previewPoints, ctx, currentColor, "transparent");
       }
     }
-  }, [ctx, shape, points, effectiveMousePos, polygonCornerNumber, currentColor]);
+  }, [
+    ctx,
+    shape,
+    points,
+    effectiveMousePos,
+    polygonCornerNumber,
+    currentColor,
+  ]);
 
   return null;
 };
 
 // ... (getBezierBoundingBox function remains unchanged) ...
-function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { minX: number; minY: number; maxX: number; maxY: number } {
+function getBezierBoundingBox(
+  p0: Point,
+  p1: Point,
+  p2: Point,
+  p3: Point
+): { minX: number; minY: number; maxX: number; maxY: number } {
   const bezierExtrema = (p0: number, p1: number, p2: number, p3: number) => {
     const a = -p0 + 3 * p1 - 3 * p2 + p3;
     const b = 2 * (p0 - 2 * p1 + p2);
@@ -526,16 +653,35 @@ function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { min
     return tValues;
   };
 
-  const evaluateBezier = (t: number, p0: number, p1: number, p2: number, p3: number) => {
+  const evaluateBezier = (
+    t: number,
+    p0: number,
+    p1: number,
+    p2: number,
+    p3: number
+  ) => {
     const mt = 1 - t;
-    return mt * mt * mt * p0 + 3 * mt * mt * t * p1 + 3 * mt * t * t * p2 + t * t * t * p3;
+    return (
+      mt * mt * mt * p0 +
+      3 * mt * mt * t * p1 +
+      3 * mt * t * t * p2 +
+      t * t * t * p3
+    );
   };
 
   const xExtrema = bezierExtrema(p0.x, p1.x, p2.x, p3.x);
   const yExtrema = bezierExtrema(p0.y, p1.y, p2.y, p3.y);
 
-  const xValues = [p0.x, p3.x, ...xExtrema.map((t) => evaluateBezier(t, p0.x, p1.x, p2.x, p3.x))];
-  const yValues = [p0.y, p3.y, ...yExtrema.map((t) => evaluateBezier(t, p0.y, p1.y, p2.y, p3.y))];
+  const xValues = [
+    p0.x,
+    p3.x,
+    ...xExtrema.map((t) => evaluateBezier(t, p0.x, p1.x, p2.x, p3.x)),
+  ];
+  const yValues = [
+    p0.y,
+    p3.y,
+    ...yExtrema.map((t) => evaluateBezier(t, p0.y, p1.y, p2.y, p3.y)),
+  ];
 
   const minX = Math.min(...xValues);
   const minY = Math.min(...yValues);
@@ -544,6 +690,5 @@ function getBezierBoundingBox(p0: Point, p1: Point, p2: Point, p3: Point): { min
 
   return { minX, minY, maxX, maxY };
 }
-
 
 export default CanvasDrawing;

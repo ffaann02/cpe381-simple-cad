@@ -889,7 +889,7 @@ const PropertiesTab: React.FC = () => {
         <>
           <h3 className="font-semibold mt-4 mb-2">Polygon</h3>
           <div className="space-y-4">
-            <div className="w-full h-[175px] overflow-y-auto pl-3 py-1.5 pr-1 border border-r-0 rounded-md">
+            <div className="w-full h-[200x] overflow-y-auto pl-3 py-1.5 pr-1 border border-r-0 rounded-md">
               {polygon.points.map((point, index) => (
                 <div key={index} className="grid grid-cols-6 mb-2 gap-x-2">
                   <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">

@@ -1,20 +1,32 @@
 import { Point, Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape";
 import { getBezierBoundingBox } from "@/utils/drawing";
 
-export const rotatePoint = (point: Point, center: Point, angleInDegrees: number): Point => {
-    const angleInRadians = angleInDegrees * Math.PI / 180;
-    const cos = Math.cos(angleInRadians);
-    const sin = Math.sin(angleInRadians);
-    const nx = (point.x - center.x) * cos - (point.y - center.y) * sin + center.x;
-    const ny = (point.x - center.x) * sin + (point.y - center.y) * cos + center.y;
-    return { x: nx, y: ny };
+export const rotatePoint = (
+    point: Point,
+    center: Point,
+    angleRad: number
+): Point => {
+    const s = Math.sin(angleRad);
+    const c = Math.cos(angleRad);
+
+    const px = point.x - center.x;
+    const py = point.y - center.y;
+
+    const newX = px * c + py * s;
+    const newY = -px * s + py * c;
+
+    return { x: Math.round(newX + center.x), y: Math.round(newY + center.y) };
 };
 
-export const flipPoint = (point: Point, center: Point, direction: "horizontal" | "vertical"): Point => {
-    if (direction === "horizontal") {
-        return { x: center.x - (point.x - center.x), y: point.y };
+export const flipPoint = (
+    point: Point,
+    axis: "horizontal" | "vertical",
+    center: Point
+): Point => {
+    if (axis === "horizontal") {
+        return { x: 2 * center.x - point.x, y: point.y };
     } else {
-        return { x: point.x, y: center.y - (point.y - center.y) };
+        return { x: point.x, y: 2 * center.y - point.y };
     }
 };
 
@@ -128,40 +140,40 @@ export const scaleShape = (shape: any, shapeType: string, handleName: string, de
 
         case 'circle':
             // Scale circle radius uniformly
-            scaledShape.radius = initialRadius * Math.max(scaleX, scaleY);
+            scaledShape.radius = Math.round(initialRadius * Math.max(scaleX, scaleY));
             break;
 
         case 'ellipse':
             // Scale ellipse radii independently
-            scaledShape.rx = initialRx * scaleX;
-            scaledShape.ry = initialRy * scaleY;
+            scaledShape.rx = Math.round(initialRx * scaleX);
+            scaledShape.ry = Math.round(initialRy * scaleY);
             break;
 
         case 'curve':
             // Scale all control points of the Bezier curve relative to origin
             scaledShape.p0 = {
-                x: origin.x + (shape.p0.x - origin.x) * scaleX,
-                y: origin.y + (shape.p0.y - origin.y) * scaleY
+                x: Math.round(origin.x + (shape.p0.x - origin.x) * scaleX),
+                y: Math.round(origin.y + (shape.p0.y - origin.y) * scaleY)
             };
             scaledShape.p1 = {
-                x: origin.x + (shape.p1.x - origin.x) * scaleX,
-                y: origin.y + (shape.p1.y - origin.y) * scaleY
+                x: Math.round(origin.x + (shape.p1.x - origin.x) * scaleX),
+                y: Math.round(origin.y + (shape.p1.y - origin.y) * scaleY)
             };
             scaledShape.p2 = {
-                x: origin.x + (shape.p2.x - origin.x) * scaleX,
-                y: origin.y + (shape.p2.y - origin.y) * scaleY
+                x: Math.round(origin.x + (shape.p2.x - origin.x) * scaleX),
+                y: Math.round(origin.y + (shape.p2.y - origin.y) * scaleY)
             };
             scaledShape.p3 = {
-                x: origin.x + (shape.p3.x - origin.x) * scaleX,
-                y: origin.y + (shape.p3.y - origin.y) * scaleY
+                x: Math.round(origin.x + (shape.p3.x - origin.x) * scaleX),
+                y: Math.round(origin.y + (shape.p3.y - origin.y) * scaleY)
             };
             break;
 
         case 'polygon':
             // Scale all points of the polygon relative to origin
             scaledShape.points = shape.points.map((point: Point) => ({
-                x: origin.x + (point.x - origin.x) * scaleX,
-                y: origin.y + (point.y - origin.y) * scaleY
+                x: Math.round(origin.x + (point.x - origin.x) * scaleX),
+                y: Math.round(origin.y + (point.y - origin.y) * scaleY)
             }));
             break;
     }

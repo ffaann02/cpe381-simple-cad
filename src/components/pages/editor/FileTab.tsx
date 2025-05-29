@@ -61,6 +61,7 @@ const FileTab = () => {
     }
   };
 
+  console.log("Projects:", projects);
   return (
     <div className="flex gap-x-1">
       {projects.length > 0 &&

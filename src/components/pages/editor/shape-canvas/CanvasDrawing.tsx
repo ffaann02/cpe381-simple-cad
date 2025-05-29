@@ -56,6 +56,9 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     currentProject,
     resetCanvasState,
     setSelectedLayerId,
+    zoomLevel,
+    zoomOffsetX,
+    zoomOffsetY,
   } = useTab();
 
   // Helper to generate the localStorage key based on the current project
@@ -375,12 +378,13 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
   // Main drawing effect
   useEffect(() => {
     if (!ctx) return;
-    // Set canvas background color based on canvasSize state
     if (canvas) {
       canvas.style.backgroundColor = canvasSize.backgroundColor;
     }
-
     clearCanvas(ctx);
+    ctx.save();
+    ctx.translate(zoomOffsetX, zoomOffsetY);
+    ctx.scale(zoomLevel, zoomLevel);
     drawMarkers(ctx);
     drawLines(ctx);
     drawCircles(ctx);
@@ -389,6 +393,7 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     drawPolygons(ctx);
     drawPreview(ctx);
     drawBoundingBoxForSelected(ctx);
+    ctx.restore();
   }, [
     points,
     effectiveMousePos,
@@ -405,6 +410,9 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
     polygonCornerNumber,
     canvasSize,
     ctx,
+    zoomLevel,
+    zoomOffsetX,
+    zoomOffsetY,
   ]);
 
   // Polygon completion effect (unchanged)

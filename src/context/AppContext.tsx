@@ -84,6 +84,12 @@ interface TabContextType {
   handleUndo: () => void;
   handleRedo: () => void;
   saveState: () => void;
+  zoomLevel: number;
+  setZoomLevel: (z: number) => void;
+  zoomOffsetX: number;
+  setZoomOffsetX: (x: number) => void;
+  zoomOffsetY: number;
+  setZoomOffsetY: (y: number) => void;
 }
 
 const TabContext = createContext<TabContextType | undefined>(undefined);
@@ -106,7 +112,7 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
   const [canvasSize, setCanvasSize] = useState<Canvas>({
     width: 800,
     height: 600,
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
   });
   const [points, setPoints] = useState<Point[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
@@ -122,6 +128,9 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
 
   const [shape, setShape] = useState<ShapeMode>(ShapeMode.Line);
   const [log, setLog] = useState<LogEntry[]>([]);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [zoomOffsetX, setZoomOffsetX] = useState<number>(0);
+  const [zoomOffsetY, setZoomOffsetY] = useState<number>(0);
 
   const history = useRef<HistoryState[]>([]);
   const currentIndex = useRef<number>(-1);
@@ -483,6 +492,12 @@ export const TabProvider = ({ children }: { children: ReactNode }) => {
     handleUndo,
     handleRedo,
     saveState,
+    zoomLevel,
+    setZoomLevel,
+    zoomOffsetX,
+    setZoomOffsetX,
+    zoomOffsetY,
+    setZoomOffsetY,
   };
 
   return <TabContext.Provider value={value}>{children}</TabContext.Provider>;

@@ -115,6 +115,9 @@ const Tools = () => {
           <div className="bg-neutral-50 p-4 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold">Select Tool</h3>
             <p className="text-sm text-gray-600">The Select Tool allows you to select and manipulate shapes on the canvas. You can move, resize, and rotate shapes using this tool.</p>
+            <div className="items-center gap-2">
+              <img src="\public\doc\tool\Select_1.png" alt="Select Tool" className="w-60 h-60 border" />
+            </div>
           </div>
 
           <div className="bg-neutral-50 p-4 rounded-lg shadow-md">

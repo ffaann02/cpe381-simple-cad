@@ -89,7 +89,8 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setLayers,
     setShowGrid,
     setCanvasSize,
-    setProjects
+    setProjects,
+    setCurrentProject
   } = useTab();
   const [formData, setFormData] = useState({
     projectName: "",
@@ -131,17 +132,18 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
       setOpenHomeModal(false);
       setFormData({ projectName: "", width: 800, height: 600 });
       setErrors({});
-      setLines([]);
-      setCircles([]);
-      setEllipses([]);
-      setCurves([]);
-      setCanvasSize({
-        width: formData.width,
-        height: formData.height,
-        backgroundColor: "#ffffff",
-      });
+      // setLines([]);
+      // setCircles([]);
+      // setEllipses([]);
+      // setCurves([]);
+      // setCanvasSize({
+      //   width: formData.width,
+      //   height: formData.height,
+      //   backgroundColor: "#ffffff",
+      // });
       message.success("New design created!");
       setShowGrid(true);
+      setCurrentProject(formData.projectName); // Set the current project to the new one
     }
   };
 
@@ -324,7 +326,7 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   const draggerProps = {
     name: 'file',
     multiple: false,
-    accept: '.cad,.txt',
+    accept: '.txt,.cad', // Accept only .txt or .cad files
     beforeUpload: (file: File) => {
       // Prevent Ant Design from automatically uploading the file
       // We will handle the file reading manually

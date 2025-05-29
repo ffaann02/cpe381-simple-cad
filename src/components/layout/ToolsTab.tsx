@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Popover } from "antd";
-import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo } from "react-icons/fa";
+import { FaPen, FaFillDrip, FaEraser, FaUndo, FaRedo, FaSearchPlus } from "react-icons/fa";
 import { LuMousePointer2 } from "react-icons/lu";
 import { MdOutlineOpenWith } from "react-icons/md";
 import { Tools } from "@/interface/tool";
@@ -112,6 +112,12 @@ const ToolsTab = () => {
       icon: <FaFillDrip className="text-2xl text-neutral-600" />,
       type: Tools.Color,
       onClick: () => setTool(Tools.Color),
+    },
+    {
+      label: "Zoom",
+      icon: <FaSearchPlus className="text-2xl text-neutral-600" />,
+      type: Tools.Zoom,
+      onClick: () => setTool(Tools.Zoom),
     },
     {
       label: "Undo",

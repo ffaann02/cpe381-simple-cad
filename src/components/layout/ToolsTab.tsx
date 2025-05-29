@@ -36,7 +36,7 @@ const shapeButtons = [
 ];
 
 const ToolsTab = () => {
-  const { tool, setTool, shape, setShape } = useTab();
+  const { tool, setTool, shape, setShape, handleUndo, handleRedo } = useTab();
   const [isPopoverVisible, setIsPopoverVisible] = useState<boolean>(false);
 
   useEffect(() => {
@@ -117,13 +117,13 @@ const ToolsTab = () => {
       label: "Undo",
       icon: <FaUndo className="text-2xl text-neutral-600" />,
       type: Tools.Undo,
-      onClick: () => setTool(Tools.Undo),
+      onClick: handleUndo,
     },
     {
       label: "Redo",
       icon: <FaRedo className="text-2xl text-neutral-600" />,
       type: Tools.Redo,
-      onClick: () => setTool(Tools.Redo),
+      onClick: handleRedo,
     },
   ];
 

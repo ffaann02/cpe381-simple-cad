@@ -4,6 +4,7 @@ import { Point, ShapeMode, Line, Circle, Curve, Ellipse, Polygon } from "@/inter
 import { GlobalColor } from "@/interface/color";
 import { v4 as uuidv4 } from "uuid";
 import { useTab } from "@/context/AppContext";
+import { Tools } from "@/interface/tool";
 
 const drawColor = GlobalColor.DefaultDrawColor;
 
@@ -30,8 +31,10 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
     setLayers,
     setSelectedLayerId,
     setLog,
+    tool,
+    setTool
   } = useTab();
-
+  
   const [willingToDrawPolygon, setWillingToDrawPolygon] = useState<boolean>(false);
 
   const handleDrawClick = useCallback(
@@ -203,7 +206,8 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           setPoints([]);
           setWillingToDrawPolygon(false);
         }
-      } else {
+      }
+      else {
         setPoints(newPoints);
       }
       setMousePos(null);

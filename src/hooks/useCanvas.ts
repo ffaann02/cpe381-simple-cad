@@ -38,7 +38,7 @@ export const useCanvasEvents = ({
   selectedShape,
   setSelectedShape,
 }: UseCanvasEventsProps) => {
-  const { tool, shape, points, setPoints } = useTab();
+  const { tool, shape, points, setPoints, setTool } = useTab();
 
   const { handleDrawClick, willingToDrawPolygon, setWillingToDrawPolygon } = useDrawing({ points, setPoints, setMousePos });
   const { handleSelectClick, handleMoveClick, handleMoveMouseMove, highlightShape, cancelHighlightShape } = useSelectionAndMovement({
@@ -80,12 +80,6 @@ export const useCanvasEvents = ({
           break;
         case Tools.Move:
           handleMoveClick(x, y);
-          break;
-        case Tools.Rotate:
-          handleRotateClick(x, y);
-          break;
-        case Tools.Flip:
-          handleFlipClick(x, y);
           break;
         case Tools.Draw:
           handleDrawClick(x, y, shape);

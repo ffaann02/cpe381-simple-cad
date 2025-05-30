@@ -1,7 +1,3 @@
-import { LuTableProperties } from "react-icons/lu";
-import { TbLine, TbTopologyRing } from "react-icons/tb";
-import { PiBezierCurveDuotone } from "react-icons/pi";
-import { LuBringToFront } from "react-icons/lu";
 import React, { useRef, useState } from 'react';
 
 const Properties = () => {

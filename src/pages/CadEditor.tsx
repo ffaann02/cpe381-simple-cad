@@ -9,38 +9,25 @@ import Canvas from "@/components/pages/editor/shape-canvas/Canvas";
 import PropertiesTab from "@/components/layout/PropertiesTab";
 import { MdGridOff, MdGridOn } from "react-icons/md";
 import { TbMagnet, TbMagnetOff } from "react-icons/tb";
-import ModalSwitcher from "@/components/layout/ModalSwitcher";
 import { Drawer, Upload } from "antd";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { IoDocumentOutline } from "react-icons/io5";
-import { FiBox } from "react-icons/fi";
 import { UploadIcon } from "lucide-react";
 import { FaChevronLeft } from "react-icons/fa";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 const gridOpacity = 0.4;
 
 const CadEditor = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const {
     tab,
     setTab,
     canvasSize,
-    setCanvasSize,
     showGrid,
     setShowGrid,
     snapEnabled,
     setSnapEnabled,
-    points,
-    lines,
-    curves,
-    ellipses,
-    circles,
-    setPoints,
-    setLines,
-    setCurves,
-    setEllipses,
-    setCircles,
     log,
     projects,
     currentProject,
@@ -141,7 +128,7 @@ const CadEditor = () => {
   };
 
   const [openLogDrawer, setOpenLogDrawer] = useState<boolean>(false);
-  const [openCodeEditor, setOpenCodeEditor] = useState<boolean>(false);
+  const [, setOpenCodeEditor] = useState<boolean>(false);
   return (
     <>
       {projects.length <= 0 || !currentProject ? (

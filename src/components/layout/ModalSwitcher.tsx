@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   File,
   FilePlus,
@@ -93,11 +93,6 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
   ellipses,
   curves,
   polygons,
-  setLines,
-  setCircles,
-  setEllipses,
-  setCurves,
-  setPolygons,
   tabs = ["new", "import", "export"], // Default to all tabs if not provided
 }) => {
   const {
@@ -105,11 +100,8 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setModalType,
     openHomeModal,
     setOpenHomeModal,
-    canvasRef,
     canvasSize,
-    setImportTimestamp,
     layers,
-    setLayers,
     setShowGrid,
     setCanvasSize,
     projects,
@@ -182,20 +174,20 @@ const ModalSwitcher: React.FC<ExportModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const clearCurrentCanvas = () => {
-    setLines([]);
-    setCircles([]);
-    setEllipses([]);
-    setCurves([]);
-    setPolygons([]);
-    setLayers([]);
-    if (canvasRef?.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-      }
-    }
-  };
+  // const clearCurrentCanvas = () => {
+  //   setLines([]);
+  //   setCircles([]);
+  //   setEllipses([]);
+  //   setCurves([]);
+  //   setPolygons([]);
+  //   setLayers([]);
+  //   if (canvasRef?.current) {
+  //     const ctx = canvasRef.current.getContext("2d");
+  //     if (ctx) {
+  //       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+  //     }
+  //   }
+  // };
 
   const handleExport = (format: "jpg" | "png" | "cad") => {
     if (format === "cad") {

@@ -1,6 +1,6 @@
 // hooks/useRotation.ts
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Point, Polygon } from "@/interface/shape";
+import { Point} from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 import { rotatePoint } from "@/utils/transform";
@@ -17,7 +17,7 @@ interface UseRotationProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
 }
 
-export const useRotation = ({ canvasRef }: UseRotationProps) => {
+export const useRotation = ({ }: UseRotationProps) => {
   const [rotatePopoverOpen, setRotatePopoverOpen] = useState(false);
   const [rotationAngle, setRotationAngle] = useState<number | string>("");
   const [rotatingShape, setRotatingShape] = useState<RotatingShape | null>(null);

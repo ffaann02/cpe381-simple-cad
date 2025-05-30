@@ -121,6 +121,7 @@ const LineCanvas: React.FC = () => {
         name: `Line ${lines.length + 1}`,
         is_selected: false,
         is_visible: true,
+        thickness: 1
       };
       setLayers([...layers, newLayer]);
     }

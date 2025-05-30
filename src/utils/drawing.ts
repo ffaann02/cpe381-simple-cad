@@ -136,13 +136,42 @@ export const drawBezierCurve = (
   color = "black",
   width = 1
 ) => {
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  ctx.beginPath();
-  ctx.moveTo(p0.x, p0.y);
-  ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-  ctx.stroke();
-  ctx.lineWidth = 1; // Reset line width
+  // Number of points to calculate along the curve
+  const steps = 100;
+  
+  // Function to calculate a point on the Bezier curve using de Casteljau's algorithm
+  const calculateBezierPoint = (t: number): Point => {
+    const mt = 1 - t;
+    const x = mt * mt * mt * p0.x + 
+              3 * mt * mt * t * p1.x + 
+              3 * mt * t * t * p2.x + 
+              t * t * t * p3.x;
+    const y = mt * mt * mt * p0.y + 
+              3 * mt * mt * t * p1.y + 
+              3 * mt * t * t * p2.y + 
+              t * t * t * p3.y;
+    return { x, y };
+  };
+
+  // Calculate points along the curve
+  const points: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    points.push(calculateBezierPoint(t));
+  }
+
+  // Draw lines between consecutive points
+  for (let i = 0; i < points.length - 1; i++) {
+    drawBresenhamLine(
+      Math.round(points[i].x),
+      Math.round(points[i].y),
+      Math.round(points[i + 1].x),
+      Math.round(points[i + 1].y),
+      ctx,
+      color,
+      width
+    );
+  }
 };
 
 export const drawEllipseMidpoint = (

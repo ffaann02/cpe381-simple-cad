@@ -892,11 +892,50 @@ const PropertiesTab: React.FC = () => {
         <>
           <h3 className="font-semibold mt-4 mb-2">Polygon</h3>
           <div className="space-y-4">
+            <div className="grid grid-cols-5 mb-2 gap-x-2">
+              <label className="col-span-1 text-sm text-gray-700 my-auto font-semibold">
+                Center
+              </label>
+              <div className="col-span-2 flex items-center gap-x-1">
+                <label className="text-sm text-gray-700">X:</label>
+                <input
+                  type="number"
+                  value={getShapeCenter(polygon, "polygon").x}
+                  onChange={(e) => {
+                    const center = getShapeCenter(polygon, "polygon");
+                    const dx = parseFloat(e.target.value) - center.x;
+                    const updatedPoints = polygon.points.map(point => ({
+                      x: point.x + dx,
+                      y: point.y
+                    }));
+                    handlePolygonChange("points", updatedPoints);
+                  }}
+                  className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+              <div className="col-span-2 flex items-center gap-x-1">
+                <label className="text-sm text-gray-700">Y:</label>
+                <input
+                  type="number"
+                  value={getShapeCenter(polygon, "polygon").y}
+                  onChange={(e) => {
+                    const center = getShapeCenter(polygon, "polygon");
+                    const dy = parseFloat(e.target.value) - center.y;
+                    const updatedPoints = polygon.points.map(point => ({
+                      x: point.x,
+                      y: point.y + dy
+                    }));
+                    handlePolygonChange("points", updatedPoints);
+                  }}
+                  className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                />
+              </div>
+            </div>
             <div className="w-full h-[200px] overflow-y-auto pl-3 py-1.5 pr-1 border border-r-0 rounded-md">
               {polygon.points.map((point, index) => (
-                <div key={index} className="grid grid-cols-6 mb-2 gap-x-2">
-                  <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
-                    Point {index + 1}
+                <div key={index} className="grid grid-cols-5 mb-2 gap-x-2">
+                  <label className="col-span-1 text-xs text-gray-700 my-auto font-semibold">
+                    P{index + 1}
                   </label>
                   <div className="col-span-2 flex items-center gap-x-1">
                     <label className="text-sm text-gray-700 font-semibold">

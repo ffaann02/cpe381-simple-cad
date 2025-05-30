@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { useTab } from "@/context/AppContext";
 import {
   drawMarker,
@@ -20,10 +20,6 @@ import {
   Curve,
 } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
-import { GlobalColor } from "@/interface/color";
-
-const previewLineColor = GlobalColor.DraftDrawColor;
-const LOCAL_STORAGE_KEY = "cad_drawing_state"; // This is now a base key, specific project key will be appended
 
 interface CanvasDrawingProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -47,7 +43,6 @@ const CanvasDrawing: React.FC<CanvasDrawingProps> = ({
 }) => {
   const {
     points,
-    setPoints,
     lines,
     setLines,
     circles,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col, Typography, Button } from 'antd';
-import { CodeOutlined, TeamOutlined, RocketOutlined, ToolOutlined, GithubOutlined } from '@ant-design/icons';
+import { CodeOutlined, RocketOutlined, ToolOutlined, GithubOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 

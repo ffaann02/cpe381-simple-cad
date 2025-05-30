@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTab } from "@/context/AppContext";
 import { Circle, Curve, Ellipse, Line, Polygon } from "@/interface/shape";
 import { MdRotate90DegreesCcw } from "react-icons/md";
@@ -7,8 +7,7 @@ import { Tools } from "@/interface/tool";
 import { Layer } from "@/interface/tab";
 import { rotatePoint, flipPoint } from "@/utils/transform";
 import { getShapeCenter } from "@/utils/position";
-import { Tabs } from "antd";
-import type { TabsProps } from "antd";
+import { Tabs, InputNumber } from "antd";
 import ThicknessSlider from "@/components/pages/editor/properties-tab/ThicknessSlider";
 
 const PropertiesTab: React.FC = () => {
@@ -26,22 +25,16 @@ const PropertiesTab: React.FC = () => {
     polygons,
     setPolygons,
     selectedLayerId,
-    setTool,
     tool,
     setLog,
   } = useTab();
 
-  const [showRotationForm, setShowRotationForm] = useState(false);
-  const [showFlipForm, setShowFlipForm] = useState(false);
   const [rotationAngle, setRotationAngle] = useState<string | number>("90");
   const [rotationCenter, setRotationCenter] = useState<{
     x: number;
     y: number;
   }>({ x: 0, y: 0 });
   const [isCenterManuallySet, setIsCenterManuallySet] = useState(false);
-  const [flipDirection, setFlipDirection] = useState<"horizontal" | "vertical">(
-    "horizontal"
-  );
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
   const line = lines.find((l) => l.layerId === selectedLayerId);
@@ -67,9 +60,9 @@ const PropertiesTab: React.FC = () => {
   const handleLinePointChange = (
     point: "start" | "end",
     axis: "x" | "y",
-    value: number
+    value: number | null
   ) => {
-    if (!selectedLayerId || !line) return;
+    if (!selectedLayerId || !line || value === null) return;
     const updatedLines = lines.map((l) =>
       l.layerId === selectedLayerId
         ? { ...l, [point]: { ...l[point], [axis]: value } }
@@ -98,8 +91,8 @@ const PropertiesTab: React.FC = () => {
     setLayers(updatedLayers);
   };
 
-  const handleCircleCenterChange = (axis: "x" | "y", value: number) => {
-    if (!selectedLayerId || !circle) return;
+  const handleCircleCenterChange = (axis: "x" | "y", value: number | null) => {
+    if (!selectedLayerId || !circle || value === null) return;
     const updatedCircles = circles.map((c) =>
       c.layerId === selectedLayerId
         ? { ...c, center: { ...c.center, [axis]: value } }
@@ -125,9 +118,9 @@ const PropertiesTab: React.FC = () => {
   const handleCurvePointChange = (
     point: "p0" | "p1" | "p2" | "p3",
     axis: "x" | "y",
-    value: number
+    value: number | null
   ) => {
-    if (!selectedLayerId || !curve) return;
+    if (!selectedLayerId || !curve || value === null) return;
     const updatedCurves = curves.map((c) =>
       c.layerId === selectedLayerId
         ? { ...c, [point]: { ...c[point], [axis]: value } }
@@ -156,8 +149,8 @@ const PropertiesTab: React.FC = () => {
     setLayers(updatedLayers);
   };
 
-  const handleEllipseCenterChange = (axis: "x" | "y", value: number) => {
-    if (!selectedLayerId || !ellipse) return;
+  const handleEllipseCenterChange = (axis: "x" | "y", value: number | null) => {
+    if (!selectedLayerId || !ellipse || value === null) return;
     const updatedEllipses = ellipses.map((e) =>
       e.layerId === selectedLayerId
         ? { ...e, center: { ...e.center, [axis]: value } }
@@ -189,9 +182,9 @@ const PropertiesTab: React.FC = () => {
   const handlePolygonPointChange = (
     index: number,
     axis: "x" | "y",
-    value: number
+    value: number | null
   ) => {
-    if (!selectedLayerId || !polygon) return;
+    if (!selectedLayerId || !polygon || value === null) return;
     const updatedPolygons = polygons.map((p) =>
       p.layerId === selectedLayerId
         ? {
@@ -472,8 +465,6 @@ const PropertiesTab: React.FC = () => {
     const polygon = polygons.find((p) => p.layerId === selectedLayerId);
 
     // Reset menus and rotation center when selected shape changes
-    setShowRotationForm(false);
-    setShowFlipForm(false);
     setIsCenterManuallySet(false);
     setRotationAngle("90"); // Reset rotation angle to default
 
@@ -535,13 +526,6 @@ const PropertiesTab: React.FC = () => {
     polygons,
   ]);
 
-  // // Add effect to automatically set transform tool when shape is selected
-  // useEffect(() => {
-  //   if (selectedLayerId && (line || circle || curve || ellipse)) {
-  //     setTool(Tools.Rotate);
-  //   }
-  // }, [selectedLayerId, line, circle, curve, ellipse]);
-
   return (
     <div className="pt-2 p-4 border rounded-md">
       <h2 className="font-bold mb-2 pb-2 border-b">Properties</h2>
@@ -557,24 +541,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={line.start.x}
-                onChange={(e) =>
-                  handleLinePointChange("start", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleLinePointChange("start", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={line.start.y}
-                onChange={(e) =>
-                  handleLinePointChange("start", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleLinePointChange("start", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -584,24 +564,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={line.end.x}
-                onChange={(e) =>
-                  handleLinePointChange("end", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleLinePointChange("end", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={line.end.y}
-                onChange={(e) =>
-                  handleLinePointChange("end", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleLinePointChange("end", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -626,36 +602,30 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={circle.center.x}
-                onChange={(e) =>
-                  handleCircleCenterChange("x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCircleCenterChange("x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={circle.center.y}
-                onChange={(e) =>
-                  handleCircleCenterChange("y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCircleCenterChange("y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
           <label className="block mb-2">
             Radius:
-            <input
-              type="number"
+            <InputNumber
               value={circle.radius}
-              onChange={(e) =>
-                handleCircleChange("radius", parseFloat(e.target.value))
-              }
-              className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              onChange={(value) => handleCircleChange("radius", value)}
+              className="w-full"
+              precision={0}
             />
           </label>
           <label className="block mb-2">
@@ -663,9 +633,7 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={circle.backgroundColor || ""}
-              onChange={(e) =>
-                handleCircleChange("backgroundColor", e.target.value)
-              }
+              onChange={(e) => handleCircleChange("backgroundColor", e.target.value)}
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -674,9 +642,7 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={circle.borderColor || "#000000"}
-              onChange={(e) =>
-                handleCircleChange("borderColor", e.target.value)
-              }
+              onChange={(e) => handleCircleChange("borderColor", e.target.value)}
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -692,24 +658,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p0.x}
-                onChange={(e) =>
-                  handleCurvePointChange("p0", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p0", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p0.y}
-                onChange={(e) =>
-                  handleCurvePointChange("p0", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p0", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -719,24 +681,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p1.x}
-                onChange={(e) =>
-                  handleCurvePointChange("p1", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p1", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p1.y}
-                onChange={(e) =>
-                  handleCurvePointChange("p1", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p1", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -746,24 +704,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p2.x}
-                onChange={(e) =>
-                  handleCurvePointChange("p2", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p2", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p2.y}
-                onChange={(e) =>
-                  handleCurvePointChange("p2", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p2", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -773,24 +727,20 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p3.x}
-                onChange={(e) =>
-                  handleCurvePointChange("p3", "x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p3", "x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={curve.p3.y}
-                onChange={(e) =>
-                  handleCurvePointChange("p3", "y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleCurvePointChange("p3", "y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -815,51 +765,43 @@ const PropertiesTab: React.FC = () => {
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={ellipse.center.x}
-                onChange={(e) =>
-                  handleEllipseCenterChange("x", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleEllipseCenterChange("x", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={ellipse.center.y}
-                onChange={(e) =>
-                  handleEllipseCenterChange("y", parseInt(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleEllipseCenterChange("y", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
-          <div className="ggrid grid-cols-6 mb-2 gap-x-2">
+          <div className="grid grid-cols-6 mb-2 gap-x-2">
             <label className="col-span-2 text-sm text-gray-700 my-auto font-semibold">
               Radius:
             </label>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">X:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={ellipse.rx}
-                onChange={(e) =>
-                  handleEllipseChange("rx", parseFloat(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleEllipseChange("rx", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
             <div className="col-span-2 flex items-center gap-x-1">
               <label className="text-sm text-gray-700">Y:</label>
-              <input
-                type="number"
+              <InputNumber
                 value={ellipse.ry}
-                onChange={(e) =>
-                  handleEllipseChange("ry", parseFloat(e.target.value))
-                }
-                className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                onChange={(value) => handleEllipseChange("ry", value)}
+                className="w-full"
+                precision={0}
               />
             </div>
           </div>
@@ -868,9 +810,7 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={ellipse.backgroundColor || ""}
-              onChange={(e) =>
-                handleEllipseChange("backgroundColor", e.target.value)
-              }
+              onChange={(e) => handleEllipseChange("backgroundColor", e.target.value)}
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -879,9 +819,7 @@ const PropertiesTab: React.FC = () => {
             <input
               type="color"
               value={ellipse.borderColor || "#000000"}
-              onChange={(e) =>
-                handleEllipseChange("borderColor", e.target.value)
-              }
+              onChange={(e) => handleEllipseChange("borderColor", e.target.value)}
               className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
             />
           </label>
@@ -898,36 +836,38 @@ const PropertiesTab: React.FC = () => {
               </label>
               <div className="col-span-2 flex items-center gap-x-1">
                 <label className="text-sm text-gray-700">X:</label>
-                <input
-                  type="number"
+                <InputNumber
                   value={getShapeCenter(polygon, "polygon").x}
-                  onChange={(e) => {
+                  onChange={(value) => {
+                    if (value === null) return;
                     const center = getShapeCenter(polygon, "polygon");
-                    const dx = parseFloat(e.target.value) - center.x;
+                    const dx = value - center.x;
                     const updatedPoints = polygon.points.map(point => ({
                       x: point.x + dx,
                       y: point.y
                     }));
                     handlePolygonChange("points", updatedPoints);
                   }}
-                  className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="w-full"
+                  precision={0}
                 />
               </div>
               <div className="col-span-2 flex items-center gap-x-1">
                 <label className="text-sm text-gray-700">Y:</label>
-                <input
-                  type="number"
+                <InputNumber
                   value={getShapeCenter(polygon, "polygon").y}
-                  onChange={(e) => {
+                  onChange={(value) => {
+                    if (value === null) return;
                     const center = getShapeCenter(polygon, "polygon");
-                    const dy = parseFloat(e.target.value) - center.y;
+                    const dy = value - center.y;
                     const updatedPoints = polygon.points.map(point => ({
                       x: point.x,
                       y: point.y + dy
                     }));
                     handlePolygonChange("points", updatedPoints);
                   }}
-                  className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="w-full"
+                  precision={0}
                 />
               </div>
             </div>
@@ -941,32 +881,20 @@ const PropertiesTab: React.FC = () => {
                     <label className="text-sm text-gray-700 font-semibold">
                       X:
                     </label>
-                    <input
-                      type="number"
+                    <InputNumber
                       value={point.x}
-                      onChange={(e) =>
-                        handlePolygonPointChange(
-                          index,
-                          "x",
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      onChange={(value) => handlePolygonPointChange(index, "x", value)}
+                      className="w-full"
+                      precision={0}
                     />
                   </div>
                   <div className="col-span-2 flex items-center gap-x-1">
                     <label className="text-sm text-gray-700">Y:</label>
-                    <input
-                      type="number"
+                    <InputNumber
                       value={point.y}
-                      onChange={(e) =>
-                        handlePolygonPointChange(
-                          index,
-                          "y",
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      onChange={(value) => handlePolygonPointChange(index, "y", value)}
+                      className="w-full"
+                      precision={0}
                     />
                   </div>
                 </div>
@@ -977,9 +905,7 @@ const PropertiesTab: React.FC = () => {
               <input
                 type="color"
                 value={polygon.borderColor || "#000000"}
-                onChange={(e) =>
-                  handlePolygonChange("borderColor", e.target.value)
-                }
+                onChange={(e) => handlePolygonChange("borderColor", e.target.value)}
                 className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </label>
@@ -988,9 +914,7 @@ const PropertiesTab: React.FC = () => {
               <input
                 type="color"
                 value={polygon.backgroundColor || ""}
-                onChange={(e) =>
-                  handlePolygonChange("backgroundColor", e.target.value)
-                }
+                onChange={(e) => handlePolygonChange("backgroundColor", e.target.value)}
                 className="w-full border rounded-md shadow-sm py-1.5 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               />
             </label>
@@ -1021,42 +945,47 @@ const PropertiesTab: React.FC = () => {
                     <div className="flex flex-col gap-2">
                       <label className="text-sm text-gray-700">
                         Angle (degrees):
-                        <input
-                          type="number"
+                        <InputNumber
                           value={rotationAngle}
-                          onChange={(e) => setRotationAngle(e.target.value)}
-                          className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                          onChange={(value) => {
+                            if (value === null) return;
+                            setRotationAngle(value);
+                          }}
+                          className="w-full"
+                          precision={0}
                         />
                       </label>
                       <div className="grid grid-cols-2 gap-2">
                         <label className="text-sm text-gray-700">
                           Center X:
-                          <input
-                            type="number"
+                          <InputNumber
                             value={rotationCenter.x}
-                            onChange={(e) => {
+                            onChange={(value) => {
+                              if (value === null) return;
                               setRotationCenter((prev) => ({
                                 ...prev,
-                                x: parseFloat(e.target.value),
+                                x: value,
                               }));
                               setIsCenterManuallySet(true);
                             }}
-                            className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            className="w-full"
+                            precision={0}
                           />
                         </label>
                         <label className="text-sm text-gray-700">
                           Center Y:
-                          <input
-                            type="number"
+                          <InputNumber
                             value={rotationCenter.y}
-                            onChange={(e) => {
+                            onChange={(value) => {
+                              if (value === null) return;
                               setRotationCenter((prev) => ({
                                 ...prev,
-                                y: parseFloat(e.target.value),
+                                y: value,
                               }));
                               setIsCenterManuallySet(true);
                             }}
-                            className="w-full border rounded-md shadow-sm py-1 px-2 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            className="w-full"
+                            precision={0}
                           />
                         </label>
                       </div>

@@ -1,4 +1,3 @@
-import React from "react";
 import { PiFlipHorizontalFill, PiFlipVerticalFill } from "react-icons/pi";
 
 interface FlipShapeModalProps {

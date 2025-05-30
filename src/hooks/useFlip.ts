@@ -1,6 +1,6 @@
 // hooks/useFlip.ts
 import { useState, useCallback } from "react";
-import { Point, Polygon } from "@/interface/shape";
+import { Point } from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 import { flipPoint } from "@/utils/transform";

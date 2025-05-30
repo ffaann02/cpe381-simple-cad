@@ -10,7 +10,6 @@ const DrawPolygonModal = ({
   points,
   polygonCornerNumber,
   setPolygonCornerNumber,
-  setWillingToDrawPolygon,
   onConfirm,
 }: DrawPolygonModalProps) => {
   return (

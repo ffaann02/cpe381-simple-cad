@@ -7,30 +7,18 @@ import {
 import { useTab } from "@/context/AppContext";
 import { Layer } from "@/interface/tab";
 import { IoMdEye, IoMdEyeOff } from "react-icons/io";
-import { useState } from "react";
-import Divider from "../ui/divider";
-import PropertiesTab from "./PropertiesTab";
+// import { useState } from "react";
 import { Check, Trash2 } from "lucide-react"; // Import Trash2 icon
 import { Popconfirm } from "antd"; // Import Popconfirm
 
 const RightTab = () => {
   const { layers, setLayers, selectedLayerId, setSelectedLayerId } = useTab();
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  // const [, setEditingIndex] = useState<number | null>(null);
 
   const toggleVisibility = (index: number) => {
     const newLayers = [...layers];
     newLayers[index].is_visible = !newLayers[index].is_visible;
     setLayers(newLayers);
-  };
-
-  const updateLayerName = (index: number, newName: string) => {
-    const newLayers = [...layers];
-    newLayers[index].name = newName;
-    setLayers(newLayers);
-  };
-
-  const handleBlur = () => {
-    setEditingIndex(null);
   };
 
   const handleLayerClick = (layerId: string) => {

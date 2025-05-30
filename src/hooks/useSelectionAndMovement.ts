@@ -31,7 +31,6 @@ export const useSelectionAndMovement = ({
   setIsMoving,
   selectedShape,
   setSelectedShape,
-  setMousePos,
   canvasRef,
   currentProject,
 }: UseSelectionAndMovementProps) => {

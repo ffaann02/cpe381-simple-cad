@@ -1,6 +1,6 @@
 // hooks/useEraser.ts
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Point, Polygon } from "@/interface/shape";
+import { Point } from "@/interface/shape";
 import { useTab } from "@/context/AppContext";
 import { findShapeAtPoint } from "@/utils/selection";
 
@@ -16,7 +16,7 @@ interface UseEraserProps {
   setMousePos: React.Dispatch<React.SetStateAction<Point | null>>;
 }
 
-export const useEraser = ({ canvasRef, setMousePos }: UseEraserProps) => {
+export const useEraser = ({ canvasRef }: UseEraserProps) => {
   const [isErasing, setIsErasing] = useState<boolean>(false);
   const [erasingShape, setErasingShape] = useState<ErasingShape | null>(null);
   const [erasingModalVisible, setErasingModalVisible] = useState<boolean>(false);

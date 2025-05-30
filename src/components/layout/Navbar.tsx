@@ -1,7 +1,5 @@
-import React from "react";
 import ModalSwitcher from "./ModalSwitcher";
 import { useTab } from "@/context/AppContext";
-import { Link } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {

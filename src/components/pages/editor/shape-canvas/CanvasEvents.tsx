@@ -1,6 +1,5 @@
 import React from "react";
 import { Point } from "@/interface/shape";
-import DrawPolygonModal from "@/components/ui/modal/canvas/DrawPolygonModal";
 import RotateModal from "@/components/ui/modal/canvas/RotateModal";
 import EraseShapeModal from "@/components/ui/modal/canvas/EraseShapeModal";
 import FlipShapeModal from "@/components/ui/modal/canvas/FlipShapeModal";
@@ -48,15 +47,13 @@ const CanvasEvents: React.FC<CanvasEventsProps> = (props) => {
     handleRotateShape,
     rotatePopoverRef,
     flipModalVisible,
-    setFlipModalVisible,
     modalPosition,
-    shapeToFlip,
     flipShape,
     handleMouseDown,
     handleMouseUp,
   } = useCanvasEvents({ ...props, currentProject: props.currentProject });
 
-  const { points, polygonCornerNumber, setPolygonCornerNumber, tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY, currentProject } = useTab();
+  const { tool, zoomLevel, setZoomLevel, zoomOffsetX, setZoomOffsetX, zoomOffsetY, setZoomOffsetY } = useTab();
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (tool === Tools.Zoom && e.shiftKey) {

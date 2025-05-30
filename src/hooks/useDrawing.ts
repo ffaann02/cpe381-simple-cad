@@ -1,11 +1,9 @@
 // hooks/useDrawing.ts
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
 import { Point, ShapeMode, Line, Circle, Curve, Ellipse, Polygon } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
-import { GlobalColor } from "@/interface/color";
 import { v4 as uuidv4 } from "uuid";
 import { useTab } from "@/context/AppContext";
-import { Tools } from "@/interface/tool";
 
 interface UseDrawingProps {
   points: Point[];
@@ -30,10 +28,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
     setLayers,
     setSelectedLayerId,
     setLog,
-    tool,
-    setTool,
     saveState,
-    canvasSize,
     currentColor
   } = useTab();
 
@@ -65,6 +60,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           icon: "🖊️",
           is_selected: false,
           is_visible: true,
+          thickness: 1
         };
         setLayers([...layers, newLayer!]);
         setSelectedLayerId(newLayer.id);
@@ -94,6 +90,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           icon: "⚪",
           is_selected: false,
           is_visible: true,
+          thickness: 1
         };
         setLayers([...layers, newLayer!]);
         setSelectedLayerId(newLayer.id);
@@ -128,6 +125,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
             icon: "➰",
             is_selected: false,
             is_visible: true,
+            thickness: 1
           };
           setLayers([...layers, newLayer!]);
           setSelectedLayerId(newLayer.id);
@@ -159,6 +157,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
           icon: "🧿",
           is_selected: false,
           is_visible: true,
+          thickness: 1
         };
         setLayers([...layers, newLayer!]);
         setSelectedLayerId(newLayer.id);
@@ -201,6 +200,7 @@ export const useDrawing = ({ points, setPoints, setMousePos }: UseDrawingProps) 
             icon: "△",
             is_selected: true,
             is_visible: true,
+            thickness: 1
           };
           setLayers([...layers, newLayer!]);
           setSelectedLayerId(newLayerId);

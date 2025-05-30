@@ -1,11 +1,8 @@
 // utils/drawing.ts (or components/Canvas/drawing.ts)
-import { Point, Line, Circle, Curve, Ellipse, Polygon } from "@/interface/shape";
+import { Point } from "@/interface/shape";
 import { Layer } from "@/interface/tab";
 
-const previewLineColor = "#D4C9BE";
 const SELECTION_COLOR = "#3D90D7"; // Color for the selected shape
-const DELETE_COLOR = "#FF0000"; // Color for the delete shape
-const SELECTION_WIDTH_MULTIPLIER = 2; // Multiplier for the width of the selected shape
 
 export const drawMarker = (x: number, y: number, ctx: CanvasRenderingContext2D) => {
   ctx.fillStyle = "black";

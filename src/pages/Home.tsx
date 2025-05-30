@@ -4,9 +4,7 @@ import { useTab } from "@/context/AppContext";
 import { Select, message, Modal, Input, Dropdown, MenuProps } from "antd"; // Import Modal, Input, Dropdown
 import dayjs from "dayjs";
 import { TbSortAscending, TbSortDescending } from "react-icons/tb";
-import { Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape";
-import { Layer } from "@/interface/tab";
-import { RxDotsHorizontal, RxDotsVertical } from "react-icons/rx";
+import { RxDotsHorizontal } from "react-icons/rx";
 
 const fallbackThumbnail =
   "https://static.thenounproject.com/png/140281-200.png";
@@ -41,9 +39,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [isDescending, setIsDescending] = useState(true);
   const {
-    setModalType,
     setShowGrid,
-    setOpenHomeModal,
     setLines,
     setCircles,
     setEllipses,

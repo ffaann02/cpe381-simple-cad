@@ -1,4 +1,4 @@
-import { Point, Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape";
+import { Point } from "@/interface/shape";
 import { getBezierBoundingBox } from "@/utils/drawing";
 
 export const rotatePoint = (

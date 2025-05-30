@@ -10,12 +10,11 @@ import { useTab } from "@/context/AppContext";
 import CanvasDrawing from "./CanvasDrawing";
 import CanvasEvents from "./CanvasEvents";
 import { Point } from "@/interface/shape";
-import { Line, Circle, Ellipse, Curve } from "@/interface/shape";
 import { Tools } from "@/interface/tool";
 
 interface CanvasProps {}
 
-const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((props, ref) => {
+const Canvas = forwardRef<{ redraw: () => void }, CanvasProps>((_, ref) => {
   const {
     canvasSize,
     canvasRef,

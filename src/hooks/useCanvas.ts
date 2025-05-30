@@ -8,7 +8,7 @@ import { useSelectionAndMovement } from "./useSelectionAndMovement";
 import { useEraser } from "./useEraser";
 import { useRotation } from "./useRotation";
 import { useFlip } from "./useFlip";
-import { drawBoundingBox, getBezierBoundingBox } from "@/utils/drawing"; // Import drawBoundingBox and getBezierBoundingBox
+import { getBezierBoundingBox } from "@/utils/drawing"; // Import drawBoundingBox and getBezierBoundingBox
 import { Line, Circle, Ellipse, Curve, Polygon } from "@/interface/shape"; // Import shape types
 import { scaleShape, getScalingOrigin } from "@/utils/transform"; // Import scaling helper functions
 
@@ -54,10 +54,10 @@ export const useCanvasEvents = ({
   setSelectedShape: setPropSelectedShape,
   currentProject,
 }: UseCanvasEventsProps) => {
-  const { tool, shape, points, setPoints, setTool, lines, circles, ellipses, curves, polygons, layers, setLines, setCircles, setEllipses, setCurves, setPolygons, zoomLevel, zoomOffsetX, zoomOffsetY, selectedLayerId } = useTab();
+  const { tool, shape, points, setPoints, lines, circles, ellipses, curves, polygons, setLines, setCircles, setEllipses, setCurves, setPolygons, zoomLevel, zoomOffsetX, zoomOffsetY } = useTab();
 
   const { handleDrawClick } = useDrawing({ points, setPoints, setMousePos });
-  const { handleSelectClick, handleMoveClick, handleMoveMouseMove, highlightShape, cancelHighlightShape } = useSelectionAndMovement({
+  const { handleSelectClick, handleMoveClick, handleMoveMouseMove } = useSelectionAndMovement({
     isMoving: propIsMoving,
     setIsMoving: setPropIsMoving,
     selectedShape: propSelectedShape,
